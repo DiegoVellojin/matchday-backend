@@ -1,0 +1,32 @@
+backend/
+├── app/
+│   ├── main.py              # Punto de entrada de la API
+│   ├── core/                # Configuración global (Seguridad, DB, Variables de entorno)
+│   │   ├── config.py
+│   │   ├── security.py      # JWT y Google Auth Logic
+│   │   └── database.py      # Conexión a Neon (SQLAlchemy/Tortoise)
+│   ├── modules/             # EQUIVALENTE A "FEATURES" EN EL FRONT
+│   │   ├── auth/            # 🔐 Registro, Login y OAuth
+│   │   ├── users/           # 👤 Gestión de perfiles y stats
+│   │   ├── matches/         # ⚽ Lógica de partidos y matchmaking
+│   │   ├── teams/           # 👥 Gestión de equipos y rosters
+│   │   ├── payments/        # 💰 Procesamiento de comprobantes y deudas
+│   │   └── rankings/        # 🏆 Lógica de tablas de clasificación
+│   └── shared/              # Utilidades comunes (Logging, helpers de fechas)
+├── requirements.txt         # Dependencias (FastAPI, Pydantic, SQLAlchemy)
+├── .env                     # Credenciales de Neon y Google (¡No subir a Git!)
+└── alembic/                 # Migraciones de la Base de Datos (Control de versiones SQL)
+
+modules/matches/
+├── domain/                  # Capa 1: El Núcleo (Puro Python, sin dependencias)
+│   ├── entities.py          # Clases base del negocio (Match, Payment)
+│   ├── exceptions.py        # Errores específicos del dominio (MatchFullException)
+│   └── interfaces.py        # Contratos/Puertos (Clases Abstractas ABC para los repositorios)
+├── application/             # Capa 2: Casos de Uso
+│   └── use_cases.py         # Lógica orquestada (CreateMatchUseCase, JoinMatchUseCase)
+├── infrastructure/          # Capa 3: Detalles (Base de Datos, APIs externas)
+│   ├── orm_models.py        # Tablas de SQLAlchemy (Cómo se guarda en Neon)
+│   └── repositories_impl.py # Implementación real de las interfaces del dominio
+└── presentation/            # Capa 4: Entrada/Salida (FastAPI)
+    ├── router.py            # Los endpoints reales (@app.post("/matches"))
+    └── schemas.py           # Validaciones de Pydantic (Requests y Responses de la API)
