@@ -1,0 +1,19 @@
+# Entornos Virtuales
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Variables de entorno
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Reglas de Agente
+.antigravityrules

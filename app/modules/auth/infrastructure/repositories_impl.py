@@ -1,0 +1,45 @@
+from typing import Optional
+from sqlalchemy.orm import Session
+from app.modules.auth.domain.entities import Usuario
+from app.modules.auth.domain.interfaces import IUsuarioRepository
+from app.modules.auth.infrastructure.orm_models import UsuarioORM
+
+class UsuarioRepositoryImpl(IUsuarioRepository):
+    """
+    Implementación concreta del repositorio de usuarios utilizando SQLAlchemy.
+    """
+    def __init__(self, db: Session):
+        self.db = db
+
+    def _to_entity(self, orm_model: UsuarioORM) -> Usuario:
+        """Convierte el modelo ORM de SQLAlchemy a la Entidad de Dominio."""
+        return Usuario(
+            id_usuario=orm_model.id_usuario,
+            nombre_usuario=orm_model.nombre_usuario,
+            email_usuario=orm_model.email_usuario,
+            telefono_usuario=orm_model.telefono_usuario,
+            url_foto_perfil=orm_model.url_foto_perfil,
+            rol_usuario=orm_model.rol_usuario,
+            reliability_score=orm_model.reliability_score,
+            fecha_creacion_usuario=orm_model.fecha_creacion_usuario
+        )
+
+    def get_by_email(self, email: str) -> Optional[Usuario]:
+        orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.email_usuario == email).first()
+        if orm_user:
+            return self._to_entity(orm_user)
+        return None
+
+    def create(self, usuario: Usuario) -> Usuario:
+        orm_user = UsuarioORM(
+            nombre_usuario=usuario.nombre_usuario,
+            email_usuario=usuario.email_usuario,
+            telefono_usuario=usuario.telefono_usuario,
+            url_foto_perfil=usuario.url_foto_perfil,
+            rol_usuario=usuario.rol_usuario,
+            reliability_score=usuario.reliability_score
+        )
+        self.db.add(orm_user)
+        self.db.commit()
+        self.db.refresh(orm_user)
+        return self._to_entity(orm_user)
