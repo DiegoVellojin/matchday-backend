@@ -1,32 +1,52 @@
+# ==============================================================================
+# MATCHDAY BACKEND - ARQUITECTURA DE SOFTWARE
+# ==============================================================================
+# Este proyecto implementa una Arquitectura Limpia (Clean Architecture) orientada
+# a Dominios (Domain-Driven Design Lite), permitiendo un código altamente 
+# escalable, testeable e independiente de frameworks externos.
+# ==============================================================================
+
 backend/
 ├── app/
-│   ├── main.py              # Punto de entrada de la API
-│   ├── core/                # Configuración global (Seguridad, DB, Variables de entorno)
-│   │   ├── config.py
-│   │   ├── security.py      # JWT y Google Auth Logic
-│   │   └── database.py      # Conexión a Neon (SQLAlchemy/Tortoise)
-│   ├── modules/             # EQUIVALENTE A "FEATURES" EN EL FRONT
-│   │   ├── auth/            # 🔐 Registro, Login y OAuth
-│   │   ├── users/           # 👤 Gestión de perfiles y stats
-│   │   ├── matches/         # ⚽ Lógica de partidos y matchmaking
-│   │   ├── teams/           # 👥 Gestión de equipos y rosters
-│   │   ├── payments/        # 💰 Procesamiento de comprobantes y deudas
-│   │   └── rankings/        # 🏆 Lógica de tablas de clasificación
-│   └── shared/              # Utilidades comunes (Logging, helpers de fechas)
-├── requirements.txt         # Dependencias (FastAPI, Pydantic, SQLAlchemy)
-├── .env                     # Credenciales de Neon y Google (¡No subir a Git!)
-└── alembic/                 # Migraciones de la Base de Datos (Control de versiones SQL)
+│   ├── main.py              # Punto de entrada FastAPI: Inicialización y registro de rutas globales.
+│   ├── core/                # Componentes Transversales: Lógica compartida por toda la aplicación.
+│   │   ├── config.py        # Gestión de variables de entorno y constantes con Pydantic Settings.
+│   │   ├── database.py      # Configuración de Engine y SessionLocal de SQLAlchemy para Neon.db.
+│   │   ├── security.py      # Criptografía: Generación/Validación de JWT y lógica de OAuth2 con Google.
+│   │   └── mail.py          # Motor de Mensajería: Configuración SMTP para envío de correos HTML (Reset Password).
+│   ├── modules/             # Capa de Negocio: Dividida por dominios funcionales (Features).
+│   │   ├── auth/            # Seguridad y Sesiones: Registro local, Google Login y recuperación.
+│   │   ├── users/           # Perfiles y Estadísticas: Gestión de identidad y rendimiento del jugador.
+│   │   ├── matches/         # Partidos: Orquestación de creación, convocatoria y estados de juego.
+│   │   ├── teams/           # Equipos: Estructura de grupos, rosters y capitanías.
+│   │   ├── payments/        # Finanzas: Control de recaudos, deudas y validación de comprobantes.
+│   │   └── rankings/        # Competición: Algoritmos de puntuación y tablas de posiciones.
+│   └── shared/              # Utilidades Genéricas: Helpers, formateadores y decoradores comunes.
+├── requirements.txt         # Manifiesto de dependencias (FastAPI, Pydantic, SQLAlchemy, Bcrypt, Jose).
+├── .env                     # Secrets: Credenciales sensibles (Excluido de Git por seguridad).
+└── MatchDay_db.sql          # Snapshot SQL: Estructura actual de la base de datos para referencia.
 
-modules/matches/
-├── domain/                  # Capa 1: El Núcleo (Puro Python, sin dependencias)
-│   ├── entities.py          # Clases base del negocio (Match, Payment)
-│   ├── exceptions.py        # Errores específicos del dominio (MatchFullException)
-│   └── interfaces.py        # Contratos/Puertos (Clases Abstractas ABC para los repositorios)
-├── application/             # Capa 2: Casos de Uso
-│   └── use_cases.py         # Lógica orquestada (CreateMatchUseCase, JoinMatchUseCase)
-├── infrastructure/          # Capa 3: Detalles (Base de Datos, APIs externas)
-│   ├── orm_models.py        # Tablas de SQLAlchemy (Cómo se guarda en Neon)
-│   └── repositories_impl.py # Implementación real de las interfaces del dominio
-└── presentation/            # Capa 4: Entrada/Salida (FastAPI)
-    ├── router.py            # Los endpoints reales (@app.post("/matches"))
-    └── schemas.py           # Validaciones de Pydantic (Requests y Responses de la API)
+# ------------------------------------------------------------------------------
+# ANATOMÍA DE UN MÓDULO (Ejemplo: auth/)
+# ------------------------------------------------------------------------------
+# Cada módulo se divide en 4 capas para garantizar la separación de conceptos:
+# ------------------------------------------------------------------------------
+
+modules/auth/
+├── domain/                  # CAPA 1: EL CORAZÓN (Lógica Pura)
+│   ├── entities.py          # Modelos de dominio (Objetos de negocio puros, sin ORM).
+│   ├── exceptions.py        # Errores específicos del dominio (Ej: InvalidCredentials).
+│   └── interfaces.py        # Contratos (Abstracciones): Definición de qué debe hacer el repositorio.
+├── application/             # CAPA 2: CASOS DE USO (Orquestación)
+│   └── use_cases.py         # Implementación de la lógica de negocio paso a paso.
+├── infrastructure/          # CAPA 3: IMPLEMENTACIÓN (Detalles Técnicos)
+│   ├── orm_models.py        # Definición de tablas SQLAlchemy (Esquema físico en BD).
+│   └── repositories_impl.py # Código real que habla con la DB usando las interfaces del dominio.
+└── presentation/            # CAPA 4: PUERTA DE ENTRADA (Framework)
+    ├── router.py            # Controladores FastAPI: Definición de rutas, métodos y códigos HTTP.
+    └── schemas.py           # DTOs (Data Transfer Objects): Validaciones Pydantic de entrada y salida.
+
+# ==============================================================================
+# REGLA DE ORO: Las dependencias siempre apuntan HACIA ADENTRO.
+# El dominio nunca debe conocer nada de FastAPI ni de SQLAlchemy.
+# ==============================================================================

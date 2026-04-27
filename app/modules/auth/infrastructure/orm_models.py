@@ -12,6 +12,7 @@ class UsuarioORM(Base):
     id_usuario = Column(Integer, primary_key=True, index=True)
     nombre_usuario = Column(String(100), nullable=False)
     email_usuario = Column(String(100), unique=True, nullable=False)
+    password_hash = Column(String(255), nullable=True)
     telefono_usuario = Column(String(20), nullable=True)
     url_foto_perfil = Column(String(255), nullable=True)
     rol_usuario = Column(String(20), nullable=False)

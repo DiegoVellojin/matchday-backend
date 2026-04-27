@@ -17,3 +17,8 @@ class IUsuarioRepository(ABC):
     def create(self, usuario: Usuario) -> Usuario:
         """Crea un nuevo usuario y retorna la entidad con el ID asignado."""
         pass
+
+    @abstractmethod
+    def update(self, usuario: Usuario) -> Usuario:
+        """Actualiza un usuario existente en la base de datos."""
+        pass

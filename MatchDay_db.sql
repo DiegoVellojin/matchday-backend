@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Usuario"(
     id_usuario SERIAL PRIMARY KEY,
     nombre_usuario VARCHAR(100) NOT NULL,
     email_usuario VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NULL,
     telefono_usuario VARCHAR(20) NULL, 
     url_foto_perfil VARCHAR(255) NULL,  
     rol_usuario VARCHAR(20) NOT NULL,  

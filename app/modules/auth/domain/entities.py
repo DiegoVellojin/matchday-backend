@@ -11,6 +11,7 @@ class Usuario:
         id_usuario: Optional[int],
         nombre_usuario: str,
         email_usuario: str,
+        password_hash: Optional[str],
         telefono_usuario: Optional[str],
         url_foto_perfil: Optional[str],
         rol_usuario: str,
@@ -20,6 +21,7 @@ class Usuario:
         self.id_usuario = id_usuario
         self.nombre_usuario = nombre_usuario
         self.email_usuario = email_usuario
+        self.password_hash = password_hash
         self.telefono_usuario = telefono_usuario
         self.url_foto_perfil = url_foto_perfil
         self.rol_usuario = rol_usuario

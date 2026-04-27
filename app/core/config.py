@@ -15,5 +15,16 @@ class Settings:
     
     # Google Auth
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
+    
+    # URL base del servidor (usada para construir links en correos)
+    # En producción, configura BASE_URL=https://api.matchday.com en el .env
+    BASE_URL: str = os.getenv("BASE_URL", "http://localhost:8000")
+
+    # SMTP / Mail Settings
+    SMTP_SERVER: str = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    SMTP_PORT: int = int(os.getenv("SMTP_PORT", 587))
+    SMTP_USERNAME: str = os.getenv("SMTP_USERNAME", "")
+    SMTP_PASSWORD: str = os.getenv("SMTP_PASSWORD", "")
+    SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "soporte.matchday@gmail.com")
 
 settings = Settings()

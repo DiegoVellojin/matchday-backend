@@ -17,6 +17,7 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
             id_usuario=orm_model.id_usuario,
             nombre_usuario=orm_model.nombre_usuario,
             email_usuario=orm_model.email_usuario,
+            password_hash=orm_model.password_hash,
             telefono_usuario=orm_model.telefono_usuario,
             url_foto_perfil=orm_model.url_foto_perfil,
             rol_usuario=orm_model.rol_usuario,
@@ -34,6 +35,7 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
         orm_user = UsuarioORM(
             nombre_usuario=usuario.nombre_usuario,
             email_usuario=usuario.email_usuario,
+            password_hash=usuario.password_hash,
             telefono_usuario=usuario.telefono_usuario,
             url_foto_perfil=usuario.url_foto_perfil,
             rol_usuario=usuario.rol_usuario,
@@ -43,3 +45,18 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
         self.db.commit()
         self.db.refresh(orm_user)
         return self._to_entity(orm_user)
+
+    def update(self, usuario: Usuario) -> Usuario:
+        orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.id_usuario == usuario.id_usuario).first()
+        if orm_user:
+            orm_user.nombre_usuario = usuario.nombre_usuario
+            orm_user.email_usuario = usuario.email_usuario
+            orm_user.password_hash = usuario.password_hash
+            orm_user.telefono_usuario = usuario.telefono_usuario
+            orm_user.url_foto_perfil = usuario.url_foto_perfil
+            orm_user.rol_usuario = usuario.rol_usuario
+            orm_user.reliability_score = usuario.reliability_score
+            self.db.commit()
+            self.db.refresh(orm_user)
+            return self._to_entity(orm_user)
+        raise ValueError("Usuario no encontrado para actualizar")
