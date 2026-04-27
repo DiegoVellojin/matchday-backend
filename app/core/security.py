@@ -95,3 +95,24 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido o expirado",
         )
+
+def create_team_invitation_token(team_id: int) -> str:
+    """
+    Genera un token firmado para invitar a un equipo (30 minutos de duración).
+    """
+    expire = datetime.utcnow() + timedelta(minutes=30)
+    to_encode = {"team_id": team_id, "exp": expire, "type": "team_invitation"}
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+def verify_team_invitation_token(token: str) -> Optional[int]:
+    """
+    Verifica un token de invitación. Retorna el ID del equipo si es válido.
+    """
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        if payload.get("type") != "team_invitation":
+            return None
+        return payload.get("team_id")
+    except jwt.PyJWTError:
+        return None
