@@ -1,6 +1,6 @@
 from app.core.security import verify_google_token, create_access_token, get_password_hash, verify_password
 from app.modules.auth.domain.interfaces import IUsuarioRepository
-from app.modules.auth.domain.entities import Usuario
+from app.modules.users.domain.entities import Usuario
 from app.modules.auth.domain.exceptions import InvalidGoogleTokenException, EmailAlreadyExistsException, InvalidCredentialsException, AuthException
 from typing import Optional
 
@@ -43,7 +43,7 @@ class GoogleLoginUseCase:
                 email_usuario=email,
                 telefono_usuario=None,
                 url_foto_perfil=picture,
-                rol_usuario="Jugador", # Valor por defecto. Se limitará por la BD.
+                rol_usuario="Standard", # Valor por defecto acorde a la BD.
                 reliability_score=5.00,
                 fecha_creacion_usuario=None
             )
@@ -81,7 +81,7 @@ class RegisterUserUseCase:
             password_hash=hashed_password,
             telefono_usuario=telefono,
             url_foto_perfil=None,
-            rol_usuario="Jugador",
+            rol_usuario="Standard",
             reliability_score=5.00,
             fecha_creacion_usuario=None
         )

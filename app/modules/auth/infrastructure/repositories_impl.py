@@ -1,8 +1,8 @@
 from typing import Optional
 from sqlalchemy.orm import Session
-from app.modules.auth.domain.entities import Usuario
+from app.modules.users.domain.entities import Usuario
 from app.modules.auth.domain.interfaces import IUsuarioRepository
-from app.modules.auth.infrastructure.orm_models import UsuarioORM
+from app.modules.users.infrastructure.orm_models import UsuarioORM
 
 class UsuarioRepositoryImpl(IUsuarioRepository):
     """

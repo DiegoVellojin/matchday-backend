@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from app.modules.auth.domain.entities import Usuario
+from app.modules.users.domain.entities import Usuario
 
 class IUsuarioRepository(ABC):
     """

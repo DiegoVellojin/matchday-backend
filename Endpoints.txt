@@ -1,0 +1,131 @@
+# ==============================================================================
+# MATCHDAY API SPECIFICATION (V1)
+# ==============================================================================
+# Base URL: https://matchday-backend-3qot.onrender.com/api/v1
+# Protocol: HTTPS | Format: JSON | Auth: JWT (Bearer)
+# ==============================================================================
+
+---
+
+## 🔐 0. MÓDULO: AUTENTICACIÓN (`/auth`)
+*Gestión de identidad, sesiones seguras y recuperación de acceso.*
+
+### 0.1 Iniciar Sesión con Google
+- **Endpoint:** `POST /auth/google`
+- **Descripción:** Intercambia un `idToken` de Google por un JWT interno.
+- **Payload:**
+  ```json
+  { "id_token": "string_google_token" }
+  ```
+- **Response (200 OK):**
+  ```json
+  { "access_token": "JWT_TOKEN", "token_type": "bearer" }
+  ```
+
+### 0.2 Registro Local (Email/Password)
+- **Endpoint:** `POST /auth/register`
+- **Payload:**
+  ```json
+  {
+    "nombre_usuario": "Nombre",
+    "email": "user@example.com",
+    "password": "min_6_characters",
+    "telefono": "opcional"
+  }
+  ```
+- **Response (201 Created):** `{ "access_token": "JWT", "token_type": "bearer" }`
+
+### 0.3 Recuperación de Contraseña (Solicitud)
+- **Endpoint:** `POST /auth/forgot-password`
+- **Descripción:** Dispara el flujo de email. El usuario recibe un link de un solo uso.
+- **Payload:** `{ "email": "user@example.com" }`
+
+---
+
+## 👤 1. MÓDULO: USUARIOS (`/users`)
+*Gestión del perfil del jugador y estadísticas de confiabilidad.*
+
+### 1.1 Obtener Perfil Autenticado (Self)
+- **Endpoint:** `GET /users/me`
+- **Auth:** Requerido (Bearer Token)
+- **Response (200 OK):**
+  ```json
+  {
+    "id_usuario": 123,
+    "nombre_usuario": "Diego Vellojin",
+    "email_usuario": "vellojin@example.com",
+    "rol_usuario": "Standard",
+    "reliability_score": 5.0,
+    "url_foto_perfil": "https://..."
+  }
+  ```
+
+### 1.2 Actualizar Datos de Perfil
+- **Endpoint:** `PUT /users/me`
+- **Payload:** `{ "nombre_usuario": "Nuevo", "telefono_usuario": "..." }`
+
+---
+
+## 🛡️ 2. MÓDULO: EQUIPOS (`/teams`)
+*Gestión de clubes, rosters de jugadores y capitanías.*
+
+### 2.1 Crear un Equipo
+- **Endpoint:** `POST /teams`
+- **Nota:** El creador se registra automáticamente como `Capitan` con estatus `aceptado`.
+- **Payload:**
+  ```json
+  {
+    "nombre_equipo": "Los Galácticos",
+    "fk_id_deporte": 1,
+    "url_logo_equipo": "https://..."
+  }
+  ```
+
+### 2.2 Gestionar Miembros
+- **Endpoint:** `PUT /teams/{id_equipo}/members/{id_usuario}`
+- **Descripción:** El Capitán aprueba o rechaza solicitudes de ingreso.
+- **Payload:** `{ "estatus_miembro": "aceptado", "rol_equipo": "Jugador" }`
+
+---
+
+## ⚽ 3. MÓDULO: PARTIDOS (`/matches`)
+*Orquestación de retos, matchmaking y gestión de pagos.*
+
+### 3.1 Crear Partida (Organizador)
+- **Endpoint:** `POST /matches`
+- **Payload:**
+  ```json
+  {
+    "fecha_inicio_estimada": "2026-05-15T18:00:00Z",
+    "costo_total_partida": 150.00,
+    "fk_id_cancha": 5,
+    "fk_id_equipo_a": 10
+  }
+  ```
+
+### 3.2 Reportar Pago e Inscripción
+- **Endpoint:** `POST /matches/{id_partida}/join`
+- **Payload:**
+  ```json
+  {
+    "url_recibo_pago": "https://...",
+    "fk_id_equipo_asignado": 10
+  }
+  ```
+
+---
+
+## 🛠️ ESTÁNDAR DE RESPUESTAS DE ERROR
+Todas las fallas siguen el esquema `{"detail": "mensaje"}` con los siguientes códigos:
+
+| HTTP | Nombre | Escenario Común |
+| :--- | :--- | :--- |
+| **400** | Bad Request | Datos de entrada inválidos (Pydantic validation). |
+| **401** | Unauthorized | Token inválido, expirado o inexistente. |
+| **403** | Forbidden | Intento de acción sin permisos (ej: editar equipo ajeno). |
+| **404** | Not Found | El recurso solicitado no existe en la BD. |
+| **409** | Conflict | Violación de unicidad (ej: email ya registrado). |
+
+# ==============================================================================
+# REGLA DE ORO: Las fechas siempre en formato ISO 8601 (UTC).
+# ==============================================================================
