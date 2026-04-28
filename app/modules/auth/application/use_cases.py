@@ -41,12 +41,14 @@ class GoogleLoginUseCase:
                 id_usuario=None,
                 nombre_usuario=name or "Usuario Sin Nombre",
                 email_usuario=email,
+                password_hash=None,
                 telefono_usuario=None,
                 url_foto_perfil=picture,
                 rol_usuario="Standard", # Valor por defecto acorde a la BD.
                 reliability_score=5.00,
                 fecha_creacion_usuario=None
             )
+
             usuario = self.usuario_repository.create(nuevo_usuario)
 
         # 4. Generar y retornar el JWT propio

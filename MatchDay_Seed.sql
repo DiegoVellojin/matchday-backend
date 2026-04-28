@@ -52,3 +52,10 @@ INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_m
 (3, 1, 'aceptado', 'Capitan'),
 (3, 3, 'pendiente', 'Jugador')
 ON CONFLICT DO NOTHING;
+
+-- 7. NOTIFICACIONES DE PRUEBA
+INSERT INTO bd_matchday."Notificacion" (fk_id_usuario, mensaje, leida, tipo, referencia_id) VALUES 
+(1, '¡Bienvenido a MatchDay! Empieza a crear tu equipo.', FALSE, 'welcome', NULL),
+(2, 'Has sido aceptado en el equipo Elite Strikers FC.', TRUE, 'accepted', 1)
+ON CONFLICT DO NOTHING;
+

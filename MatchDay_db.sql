@@ -125,8 +125,32 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Resultado"(
 );
 
 -- =========================================================================================
+-- 3.5. MÓDULO DE NOTIFICACIONES
+-- =========================================================================================
+
+CREATE TABLE IF NOT EXISTS bd_matchday."Notificacion"(
+    id_notificacion SERIAL PRIMARY KEY,
+    fk_id_usuario INT NOT NULL,
+    mensaje VARCHAR(255) NOT NULL,
+    leida BOOLEAN DEFAULT FALSE,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tipo VARCHAR(50) NULL,
+    referencia_id INT NULL,
+    CONSTRAINT fk_notificacion_usuario FOREIGN KEY (fk_id_usuario) REFERENCES bd_matchday."Usuario"(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS bd_matchday."Usuario_FCM"(
+    id_token SERIAL PRIMARY KEY,
+    fk_id_usuario INT NOT NULL,
+    fcm_token TEXT UNIQUE NOT NULL,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_usuario_fcm FOREIGN KEY (fk_id_usuario) REFERENCES bd_matchday."Usuario"(id_usuario) ON DELETE CASCADE
+);
+
+-- =========================================================================================
 -- 4. RESTRICCIONES DE INTEGRIDAD Y LÓGICA DE ESTADO (CHECKS)
 -- =========================================================================================
+
 
 ALTER TABLE bd_matchday."Usuario" ADD CONSTRAINT chk_rol_usuario CHECK (rol_usuario IN ('Standard', 'Admin'));
 ALTER TABLE bd_matchday."Equipo_Usuario" ADD CONSTRAINT chk_estatus_miembro CHECK (estatus_miembro IN ('pendiente', 'aceptado'));
