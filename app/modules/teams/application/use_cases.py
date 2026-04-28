@@ -130,3 +130,14 @@ class RespondToJoinRequestUseCase:
             )
         else:
             return self.repository.delete_member(id_equipo, id_usuario)
+
+class GetDiscoverableTeamsUseCase:
+    """
+    Caso de uso para obtener todos los equipos que están reclutando miembros.
+    """
+    def __init__(self, repository: IEquipoRepository):
+        self.repository = repository
+
+    def execute(self) -> List[Equipo]:
+        return self.repository.get_discoverable_teams()
+

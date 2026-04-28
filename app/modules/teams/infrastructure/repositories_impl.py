@@ -119,3 +119,14 @@ class EquipoRepositoryImpl(IEquipoRepository):
             self.db.commit()
             return True
         return False
+
+    def get_discoverable_teams(self) -> List[Equipo]:
+        # Traemos equipos que estén reclutando, haciendo join para obtener el deporte
+        results = self.db.query(EquipoORM, DeporteORM).join(
+            DeporteORM, EquipoORM.fk_id_deporte == DeporteORM.id_deporte
+        ).filter(
+            EquipoORM.esta_reclutando == True
+        ).all()
+        
+        return [self._to_entity(orm, Deporte(d.id_deporte, d.nombre_deporte)) for orm, d in results]
+

@@ -4,7 +4,8 @@ from typing import List
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.modules.teams.infrastructure.repositories_impl import EquipoRepositoryImpl
-from app.modules.teams.application.use_cases import CreateTeamUseCase, RequestJoinTeamUseCase, GetMyTeamsUseCase, JoinTeamWithTokenUseCase, GetPendingMembersUseCase, RespondToJoinRequestUseCase
+from app.modules.teams.application.use_cases import CreateTeamUseCase, RequestJoinTeamUseCase, GetMyTeamsUseCase, JoinTeamWithTokenUseCase, GetPendingMembersUseCase, RespondToJoinRequestUseCase, GetDiscoverableTeamsUseCase
+
 from app.modules.teams.presentation.schemas import TeamCreateRequest, TeamResponse, MemberResponse, RespondRequest
 
 router = APIRouter()
@@ -30,6 +31,19 @@ def create_team(
         esta_reclutando=request.esta_reclutando,
         max_miembros=request.max_miembros
     )
+
+@router.get("/", response_model=List[TeamResponse])
+def get_discoverable_teams(
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene la lista de todos los equipos que están reclutando miembros.
+    """
+    repo = EquipoRepositoryImpl(db)
+    use_case = GetDiscoverableTeamsUseCase(repo)
+    
+    return use_case.execute()
+
 
 @router.get("/me", response_model=List[TeamResponse])
 def get_my_teams(

@@ -31,6 +31,14 @@
 - **Endpoint:** `POST /auth/login`
 - **Payload:** `{ "email": "user@example.com", "password": "password123" }`
 
+### 0.4 Solicitar Recuperación de Contraseña
+- **Endpoint:** `POST /auth/forgot-password`
+- **Payload:** `{ "email": "user@example.com" }`
+
+### 0.5 Restablecer Contraseña (vía Token)
+- **Endpoint:** `POST /auth/reset-password`
+- **Payload:** `{ "token": "string_token", "new_password": "nueva_clave" }`
+
 ---
 
 ## 👤 1. MÓDULO: USUARIOS (`/users`)
@@ -40,6 +48,18 @@
 - **Endpoint:** `GET /users/me`
 - **Auth:** Requerido (Bearer)
 - **Response:** Información completa del usuario logueado.
+
+### 1.2 Actualizar Datos del Perfil
+- **Endpoint:** `PUT /users/me`
+- **Auth:** Requerido (Bearer)
+- **Payload:**
+  ```json
+  {
+    "nombre_usuario": "Nombre Actualizado",
+    "telefono_usuario": "1234567890",
+    "url_foto_perfil": "https://..."
+  }
+  ```
 
 ---
 
@@ -62,30 +82,29 @@
 
 ### 2.2 Ver Mis Equipos
 - **Endpoint:** `GET /teams/me`
-- **Descripción:** Lista los equipos donde el usuario es miembro aceptado.
+- **Descripción:** Lista los equipos donde el usuario es miembro aceptado o creador.
 - **Response:** Lista de equipos con objeto `deporte` anidado.
 
 ### 2.3 Generar Link de Invitación
 - **Endpoint:** `GET /teams/{id_equipo}/invite-token`
-- **Descripción:** Genera un token JWT (expira en 30m) para compartir.
-- **Response:** `{ "invite_token": "string", "expires_in": "30 minutes" }`
+- **Descripción:** Genera un token JWT (expira en 30m) para compartir. Solo para el Capitán.
+- **Response:** `{ "invitation_token": "string_token" }`
 
 ### 2.4 Unirse vía Token (Entrada Directa)
-- **Endpoint:** `POST /teams/join-with-token`
-- **Payload:** `{ "token": "string_token" }`
-- **Nota:** El usuario entra automáticamente con estatus `aceptado`.
+- **Endpoint:** `POST /teams/join-with-token?token=string_token`
+- **Nota:** El token se envía como Query Parameter. El usuario entra automáticamente.
 
 ### 2.5 Solicitar Unirse (Manual)
-- **Endpoint:** `POST /teams/{id_equipo}/join-request`
+- **Endpoint:** `POST /teams/{id_equipo}/join`
 - **Descripción:** El usuario solicita entrar. Queda en estatus `pendiente`.
 
 ### 2.6 Ver Solicitudes Pendientes (Solo Capitán)
-- **Endpoint:** `GET /teams/{id_equipo}/pending-members`
+- **Endpoint:** `GET /teams/{id_equipo}/requests`
 - **Response:** Lista de usuarios esperando aprobación.
 
 ### 2.7 Responder a Solicitud (Solo Capitán)
-- **Endpoint:** `POST /teams/{id_equipo}/respond-request`
-- **Payload:** `{ "user_id": 123, "accept": true }`
+- **Endpoint:** `PUT /teams/{id_equipo}/requests/{id_usuario}`
+- **Payload:** `{ "accept": true }`
 - **Nota:** Si `accept` es `false`, la solicitud se elimina de la DB.
 
 ---

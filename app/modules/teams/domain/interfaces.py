@@ -31,5 +31,11 @@ class IEquipoRepository(ABC):
         pass
 
     @abstractmethod
+    def get_discoverable_teams(self) -> List[Equipo]:
+        pass
+
+    @abstractmethod
     def delete_member(self, id_equipo: int, id_usuario: int) -> bool:
         pass
+
+
