@@ -22,7 +22,7 @@ def create_team(
     repo = EquipoRepositoryImpl(db)
     use_case = CreateTeamUseCase(repo)
     
-    return use_case.execute(
+    equipo = use_case.execute(
         nombre=request.nombre_equipo,
         id_deporte=request.fk_id_deporte,
         id_usuario_creador=current_user_id,
@@ -31,6 +31,11 @@ def create_team(
         esta_reclutando=request.esta_reclutando,
         max_miembros=request.max_miembros
     )
+    
+    eq_dict = equipo.__dict__.copy()
+    eq_dict["miembros_actuales"] = 1
+    return eq_dict
+
 
 @router.get("/", response_model=List[TeamResponse])
 def get_discoverable_teams(
@@ -41,8 +46,20 @@ def get_discoverable_teams(
     """
     repo = EquipoRepositoryImpl(db)
     use_case = GetDiscoverableTeamsUseCase(repo)
+    equipos = use_case.execute()
     
-    return use_case.execute()
+    from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+    
+    response = []
+    for eq in equipos:
+        count = db.query(EquipoUsuarioORM).filter(
+            EquipoUsuarioORM.fk_id_equipo == eq.id_equipo,
+            EquipoUsuarioORM.estatus_miembro == 'aceptado'
+        ).count()
+        eq_dict = eq.__dict__.copy()
+        eq_dict["miembros_actuales"] = count if count > 0 else 1
+        response.append(eq_dict)
+    return response
 
 
 @router.get("/me", response_model=List[TeamResponse])
@@ -55,8 +72,21 @@ def get_my_teams(
     """
     repo = EquipoRepositoryImpl(db)
     use_case = GetMyTeamsUseCase(repo)
+    equipos = use_case.execute(id_usuario=current_user_id)
     
-    return use_case.execute(id_usuario=current_user_id)
+    from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+    
+    response = []
+    for eq in equipos:
+        count = db.query(EquipoUsuarioORM).filter(
+            EquipoUsuarioORM.fk_id_equipo == eq.id_equipo,
+            EquipoUsuarioORM.estatus_miembro == 'aceptado'
+        ).count()
+        eq_dict = eq.__dict__.copy()
+        eq_dict["miembros_actuales"] = count if count > 0 else 1
+        response.append(eq_dict)
+    return response
+
 
 @router.post("/{id_equipo}/join", response_model=MemberResponse)
 def join_team(

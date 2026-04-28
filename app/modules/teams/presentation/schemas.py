@@ -25,7 +25,9 @@ class TeamResponse(BaseModel):
     descripcion_equipo: Optional[str]
     esta_reclutando: bool
     max_miembros: int
+    miembros_actuales: int = 1
     fecha_creacion_equipo: datetime
+
 
     class Config:
         from_attributes = True
