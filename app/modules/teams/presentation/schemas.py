@@ -40,9 +40,25 @@ class MemberResponse(BaseModel):
     fk_id_usuario: int
     estatus_miembro: str
     rol_equipo: str
+    nombre_usuario: Optional[str] = None
+    email_usuario: Optional[str] = None
+    url_foto_perfil: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+class MatchResponse(BaseModel):
+    """Esquema para devolver información de partidos del equipo."""
+    id_partida: int
+    fecha_inicio_estimada: datetime
+    estatus_partida: str
+    nombre_equipo_a: Optional[str] = None
+    nombre_equipo_b: Optional[str] = None
+    costo_total_partida: float
+
+    class Config:
+        from_attributes = True
+
 
 class RespondRequest(BaseModel):
     """Esquema para aceptar/rechazar solicitud."""

@@ -227,9 +227,58 @@ def get_pending_requests(
     
     if not equipo or equipo.fk_id_usuario_capitan != current_user_id:
         raise HTTPException(status_code=403, detail="Acceso denegado.")
+        
+    from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+    from app.modules.users.infrastructure.orm_models import UsuarioORM
     
-    use_case = GetPendingMembersUseCase(repo)
-    return use_case.execute(id_equipo)
+    results = db.query(EquipoUsuarioORM, UsuarioORM).join(
+        UsuarioORM, EquipoUsuarioORM.fk_id_usuario == UsuarioORM.id_usuario
+    ).filter(
+        EquipoUsuarioORM.fk_id_equipo == id_equipo,
+        EquipoUsuarioORM.estatus_miembro == "pendiente"
+    ).all()
+    
+    response = []
+    for member, user in results:
+        m_dict = member.__dict__.copy()
+        m_dict["nombre_usuario"] = user.nombre_usuario
+        m_dict["email_usuario"] = user.email_usuario
+        m_dict["url_foto_perfil"] = user.url_foto_perfil
+        response.append(m_dict)
+        
+    return response
+
+
+@router.get("/{id_equipo}/members", response_model=List[MemberResponse])
+def get_team_members(
+    id_equipo: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Lista todos los miembros aceptados de un equipo.
+    """
+    from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+    from app.modules.users.infrastructure.orm_models import UsuarioORM
+    
+    results = db.query(EquipoUsuarioORM, UsuarioORM).join(
+
+        UsuarioORM, EquipoUsuarioORM.fk_id_usuario == UsuarioORM.id_usuario
+    ).filter(
+        EquipoUsuarioORM.fk_id_equipo == id_equipo,
+        EquipoUsuarioORM.estatus_miembro == "aceptado"
+    ).all()
+    
+    response = []
+    for member, user in results:
+        m_dict = member.__dict__.copy()
+        m_dict["nombre_usuario"] = user.nombre_usuario
+        m_dict["email_usuario"] = user.email_usuario
+        m_dict["url_foto_perfil"] = user.url_foto_perfil
+        response.append(m_dict)
+        
+    return response
+
 
 @router.put("/{id_equipo}/requests/{id_usuario}")
 def respond_to_request(
