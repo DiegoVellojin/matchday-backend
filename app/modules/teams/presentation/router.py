@@ -73,7 +73,11 @@ def join_team(
     if not repo.get_by_id(id_equipo):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipo no encontrado")
         
-    return use_case.execute(id_equipo=id_equipo, id_usuario=current_user_id)
+    try:
+        return use_case.execute(id_equipo=id_equipo, id_usuario=current_user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 
 @router.get("/{id_equipo}/invite-token")
 def get_invite_token(

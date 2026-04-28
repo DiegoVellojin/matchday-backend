@@ -54,7 +54,11 @@ class RequestJoinTeamUseCase:
         self.repository = repository
 
     def execute(self, id_equipo: int, id_usuario: int) -> EquipoUsuario:
-        # Aquí se podrían agregar validaciones: si ya es miembro, etc.
+        # Verificar si ya es miembro o tiene solicitud pendiente
+        miembros = self.repository.get_members(id_equipo)
+        if any(m.fk_id_usuario == id_usuario for m in miembros):
+            raise ValueError("Ya eres miembro de este equipo o tienes una solicitud pendiente.")
+
         membresia = EquipoUsuario(
             fk_id_equipo=id_equipo,
             fk_id_usuario=id_usuario,
@@ -62,6 +66,7 @@ class RequestJoinTeamUseCase:
             rol_equipo="Jugador"
         )
         return self.repository.add_member(membresia)
+
 
 class GetMyTeamsUseCase:
     """
