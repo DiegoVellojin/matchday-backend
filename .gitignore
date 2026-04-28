@@ -15,5 +15,6 @@ __pycache__/
 .vscode/
 .idea/
 
-# Reglas de Agente
-.antigravityrules
+# Firebase
+firebase-service-account.json
+

@@ -1,3 +1,6 @@
+import os
+import firebase_admin
+from firebase_admin import credentials
 from fastapi import FastAPI
 from app.modules.auth.presentation.router import router as auth_router
 from app.modules.users.presentation.router import router as users_router
@@ -5,9 +8,15 @@ from app.modules.teams.presentation.router import router as teams_router
 from app.modules.catalogs.presentation.router import router as catalogs_router
 from app.modules.notifications.presentation.router import router as notifications_router
 
+# Inicializar Firebase Admin SDK
+cred_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "firebase-service-account.json")
+if os.path.exists(cred_path):
+    cred = credentials.Certificate(cred_path)
+    firebase_admin.initialize_app(cred)
 
 # Inicializamos la aplicación FastAPI
 app = FastAPI(
+
     title="MatchDay API",
     description="Backend en Clean Architecture para la gestión de retos y equipos de fútbol",
     version="1.0.0",

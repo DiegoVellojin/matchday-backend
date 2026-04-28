@@ -66,3 +66,39 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
             self.db.refresh(orm_user)
             return self._to_entity(orm_user)
         raise ValueError("Usuario no encontrado para actualizar")
+
+from app.modules.users.domain.interfaces import IFCMRepository
+from app.modules.users.infrastructure.orm_models import UsuarioFCMORM
+
+class FCMRepositoryImpl(IFCMRepository):
+    """
+    Implementación del repositorio para guardar/borrar tokens FCM.
+    """
+    def __init__(self, db: Session):
+        self.db = db
+
+    def save_token(self, id_usuario: int, fcm_token: str) -> None:
+        existing = self.db.query(UsuarioFCMORM).filter(UsuarioFCMORM.fcm_token == fcm_token).first()
+        if existing:
+            if existing.fk_id_usuario != id_usuario:
+                existing.fk_id_usuario = id_usuario
+                self.db.commit()
+            return
+        
+        new_fcm = UsuarioFCMORM(
+            fk_id_usuario=id_usuario,
+            fcm_token=fcm_token
+        )
+        self.db.add(new_fcm)
+        self.db.commit()
+
+    def delete_token(self, fcm_token: str) -> None:
+        token_to_delete = self.db.query(UsuarioFCMORM).filter(UsuarioFCMORM.fcm_token == fcm_token).first()
+        if token_to_delete:
+            self.db.delete(token_to_delete)
+            self.db.commit()
+
+    def get_tokens_by_user(self, id_usuario: int) -> list[str]:
+        records = self.db.query(UsuarioFCMORM).filter(UsuarioFCMORM.fk_id_usuario == id_usuario).all()
+        return [r.fcm_token for r in records]
+

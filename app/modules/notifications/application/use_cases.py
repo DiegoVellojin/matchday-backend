@@ -20,7 +20,7 @@ class CreateNotificationUseCase:
     def __init__(self, repository: INotificacionRepository):
         self.repository = repository
 
-    def execute(self, id_usuario: int, mensaje: str, tipo: str = None, referencia_id: int = None) -> Notificacion:
+    def execute(self, id_usuario: int, mensaje: str, tipo: str = None, referencia_id: int = None, db = None) -> Notificacion:
         from datetime import datetime
         notif = Notificacion(
             id_notificacion=None,
@@ -31,4 +31,27 @@ class CreateNotificationUseCase:
             tipo=tipo,
             referencia_id=referencia_id
         )
-        return self.repository.create(notif)
+        saved_notif = self.repository.create(notif)
+        
+        if db:
+            try:
+                from app.modules.users.infrastructure.repositories_impl import FCMRepositoryImpl
+                from firebase_admin import messaging
+                
+                fcm_repo = FCMRepositoryImpl(db)
+                tokens = fcm_repo.get_tokens_by_user(id_usuario)
+                
+                if tokens:
+                    message = messaging.MulticastMessage(
+                        notification=messaging.Notification(
+                            title="MatchDay ⚽",
+                            body=mensaje,
+                        ),
+                        tokens=tokens,
+                    )
+                    messaging.send_multicast(message)
+            except Exception as e:
+                print(f"Error al enviar notificación push FCM: {e}")
+                
+        return saved_notif
+

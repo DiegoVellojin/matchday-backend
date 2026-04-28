@@ -18,3 +18,16 @@ class UsuarioORM(Base):
     rol_usuario = Column(String(20), nullable=False, default="Standard")
     reliability_score = Column(Float, default=5.00)
     fecha_creacion_usuario = Column(DateTime, server_default=func.now())
+
+class UsuarioFCMORM(Base):
+    """
+    Modelo ORM que mapea a la tabla bd_matchday."Usuario_FCM"
+    """
+    __tablename__ = "Usuario_FCM"
+    __table_args__ = {"schema": "bd_matchday"}
+
+    id_token = Column(Integer, primary_key=True, index=True)
+    fk_id_usuario = Column(Integer, nullable=False)
+    fcm_token = Column(String, unique=True, nullable=False)
+    fecha_registro = Column(DateTime, server_default=func.now())
+

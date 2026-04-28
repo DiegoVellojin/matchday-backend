@@ -22,3 +22,17 @@ class IUsuarioRepository(ABC):
     @abstractmethod
     def update(self, usuario: Usuario) -> Usuario:
         pass
+
+class IFCMRepository(ABC):
+    @abstractmethod
+    def save_token(self, id_usuario: int, fcm_token: str) -> None:
+        pass
+
+    @abstractmethod
+    def delete_token(self, fcm_token: str) -> None:
+        pass
+
+    @abstractmethod
+    def get_tokens_by_user(self, id_usuario: int) -> list[str]:
+        pass
+

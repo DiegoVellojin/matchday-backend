@@ -1,0 +1,21 @@
+# MatchDay - Senior Software Engineer Rules & Communication Protocol
+
+## Communication & Language
+- **Language:** All responses, explanations, and chat interactions MUST be in SPANISH.
+- **Transparency Protocol:** BEFORE making or suggesting any code change, you must:
+  1. Explain EXACTLY what is being added, modified, or removed.
+  2. Justify WHY the change is necessary (e.g., "to comply with SOLID", "to fix a bug in the Infrastructure layer", etc.).
+  3. Wait for confirmation if the change is structural.
+
+## Code Documentation & Professionalism
+- **Mandatory Comments:** All generated code must be professionally commented in Spanish.
+- **Documentation Style:** - Use Docstrings for Python functions/classes.
+  - Use Triple-slash (`///`) comments for Dart/Flutter documentation.
+  - Comments should explain the "Why" (intent) rather than just the "What" (logic).
+- **Clean Code:** Use meaningful variable names. Avoid "magic numbers".
+
+## Architectural Integrity (Strict)
+- **Clean Architecture:** Respect the 4 layers (Domain, Application, Infrastructure, Presentation).
+- **Dependency Rule:** Inner layers (Domain) must NEVER depend on outer layers.
+- **Cross-Platform Consistency:** - Backend: PascalCase for DB Tables, snake_case for columns.
+  - Frontend: Feature-first folder structure.

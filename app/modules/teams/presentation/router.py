@@ -165,8 +165,10 @@ def join_team(
                 id_usuario=equipo.fk_id_usuario_capitan,
                 mensaje=mensaje,
                 tipo="join_request",
-                referencia_id=id_equipo
+                referencia_id=id_equipo,
+                db=db
             )
+
             
         return resultado
     except ValueError as e:
@@ -319,8 +321,10 @@ def respond_to_request(
         id_usuario=id_usuario,
         mensaje=mensaje,
         tipo=tipo,
-        referencia_id=id_equipo
+        referencia_id=id_equipo,
+        db=db
     )
+
     
     return {"message": "Solicitud procesada correctamente."}
 

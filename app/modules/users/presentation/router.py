@@ -52,3 +52,20 @@ def update_my_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
+
+from app.modules.users.infrastructure.repositories_impl import FCMRepositoryImpl
+from app.modules.users.presentation.schemas import FCMTokenRequest
+
+@router.post("/fcm-token")
+def register_fcm_token(
+    request: FCMTokenRequest,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Registra el token FCM del dispositivo móvil del usuario autenticado.
+    """
+    repo = FCMRepositoryImpl(db)
+    repo.save_token(id_usuario=current_user_id, fcm_token=request.fcm_token)
+    return {"message": "Token FCM registrado con éxito"}
+
