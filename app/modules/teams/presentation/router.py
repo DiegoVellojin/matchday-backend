@@ -74,9 +74,28 @@ def join_team(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipo no encontrado")
         
     try:
-        return use_case.execute(id_equipo=id_equipo, id_usuario=current_user_id)
+        resultado = use_case.execute(id_equipo=id_equipo, id_usuario=current_user_id)
+        
+        # Crear notificación para el capitán
+        equipo = repo.get_by_id(id_equipo)
+        if equipo and equipo.fk_id_usuario_capitan:
+            from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
+            from app.modules.notifications.application.use_cases import CreateNotificationUseCase
+            
+            notif_repo = NotificacionRepositoryImpl(db)
+            notif_use_case = CreateNotificationUseCase(notif_repo)
+            mensaje = f"Un nuevo jugador ha solicitado unirse a tu equipo '{equipo.nombre_equipo}'."
+            notif_use_case.execute(
+                id_usuario=equipo.fk_id_usuario_capitan,
+                mensaje=mensaje,
+                tipo="join_request",
+                referencia_id=id_equipo
+            )
+            
+        return resultado
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
 
 
 @router.get("/{id_equipo}/invite-token")
@@ -159,5 +178,24 @@ def respond_to_request(
     
     if not success:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada.")
+        
+    # Crear notificación para el jugador
+    from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
+    from app.modules.notifications.application.use_cases import CreateNotificationUseCase
+    
+    notif_repo = NotificacionRepositoryImpl(db)
+    notif_use_case = CreateNotificationUseCase(notif_repo)
+    
+    accion = "aceptada" if request.accept else "rechazada"
+    mensaje = f"Tu solicitud para unirte al equipo '{equipo.nombre_equipo}' ha sido {accion}."
+    tipo = "accepted" if request.accept else "rejected"
+    
+    notif_use_case.execute(
+        id_usuario=id_usuario,
+        mensaje=mensaje,
+        tipo=tipo,
+        referencia_id=id_equipo
+    )
     
     return {"message": "Solicitud procesada correctamente."}
+
