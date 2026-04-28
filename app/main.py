@@ -12,18 +12,10 @@ import json
 
 # Inicializar Firebase Admin SDK
 cred_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "firebase-service-account.json")
-firebase_env = os.environ.get("FIREBASE_SERVICE_ACCOUNT_JSON")
-
 if os.path.exists(cred_path):
     cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred)
-elif firebase_env:
-    try:
-        cred_dict = json.loads(firebase_env)
-        cred = credentials.Certificate(cred_dict)
-        firebase_admin.initialize_app(cred)
-    except Exception as e:
-        print(f"Error al inicializar Firebase desde ENV en Render: {e}")
+
 
 
 # Inicializamos la aplicación FastAPI
