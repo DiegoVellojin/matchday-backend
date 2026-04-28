@@ -100,7 +100,7 @@ def reset_password_redirect(token: str):
     pero sí permiten abrir un link https:// que luego haga la redirección.
     """
     from fastapi.responses import HTMLResponse
-    deep_link = f"matchday://reset-password?token={token}"
+    deep_link = f"matchday://app/reset-password?token={token}"
     html = f"""
     <!DOCTYPE html>
     <html lang="es">
