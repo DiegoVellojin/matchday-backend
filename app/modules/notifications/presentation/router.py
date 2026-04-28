@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.core.database import get_db, engine
-from app.core.auth import get_current_user_id
+from app.core.security import get_current_user_id
+
 from app.modules.notifications.presentation.schemas import NotificationResponse
 from app.modules.notifications.application.use_cases import GetMyNotificationsUseCase, MarkNotificationAsReadUseCase
 from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
