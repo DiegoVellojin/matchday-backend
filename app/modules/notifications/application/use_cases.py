@@ -42,14 +42,19 @@ class CreateNotificationUseCase:
                 tokens = fcm_repo.get_tokens_by_user(id_usuario)
                 
                 if tokens:
-                    message = messaging.MulticastMessage(
-                        notification=messaging.Notification(
-                            title="MatchDay ⚽",
-                            body=mensaje,
-                        ),
-                        tokens=tokens,
-                    )
-                    messaging.send_multicast(message)
+                    for token in tokens:
+                        try:
+                            message = messaging.Message(
+                                notification=messaging.Notification(
+                                    title="MatchDay ⚽",
+                                    body=mensaje,
+                                ),
+                                token=token,
+                            )
+                            messaging.send(message)
+                        except Exception as e_send:
+                            print(f"Error enviando token individual {token}: {e_send}")
+
             except Exception as e:
                 print(f"Error al enviar notificación push FCM: {e}")
                 
