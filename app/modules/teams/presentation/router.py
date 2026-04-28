@@ -324,3 +324,37 @@ def respond_to_request(
     
     return {"message": "Solicitud procesada correctamente."}
 
+
+@router.get("/{id_equipo}/share")
+def share_team_redirect(id_equipo: int):
+    """
+    Endpoint web que redirige al detalle del equipo mediante deep link.
+    """
+    from fastapi.responses import HTMLResponse
+    deep_link = f"matchday://app/team-dashboard/{id_equipo}"
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="refresh" content="0;url={deep_link}">
+        <title>Redirigiendo a MatchDay...</title>
+        <style>
+            body {{ font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center;
+                   align-items: center; height: 100vh; margin: 0; background-color: #111; color: #fff; }}
+            .box {{ text-align: center; }}
+            a {{ color: #00A859; font-weight: bold; }}
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h2>Abriendo el equipo en MatchDay...</h2>
+            <p>Si no abre automáticamente, <a href="{deep_link}">presiona aquí</a>.</p>
+        </div>
+        <script>window.location.href = "{deep_link}";</script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html)
+
+
