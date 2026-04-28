@@ -39,6 +39,7 @@ def create_team(
 
 @router.get("/", response_model=List[TeamResponse])
 def get_discoverable_teams(
+    current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
@@ -56,8 +57,16 @@ def get_discoverable_teams(
             EquipoUsuarioORM.fk_id_equipo == eq.id_equipo,
             EquipoUsuarioORM.estatus_miembro == 'aceptado'
         ).count()
+        
+        es_miembro = db.query(EquipoUsuarioORM).filter(
+            EquipoUsuarioORM.fk_id_equipo == eq.id_equipo,
+            EquipoUsuarioORM.fk_id_usuario == current_user_id,
+            EquipoUsuarioORM.estatus_miembro == 'aceptado'
+        ).first() is not None
+        
         eq_dict = eq.__dict__.copy()
         eq_dict["miembros_actuales"] = count if count > 0 else 1
+        eq_dict["soy_miembro"] = es_miembro
         response.append(eq_dict)
     return response
 
@@ -84,11 +93,48 @@ def get_my_teams(
         ).count()
         eq_dict = eq.__dict__.copy()
         eq_dict["miembros_actuales"] = count if count > 0 else 1
+        eq_dict["soy_miembro"] = True
         response.append(eq_dict)
     return response
 
 
+
+@router.get("/{id_equipo}", response_model=TeamResponse)
+def get_team_detail(
+    id_equipo: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Obtiene los detalles de un equipo por su ID.
+    """
+    repo = EquipoRepositoryImpl(db)
+    equipo = repo.get_by_id(id_equipo)
+    
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        
+    from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+    
+    count = db.query(EquipoUsuarioORM).filter(
+        EquipoUsuarioORM.fk_id_equipo == equipo.id_equipo,
+        EquipoUsuarioORM.estatus_miembro == 'aceptado'
+    ).count()
+    
+    es_miembro = db.query(EquipoUsuarioORM).filter(
+        EquipoUsuarioORM.fk_id_equipo == equipo.id_equipo,
+        EquipoUsuarioORM.fk_id_usuario == current_user_id,
+        EquipoUsuarioORM.estatus_miembro == 'aceptado'
+    ).first() is not None
+    
+    eq_dict = equipo.__dict__.copy()
+    eq_dict["miembros_actuales"] = count if count > 0 else 1
+    eq_dict["soy_miembro"] = es_miembro
+    return eq_dict
+
+
 @router.post("/{id_equipo}/join", response_model=MemberResponse)
+
 def join_team(
     id_equipo: int,
     current_user_id: int = Depends(get_current_user_id),

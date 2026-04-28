@@ -26,7 +26,9 @@ class TeamResponse(BaseModel):
     esta_reclutando: bool
     max_miembros: int
     miembros_actuales: int = 1
+    soy_miembro: bool = False
     fecha_creacion_equipo: datetime
+
 
 
     class Config:
