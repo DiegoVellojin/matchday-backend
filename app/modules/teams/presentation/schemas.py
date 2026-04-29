@@ -12,6 +12,8 @@ class TeamCreateRequest(BaseModel):
     descripcion_equipo: Optional[str] = None
     esta_reclutando: bool = True
     max_miembros: int = 11
+    url_chat_equipo: Optional[str] = None
+
 
 class TeamResponse(BaseModel):
     """Esquema para devolver la información de un equipo."""
@@ -25,6 +27,7 @@ class TeamResponse(BaseModel):
     descripcion_equipo: Optional[str]
     esta_reclutando: bool
     max_miembros: int
+    url_chat_equipo: Optional[str] = None
     miembros_actuales: int = 1
     soy_miembro: bool = False
     fecha_creacion_equipo: datetime

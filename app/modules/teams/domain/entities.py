@@ -18,7 +18,8 @@ class Equipo:
         descripcion_equipo: Optional[str] = None,
         esta_reclutando: bool = True,
         max_miembros: int = 11,
-        fecha_creacion_equipo: Optional[datetime] = None
+        fecha_creacion_equipo: Optional[datetime] = None,
+        url_chat_equipo: Optional[str] = None
     ):
         self.id_equipo = id_equipo
         self.nombre_equipo = nombre_equipo
@@ -31,6 +32,8 @@ class Equipo:
         self.esta_reclutando = esta_reclutando
         self.max_miembros = max_miembros
         self.fecha_creacion_equipo = fecha_creacion_equipo
+        self.url_chat_equipo = url_chat_equipo
+
 
 class EquipoUsuario:
     """

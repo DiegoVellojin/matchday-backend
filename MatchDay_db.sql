@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Equipo"(
     max_miembros INT DEFAULT 11,
     puntos_acumulados INT DEFAULT 0,  
     fecha_creacion_equipo TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    url_chat_equipo VARCHAR(255) NULL,
     fk_id_deporte INT NOT NULL,
     fk_id_usuario_capitan INT NULL,
     CONSTRAINT fk_equipo_deporte FOREIGN KEY (fk_id_deporte) REFERENCES bd_matchday."Deporte"(id_deporte),

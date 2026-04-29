@@ -7,6 +7,8 @@ from app.modules.users.presentation.router import router as users_router
 from app.modules.teams.presentation.router import router as teams_router
 from app.modules.catalogs.presentation.router import router as catalogs_router
 from app.modules.notifications.presentation.router import router as notifications_router
+from app.modules.payments.presentation.router import router as payments_router
+
 
 import json
 
@@ -42,4 +44,6 @@ app.include_router(auth_router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users_router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(teams_router, prefix="/api/v1/teams", tags=["Teams"])
 app.include_router(catalogs_router, prefix="/api/v1/catalogs", tags=["Catalogs"])
-app.include_router(notifications_router, prefix="/api/v1", tags=["Notifications"])
+app.include_router(notifications_router, prefix="/api/v1", tags=["Notifications"])
+app.include_router(payments_router, prefix="/api/v1", tags=["Payments"])
+

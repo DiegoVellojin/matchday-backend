@@ -25,8 +25,10 @@ class EquipoRepositoryImpl(IEquipoRepository):
             descripcion_equipo=orm.descripcion_equipo,
             esta_reclutando=orm.esta_reclutando,
             max_miembros=orm.max_miembros,
-            fecha_creacion_equipo=orm.fecha_creacion_equipo
+            fecha_creacion_equipo=orm.fecha_creacion_equipo,
+            url_chat_equipo=orm.url_chat_equipo
         )
+
 
     def _to_membership_entity(self, orm: EquipoUsuarioORM) -> EquipoUsuario:
         return EquipoUsuario(
@@ -44,9 +46,11 @@ class EquipoRepositoryImpl(IEquipoRepository):
             url_logo_equipo=equipo.url_logo_equipo,
             descripcion_equipo=equipo.descripcion_equipo,
             esta_reclutando=equipo.esta_reclutando,
-            max_miembros=equipo.max_miembros
+            max_miembros=equipo.max_miembros,
+            url_chat_equipo=equipo.url_chat_equipo
         )
         self.db.add(orm_equipo)
+
         self.db.commit()
         self.db.refresh(orm_equipo)
         

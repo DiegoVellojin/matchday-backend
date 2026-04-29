@@ -198,7 +198,40 @@ def get_invite_token(
     token = create_team_invitation_token(id_equipo)
     return {"invitation_token": token}
 
+@router.delete("/{id_equipo}/members/{id_usuario}")
+def kick_member(
+    id_equipo: int,
+    id_usuario: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Expulsa a un miembro del equipo. Solo para el Capitán.
+    """
+    repo = EquipoRepositoryImpl(db)
+    equipo = repo.get_by_id(id_equipo)
+    
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        
+    if equipo.fk_id_usuario_capitan != current_user_id:
+        raise HTTPException(status_code=403, detail="No eres el capitán de este equipo.")
+        
+    if id_usuario == current_user_id:
+        raise HTTPException(status_code=400, detail="No puedes expulsarte a ti mismo.")
+
+    from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+    
+    db.query(EquipoUsuarioORM).filter(
+        EquipoUsuarioORM.fk_id_equipo == id_equipo,
+        EquipoUsuarioORM.fk_id_usuario == id_usuario
+    ).delete()
+    db.commit()
+    
+    return {"message": "Miembro expulsado correctamente."}
+
 @router.post("/join-with-token", response_model=MemberResponse)
+
 def join_with_token(
     token: str,
     current_user_id: int = Depends(get_current_user_id),

@@ -18,6 +18,8 @@ class EquipoORM(Base):
     fk_id_deporte = Column(Integer, ForeignKey("bd_matchday.Deporte.id_deporte"), nullable=False)
     fk_id_usuario_capitan = Column(Integer, ForeignKey("bd_matchday.Usuario.id_usuario"), nullable=True)
     descripcion_equipo = Column(String, nullable=True)
+    url_chat_equipo = Column(String(255), nullable=True)
+
     from sqlalchemy import Boolean
     esta_reclutando = Column(Boolean, default=True)
     max_miembros = Column(Integer, default=11)
