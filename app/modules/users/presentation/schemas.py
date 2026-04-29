@@ -19,6 +19,8 @@ class UpdateUserRequest(BaseModel):
     nombre_usuario: Optional[str] = Field(None, min_length=2, max_length=100)
     telefono_usuario: Optional[str] = Field(None, max_length=20)
     url_foto_perfil: Optional[str] = Field(None, max_length=255)
+    password: Optional[str] = Field(None, min_length=6, max_length=72)
+
 
 class FCMTokenRequest(BaseModel):
     fcm_token: str

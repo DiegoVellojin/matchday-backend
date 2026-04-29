@@ -61,10 +61,24 @@
   }
   ```
 
+### 1.3 Registrar Token FCM
+- **Endpoint:** `POST /users/fcm-token`
+- **Auth:** Requerido (Bearer)
+- **Payload:** `{ "fcm_token": "string" }`
+- **Response:** `{ "message": "Token FCM registrado con éxito" }`
+
 ---
+
 
 ## 🛡️ 2. MÓDULO: EQUIPOS (`/teams`)
 *Gestión de clubes y membresías.*
+
+### 2.0 Explorar Equipos
+- **Endpoint:** `GET /teams`
+- **Auth:** Requerido (Bearer)
+- **Descripción:** Obtiene la lista de todos los equipos que están reclutando miembros.
+- **Response:** Lista de equipos.
+
 
 ### 2.1 Crear un Equipo
 - **Endpoint:** `POST /teams`

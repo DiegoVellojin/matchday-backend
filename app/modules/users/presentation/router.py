@@ -44,8 +44,10 @@ def update_my_profile(
             id_usuario=current_user_id,
             nombre=request.nombre_usuario,
             telefono=request.telefono_usuario,
-            foto_url=request.url_foto_perfil
+            foto_url=request.url_foto_perfil,
+            password=request.password
         )
+
         return usuario
     except ValueError as e:
         raise HTTPException(
