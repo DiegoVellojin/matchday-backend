@@ -48,3 +48,14 @@ class NotificacionRepositoryImpl(INotificacionRepository):
             self.db.commit()
             return True
         return False
+
+    def mark_all_as_read(self, id_usuario: int) -> bool:
+        orms = self.db.query(NotificacionORM).filter(
+            NotificacionORM.fk_id_usuario == id_usuario,
+            NotificacionORM.leida == False
+        ).all()
+        for orm in orms:
+            orm.leida = True
+        self.db.commit()
+        return True
+

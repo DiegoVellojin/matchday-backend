@@ -14,3 +14,8 @@ class INotificacionRepository(ABC):
     @abstractmethod
     def mark_as_read(self, id_notificacion: int, id_usuario: int) -> bool:
         pass
+
+    @abstractmethod
+    def mark_all_as_read(self, id_usuario: int) -> bool:
+        pass
+

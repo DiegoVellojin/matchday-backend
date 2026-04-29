@@ -16,6 +16,14 @@ class MarkNotificationAsReadUseCase:
     def execute(self, id_notificacion: int, id_usuario: int) -> bool:
         return self.repository.mark_as_read(id_notificacion, id_usuario)
 
+class MarkAllNotificationsAsReadUseCase:
+    def __init__(self, repository: INotificacionRepository):
+        self.repository = repository
+
+    def execute(self, id_usuario: int) -> bool:
+        return self.repository.mark_all_as_read(id_usuario)
+
+
 class CreateNotificationUseCase:
     def __init__(self, repository: INotificacionRepository):
         self.repository = repository

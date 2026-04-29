@@ -7,7 +7,8 @@ from app.core.database import get_db, engine
 from app.core.security import get_current_user_id
 
 from app.modules.notifications.presentation.schemas import NotificationResponse
-from app.modules.notifications.application.use_cases import GetMyNotificationsUseCase, MarkNotificationAsReadUseCase
+from app.modules.notifications.application.use_cases import GetMyNotificationsUseCase, MarkNotificationAsReadUseCase, MarkAllNotificationsAsReadUseCase
+
 from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
@@ -45,6 +46,20 @@ def get_notifications(
     repo = NotificacionRepositoryImpl(db)
     use_case = GetMyNotificationsUseCase(repo)
     return use_case.execute(current_user_id)
+
+@router.put("/read-all")
+def mark_all_as_read(
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Marca todas las notificaciones del usuario autenticado como leídas.
+    """
+    repo = NotificacionRepositoryImpl(db)
+    use_case = MarkAllNotificationsAsReadUseCase(repo)
+    use_case.execute(current_user_id)
+    return {"message": "Todas las notificaciones marcadas como leídas."}
+
 
 @router.put("/{id_notificacion}/read")
 def mark_as_read(
