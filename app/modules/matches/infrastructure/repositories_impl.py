@@ -48,7 +48,7 @@ class MatchRepositoryImpl(IMatchRepository):
 
     def get_by_id(self, match_id: int) -> Optional[MatchEntity]:
         from app.modules.teams.infrastructure.orm_models import EquipoORM
-        from app.modules.catalogs.infrastructure.orm_models import CanchaORM
+        from app.modules.catalogs.infrastructure.orm_models import CanchaORM, DeporteORM
         from app.modules.users.infrastructure.orm_models import UsuarioORM
 
         result = self.db.query(
@@ -56,11 +56,14 @@ class MatchRepositoryImpl(IMatchRepository):
             EquipoORM.nombre_equipo, 
             EquipoORM.url_logo_equipo,
             UsuarioORM.nombre_usuario,
-            CanchaORM.nombre_cancha
+            CanchaORM.nombre_cancha,
+            DeporteORM.nombre_deporte
         ).join(
             UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
         ).join(
             CanchaORM, PartidaORM.fk_id_cancha == CanchaORM.id_cancha
+        ).join(
+            DeporteORM, PartidaORM.fk_id_deporte == DeporteORM.id_deporte
         ).outerjoin(
             EquipoORM, PartidaORM.fk_id_equipo_a == EquipoORM.id_equipo
         ).filter(PartidaORM.id_partida == match_id).first()
@@ -68,29 +71,38 @@ class MatchRepositoryImpl(IMatchRepository):
         if not result:
             return None
             
-        orm, team_name, team_logo, user_name, court_name = result
+        orm, team_name, team_logo, user_name, court_name, sport_name = result
         entity = self._to_entity(orm)
         entity.nombre_equipo_a = team_name
         entity.logo_equipo_a = team_logo
         entity.nombre_capitan_a = user_name
         entity.nombre_cancha = court_name
+        entity.nombre_deporte = sport_name
         return entity
 
-    def get_all(self, sport_id: Optional[int] = None, status: Optional[str] = None) -> List[MatchEntity]:
+    def get_all(self, 
+                sport_id: Optional[int] = None, 
+                status: Optional[str] = None,
+                region_id: Optional[int] = None,
+                cancha_id: Optional[int] = None,
+                fecha: Optional[datetime] = None) -> List[MatchEntity]:
         from app.modules.teams.infrastructure.orm_models import EquipoORM
-        from app.modules.catalogs.infrastructure.orm_models import CanchaORM
+        from app.modules.catalogs.infrastructure.orm_models import CanchaORM, DeporteORM
         from app.modules.users.infrastructure.orm_models import UsuarioORM
-
+        from sqlalchemy import func
         query = self.db.query(
             PartidaORM, 
             EquipoORM.nombre_equipo, 
             EquipoORM.url_logo_equipo,
             UsuarioORM.nombre_usuario,
-            CanchaORM.nombre_cancha
+            CanchaORM.nombre_cancha,
+            DeporteORM.nombre_deporte
         ).join(
             UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
         ).join(
             CanchaORM, PartidaORM.fk_id_cancha == CanchaORM.id_cancha
+        ).join(
+            DeporteORM, PartidaORM.fk_id_deporte == DeporteORM.id_deporte
         ).outerjoin(
             EquipoORM, PartidaORM.fk_id_equipo_a == EquipoORM.id_equipo
         )
@@ -99,16 +111,23 @@ class MatchRepositoryImpl(IMatchRepository):
             query = query.filter(PartidaORM.fk_id_deporte == sport_id)
         if status:
             query = query.filter(PartidaORM.estatus_partida == status)
+        if region_id:
+            query = query.filter(CanchaORM.fk_id_region == region_id)
+        if cancha_id:
+            query = query.filter(PartidaORM.fk_id_cancha == cancha_id)
+        if fecha:
+            query = query.filter(func.date(PartidaORM.fecha_inicio_estimada) == fecha.date())
         
         results = query.all()
         
         entities = []
-        for orm, team_name, team_logo, user_name, court_name in results:
+        for orm, team_name, team_logo, user_name, court_name, sport_name in results:
             entity = self._to_entity(orm)
             entity.nombre_equipo_a = team_name
             entity.logo_equipo_a = team_logo
             entity.nombre_capitan_a = user_name
             entity.nombre_cancha = court_name
+            entity.nombre_deporte = sport_name
             entities.append(entity)
             
         return entities

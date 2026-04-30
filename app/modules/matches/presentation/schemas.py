@@ -39,6 +39,7 @@ class MatchResponse(BaseModel):
     logo_equipo_a: Optional[str] = None
     nombre_capitan_a: Optional[str] = None
     nombre_cancha: Optional[str] = None
+    nombre_deporte: Optional[str] = None
 
     class Config:
         from_attributes = True

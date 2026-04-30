@@ -29,6 +29,7 @@ class MatchEntity:
     logo_equipo_a: Optional[str] = None
     nombre_capitan_a: Optional[str] = None
     nombre_cancha: Optional[str] = None
+    nombre_deporte: Optional[str] = None
 
     def can_transition_to_pending_payment(self) -> bool:
         """Verifica si ambas propuestas coinciden para avanzar a pendiente_pago."""

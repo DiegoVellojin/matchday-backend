@@ -17,7 +17,12 @@ class IMatchRepository(ABC):
         pass
 
     @abstractmethod
-    def get_all(self, sport_id: Optional[int] = None, status: Optional[str] = None) -> List[MatchEntity]:
+    def get_all(self, 
+                sport_id: Optional[int] = None, 
+                status: Optional[str] = None,
+                region_id: Optional[int] = None,
+                cancha_id: Optional[int] = None,
+                fecha: Optional[datetime] = None) -> List[MatchEntity]:
         """Obtiene todos los partidos con filtros opcionales."""
         pass
 

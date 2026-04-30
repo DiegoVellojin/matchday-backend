@@ -27,15 +27,26 @@ def create_match(
     
     return use_case.execute(match_data)
 
+from datetime import datetime
+ 
 @router.get("/", response_model=List[MatchResponse])
 def list_matches(
     sport_id: Optional[int] = None,
     status: Optional[str] = "publicada",
+    region_id: Optional[int] = None,
+    cancha_id: Optional[int] = None,
+    fecha: Optional[datetime] = None,
     db: Session = Depends(get_db)
 ):
     repository = MatchRepositoryImpl(db)
     use_case = GetMatchesUseCase(repository)
-    return use_case.execute(sport_id=sport_id, status=status)
+    return use_case.execute(
+        sport_id=sport_id, 
+        status=status,
+        region_id=region_id,
+        cancha_id=cancha_id,
+        fecha=fecha
+    )
 
 @router.get("/{match_id}", response_model=MatchResponse)
 def get_match(

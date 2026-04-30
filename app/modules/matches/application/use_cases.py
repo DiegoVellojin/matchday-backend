@@ -18,8 +18,19 @@ class GetMatchesUseCase:
     def __init__(self, repository: IMatchRepository):
         self.repository = repository
 
-    def execute(self, sport_id: Optional[int] = None, status: Optional[str] = "publicada") -> List[MatchEntity]:
-        return self.repository.get_all(sport_id=sport_id, status=status)
+    def execute(self, 
+                sport_id: Optional[int] = None, 
+                status: Optional[str] = "publicada",
+                region_id: Optional[int] = None,
+                cancha_id: Optional[int] = None,
+                fecha: Optional[datetime] = None) -> List[MatchEntity]:
+        return self.repository.get_all(
+            sport_id=sport_id, 
+            status=status,
+            region_id=region_id,
+            cancha_id=cancha_id,
+            fecha=fecha
+        )
 
 class GetMatchDetailsUseCase:
     """Caso de uso para obtener detalles de un partido."""
