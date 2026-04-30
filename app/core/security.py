@@ -7,20 +7,37 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
-# Contexto para encriptar contraseñas
+# Contexto para encriptar contraseñas utilizando el algoritmo bcrypt.
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica una contraseña contra su hash"""
+    """
+    Verifica si una contraseña en texto plano coincide con su versión hasheada.
+    
+    :param plain_password: La contraseña enviada por el usuario.
+    :param hashed_password: El hash almacenado en la base de datos.
+    :return: True si coinciden, False en caso contrario.
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    """Genera un hash bcrypt a partir de una contraseña"""
+    """
+    Genera un hash seguro a partir de una contraseña en texto plano.
+    
+    :param password: La contraseña a encriptar.
+    :return: El hash resultante (str).
+    """
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """
     Genera un JSON Web Token (JWT) firmado para la sesión del usuario.
+    
+    El token incluye los datos proporcionados y una marca de tiempo de expiración.
+    
+    :param data: Diccionario con la carga útil (payload) del token.
+    :param expires_delta: Periodo de validez personalizado (opcional).
+    :return: String del JWT codificado.
     """
     to_encode = data.copy()
     if expires_delta:
@@ -34,12 +51,16 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 def verify_google_token(token: str) -> dict:
     """
-    Verifica el idToken proporcionado por Google Sign-In.
-    Retorna la información del usuario si es válido, lanza ValueError si no.
+    Verifica el idToken proporcionado por el flujo de Google Sign-In.
+    
+    Utiliza la librería oficial de Google Auth para validar la firma y el cliente.
+    
+    :param token: El token JWT emitido por Google.
+    :raises ValueError: Si el token es inválido, ha expirado o el cliente no coincide.
+    :return: Diccionario con la información del perfil del usuario en Google.
     """
     try:
-        # Verifica el token con Google. Si el CLIENT_ID está configurado,
-        # lo valida. Si no, solo valida la firma de Google.
+        # Verifica el token con Google.
         client_id = settings.GOOGLE_CLIENT_ID if settings.GOOGLE_CLIENT_ID else None
         
         idinfo = id_token.verify_oauth2_token(
@@ -47,12 +68,16 @@ def verify_google_token(token: str) -> dict:
         )
         return idinfo
     except ValueError as e:
-        # Token inválido
         raise ValueError(f"Token de Google inválido: {str(e)}")
 
 def create_password_reset_token(email: str) -> str:
     """
-    Genera un token JWT temporal para el restablecimiento de contraseña (15 minutos).
+    Genera un token JWT temporal y de uso único para el flujo de recuperación de contraseña.
+    
+    Tiene una validez corta (15 minutos) para minimizar riesgos de seguridad.
+    
+    :param email: Correo del usuario que solicita el cambio.
+    :return: JWT firmado con el tipo 'password_reset'.
     """
     expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode = {"sub": email, "exp": expire, "type": "password_reset"}
@@ -61,8 +86,10 @@ def create_password_reset_token(email: str) -> str:
 
 def verify_password_reset_token(token: str) -> Optional[str]:
     """
-    Verifica un token de restablecimiento de contraseña.
-    Retorna el email asociado si es válido, None si es inválido o expiró.
+    Valida un token de restablecimiento de contraseña y extrae el correo asociado.
+    
+    :param token: El token a verificar.
+    :return: El email del usuario si es válido, None en caso de error o expiración.
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -75,11 +102,18 @@ def verify_password_reset_token(token: str) -> Optional[str]:
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
+# Esquema de seguridad para la extracción automática del token del header Authorization.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     """
-    Dependencia para obtener el ID del usuario desde el JWT.
+    Dependencia de FastAPI para autenticar peticiones y obtener el ID del usuario actual.
+    
+    Decodifica el JWT, valida su integridad y extrae el campo 'sub' (User ID).
+    
+    :param token: Token extraído del header por oauth2_scheme.
+    :raises HTTPException 401: Si el token es inválido o no contiene el ID del usuario.
+    :return: ID del usuario como entero.
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -98,7 +132,10 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
 
 def create_team_invitation_token(team_id: int) -> str:
     """
-    Genera un token firmado para invitar a un equipo (30 minutos de duración).
+    Genera un token firmado para invitar a usuarios a un equipo de forma directa.
+    
+    :param team_id: ID del equipo al que se invita.
+    :return: JWT con validez de 30 minutos y tipo 'team_invitation'.
     """
     expire = datetime.utcnow() + timedelta(minutes=30)
     to_encode = {"team_id": team_id, "exp": expire, "type": "team_invitation"}
@@ -107,7 +144,10 @@ def create_team_invitation_token(team_id: int) -> str:
 
 def verify_team_invitation_token(token: str) -> Optional[int]:
     """
-    Verifica un token de invitación. Retorna el ID del equipo si es válido.
+    Verifica un token de invitación a equipo y retorna el ID del equipo.
+    
+    :param token: Token de invitación.
+    :return: ID del equipo si es válido, None en caso contrario.
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])

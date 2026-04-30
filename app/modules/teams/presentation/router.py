@@ -4,9 +4,9 @@ from typing import List
 from app.core.database import get_db
 from app.core.security import get_current_user_id
 from app.modules.teams.infrastructure.repositories_impl import EquipoRepositoryImpl
-from app.modules.teams.application.use_cases import CreateTeamUseCase, RequestJoinTeamUseCase, GetMyTeamsUseCase, JoinTeamWithTokenUseCase, GetPendingMembersUseCase, RespondToJoinRequestUseCase, GetDiscoverableTeamsUseCase
+from app.modules.teams.application.use_cases import CreateTeamUseCase, RequestJoinTeamUseCase, GetMyTeamsUseCase, JoinTeamWithTokenUseCase, GetPendingMembersUseCase, RespondToJoinRequestUseCase, GetDiscoverableTeamsUseCase, UpdateTeamUseCase, DeleteTeamUseCase, TransferCaptainUseCase
 
-from app.modules.teams.presentation.schemas import TeamCreateRequest, TeamResponse, MemberResponse, RespondRequest
+from app.modules.teams.presentation.schemas import TeamCreateRequest, TeamResponse, MemberResponse, RespondRequest, TeamUpdateRequest
 
 router = APIRouter()
 
@@ -17,7 +17,10 @@ def create_team(
     db: Session = Depends(get_db)
 ):
     """
-    Crea un nuevo equipo y asigna al usuario actual como Capitán.
+    Crea un nuevo equipo y asigna al usuario autenticado como Capitán.
+    
+    El proceso incluye la creación del registro del equipo y la inserción 
+    automática del creador en la tabla de miembros con estatus 'aceptado'.
     """
     repo = EquipoRepositoryImpl(db)
     use_case = CreateTeamUseCase(repo)
@@ -43,7 +46,10 @@ def get_discoverable_teams(
     db: Session = Depends(get_db)
 ):
     """
-    Obtiene la lista de todos los equipos que están reclutando miembros.
+    Recupera el listado de equipos que tienen activada la opción de reclutamiento.
+    
+    Incluye metadatos adicionales como si el usuario actual ya es miembro 
+    y el conteo de jugadores aceptados.
     """
     repo = EquipoRepositoryImpl(db)
     use_case = GetDiscoverableTeamsUseCase(repo)
@@ -77,7 +83,7 @@ def get_my_teams(
     db: Session = Depends(get_db)
 ):
     """
-    Obtiene la lista de equipos a los que pertenece el usuario actual.
+    Obtiene los equipos donde el usuario autenticado tiene una membresía activa.
     """
     repo = EquipoRepositoryImpl(db)
     use_case = GetMyTeamsUseCase(repo)
@@ -98,7 +104,6 @@ def get_my_teams(
     return response
 
 
-
 @router.get("/{id_equipo}", response_model=TeamResponse)
 def get_team_detail(
     id_equipo: int,
@@ -106,7 +111,7 @@ def get_team_detail(
     db: Session = Depends(get_db)
 ):
     """
-    Obtiene los detalles de un equipo por su ID.
+    Retorna la información completa de un equipo específico identificado por su ID.
     """
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
@@ -134,14 +139,13 @@ def get_team_detail(
 
 
 @router.post("/{id_equipo}/join", response_model=MemberResponse)
-
 def join_team(
     id_equipo: int,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
-    Solicita unirse a un equipo existente (requiere aprobación posterior).
+    Inicia un proceso de unión a un equipo enviando una solicitud pendiente al capitán.
     """
     repo = EquipoRepositoryImpl(db)
     use_case = RequestJoinTeamUseCase(repo)
@@ -152,7 +156,7 @@ def join_team(
     try:
         resultado = use_case.execute(id_equipo=id_equipo, id_usuario=current_user_id)
         
-        # Crear notificación para el capitán
+        # Notificar al capitán de la nueva solicitud
         equipo = repo.get_by_id(id_equipo)
         if equipo and equipo.fk_id_usuario_capitan:
             from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
@@ -168,12 +172,10 @@ def join_team(
                 referencia_id=id_equipo,
                 db=db
             )
-
             
         return resultado
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
 
 
 @router.get("/{id_equipo}/invite-token")
@@ -183,7 +185,8 @@ def get_invite_token(
     db: Session = Depends(get_db)
 ):
     """
-    Genera un token de invitación de 30 min. Solo para el Capitán.
+    Genera un token de acceso directo para invitar jugadores al equipo. 
+    Requiere permisos de Capitán.
     """
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
@@ -206,7 +209,8 @@ def kick_member(
     db: Session = Depends(get_db)
 ):
     """
-    Expulsa a un miembro del equipo. Solo para el Capitán.
+    Remueve forzosamente a un miembro del equipo. 
+    Restringido al Capitán del equipo.
     """
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
@@ -218,7 +222,7 @@ def kick_member(
         raise HTTPException(status_code=403, detail="No eres el capitán de este equipo.")
         
     if id_usuario == current_user_id:
-        raise HTTPException(status_code=400, detail="No puedes expulsarte a ti mismo.")
+        raise HTTPException(status_code=400, detail="No puedes expulsarte a ti mismo. Usa el endpoint de abandono.")
 
     from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
     
@@ -231,14 +235,13 @@ def kick_member(
     return {"message": "Miembro expulsado correctamente."}
 
 @router.post("/join-with-token", response_model=MemberResponse)
-
 def join_with_token(
     token: str,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
     """
-    Se une a un equipo inmediatamente usando un token válido.
+    Procesa un token de invitación para unir al usuario inmediatamente como miembro aceptado.
     """
     repo = EquipoRepositoryImpl(db)
     use_case = JoinTeamWithTokenUseCase(repo)
@@ -255,7 +258,7 @@ def get_pending_requests(
     db: Session = Depends(get_db)
 ):
     """
-    Lista las solicitudes pendientes. Solo para el Capitán.
+    Lista todas las solicitudes de unión pendientes de aprobación para un equipo.
     """
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
@@ -291,13 +294,12 @@ def get_team_members(
     db: Session = Depends(get_db)
 ):
     """
-    Lista todos los miembros aceptados de un equipo.
+    Retorna el listado de miembros aceptados de un equipo, incluyendo información básica de perfil.
     """
     from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
     from app.modules.users.infrastructure.orm_models import UsuarioORM
     
     results = db.query(EquipoUsuarioORM, UsuarioORM).join(
-
         UsuarioORM, EquipoUsuarioORM.fk_id_usuario == UsuarioORM.id_usuario
     ).filter(
         EquipoUsuarioORM.fk_id_equipo == id_equipo,
@@ -324,8 +326,8 @@ def respond_to_request(
     db: Session = Depends(get_db)
 ):
     """
-    Acepta o rechaza una solicitud. Solo para el Capitán.
-    Si se rechaza, el registro se elimina de la BD.
+    Permite al capitán aceptar o rechazar una solicitud de unión. 
+    Notifica al jugador sobre el resultado.
     """
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
@@ -339,7 +341,7 @@ def respond_to_request(
     if not success:
         raise HTTPException(status_code=404, detail="Solicitud no encontrada.")
         
-    # Crear notificación para el jugador
+    # Notificar al jugador sobre la decisión
     from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
     from app.modules.notifications.application.use_cases import CreateNotificationUseCase
     
@@ -357,7 +359,6 @@ def respond_to_request(
         referencia_id=id_equipo,
         db=db
     )
-
     
     return {"message": "Solicitud procesada correctamente."}
 
@@ -365,7 +366,7 @@ def respond_to_request(
 @router.get("/{id_equipo}/share")
 def share_team_redirect(id_equipo: int):
     """
-    Endpoint web que redirige al detalle del equipo mediante deep link.
+    Genera una página de redirección (Deep Link) para compartir el equipo en redes sociales.
     """
     from fastapi.responses import HTMLResponse
     deep_link = f"matchday://app/team-dashboard/{id_equipo}"
@@ -395,3 +396,109 @@ def share_team_redirect(id_equipo: int):
     return HTMLResponse(content=html)
 
 
+@router.put("/{id_equipo}", response_model=TeamResponse)
+def update_team(
+    id_equipo: int,
+    request: TeamUpdateRequest,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Actualiza la configuración y metadatos del equipo. Exclusivo para el Capitán.
+    """
+    repo = EquipoRepositoryImpl(db)
+    equipo = repo.get_by_id(id_equipo)
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+    
+    if equipo.fk_id_usuario_capitan != current_user_id:
+        raise HTTPException(status_code=403, detail="No eres el capitán de este equipo.")
+    
+    use_case = UpdateTeamUseCase(repo)
+    updated = use_case.execute(id_equipo, request.model_dump(exclude_none=True))
+    if not updated:
+        raise HTTPException(status_code=400, detail="No se pudo actualizar el equipo.")
+    
+    from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+    count = db.query(EquipoUsuarioORM).filter(
+        EquipoUsuarioORM.fk_id_equipo == id_equipo,
+        EquipoUsuarioORM.estatus_miembro == 'aceptado'
+    ).count()
+    
+    res_dict = updated.__dict__.copy()
+    res_dict["miembros_actuales"] = count
+    res_dict["soy_miembro"] = True
+    return res_dict
+
+@router.put("/{id_equipo}/transfer-captain/{id_nuevo_capitan}")
+def transfer_captain(
+    id_equipo: int,
+    id_nuevo_capitan: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Cede la capitanía del equipo a otro miembro aceptado. 
+    Requiere que el actual capitán realice la petición.
+    """
+    repo = EquipoRepositoryImpl(db)
+    equipo = repo.get_by_id(id_equipo)
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+    
+    if equipo.fk_id_usuario_capitan != current_user_id:
+        raise HTTPException(status_code=403, detail="Solo el capitán puede transferir su rol.")
+    
+    members = repo.get_members(id_equipo)
+    es_miembro = any(m.fk_id_usuario == id_nuevo_capitan and m.estatus_miembro == "aceptado" for m in members)
+    if not es_miembro:
+        raise HTTPException(status_code=400, detail="El nuevo capitán debe ser un miembro aceptado del equipo.")
+
+    use_case = TransferCaptainUseCase(repo)
+    if use_case.execute(id_equipo, id_nuevo_capitan):
+        return {"message": "Capitanía transferida con éxito."}
+    raise HTTPException(status_code=400, detail="No se pudo transferir la capitanía.")
+
+@router.delete("/{id_equipo}/leave")
+def leave_team(
+    id_equipo: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Permite que el usuario actual abandone el equipo. 
+    Los capitanes no pueden abandonar sin transferir su rol previamente.
+    """
+    repo = EquipoRepositoryImpl(db)
+    equipo = repo.get_by_id(id_equipo)
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+    
+    if equipo.fk_id_usuario_capitan == current_user_id:
+        raise HTTPException(status_code=400, detail="El capitán no puede salirse sin transferir su rol o eliminar el equipo.")
+
+    if repo.delete_member(id_equipo, current_user_id):
+        return {"message": "Has salido del equipo correctamente."}
+    raise HTTPException(status_code=400, detail="No eres miembro de este equipo o no se pudo procesar.")
+
+@router.delete("/{id_equipo}")
+def delete_team(
+    id_equipo: int,
+    current_user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Disuelve el equipo por completo. Acción irreversible y exclusiva del Capitán.
+    """
+    repo = EquipoRepositoryImpl(db)
+    equipo = repo.get_by_id(id_equipo)
+    if not equipo:
+        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+    
+    if equipo.fk_id_usuario_capitan != current_user_id:
+        raise HTTPException(status_code=403, detail="Solo el capitán puede eliminar el equipo.")
+
+    use_case = DeleteTeamUseCase(repo)
+    if use_case.execute(id_equipo):
+        return {"message": "Equipo eliminado con éxito."}
+    raise HTTPException(status_code=400, detail="No se pudo eliminar el equipo.")

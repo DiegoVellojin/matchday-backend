@@ -38,4 +38,16 @@ class IEquipoRepository(ABC):
     def delete_member(self, id_equipo: int, id_usuario: int) -> bool:
         pass
 
+    @abstractmethod
+    def update(self, id_equipo: int, data: dict) -> Optional[Equipo]:
+        pass
+
+    @abstractmethod
+    def delete(self, id_equipo: int) -> bool:
+        pass
+
+    @abstractmethod
+    def transfer_captain(self, id_equipo: int, id_nuevo_capitan: int) -> bool:
+        pass
+
 

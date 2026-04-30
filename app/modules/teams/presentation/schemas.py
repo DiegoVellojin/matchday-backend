@@ -12,10 +12,17 @@ class TeamCreateRequest(BaseModel):
     descripcion_equipo: Optional[str] = None
     esta_reclutando: bool = True
     max_miembros: int = 11
+class TeamUpdateRequest(BaseModel):
+    """Esquema para actualizar un equipo."""
+    nombre_equipo: Optional[str] = None
+    url_logo_equipo: Optional[str] = None
+    descripcion_equipo: Optional[str] = None
+    esta_reclutando: Optional[bool] = None
+    max_miembros: Optional[int] = None
     url_chat_equipo: Optional[str] = None
 
-
 class TeamResponse(BaseModel):
+
     """Esquema para devolver la información de un equipo."""
     id_equipo: int
     nombre_equipo: str
