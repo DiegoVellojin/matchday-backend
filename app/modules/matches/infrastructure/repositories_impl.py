@@ -47,18 +47,71 @@ class MatchRepositoryImpl(IMatchRepository):
         return self._to_entity(orm)
 
     def get_by_id(self, match_id: int) -> Optional[MatchEntity]:
-        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
-        return self._to_entity(orm) if orm else None
+        from app.modules.teams.infrastructure.orm_models import EquipoORM
+        from app.modules.catalogs.infrastructure.orm_models import CanchaORM
+        from app.modules.users.infrastructure.orm_models import UsuarioORM
+
+        result = self.db.query(
+            PartidaORM, 
+            EquipoORM.nombre_equipo, 
+            EquipoORM.url_logo_equipo,
+            UsuarioORM.nombre_usuario,
+            CanchaORM.nombre_cancha
+        ).join(
+            UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
+        ).join(
+            CanchaORM, PartidaORM.fk_id_cancha == CanchaORM.id_cancha
+        ).outerjoin(
+            EquipoORM, PartidaORM.fk_id_equipo_a == EquipoORM.id_equipo
+        ).filter(PartidaORM.id_partida == match_id).first()
+        
+        if not result:
+            return None
+            
+        orm, team_name, team_logo, user_name, court_name = result
+        entity = self._to_entity(orm)
+        entity.nombre_equipo_a = team_name
+        entity.logo_equipo_a = team_logo
+        entity.nombre_capitan_a = user_name
+        entity.nombre_cancha = court_name
+        return entity
 
     def get_all(self, sport_id: Optional[int] = None, status: Optional[str] = None) -> List[MatchEntity]:
-        query = self.db.query(PartidaORM)
+        from app.modules.teams.infrastructure.orm_models import EquipoORM
+        from app.modules.catalogs.infrastructure.orm_models import CanchaORM
+        from app.modules.users.infrastructure.orm_models import UsuarioORM
+
+        query = self.db.query(
+            PartidaORM, 
+            EquipoORM.nombre_equipo, 
+            EquipoORM.url_logo_equipo,
+            UsuarioORM.nombre_usuario,
+            CanchaORM.nombre_cancha
+        ).join(
+            UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
+        ).join(
+            CanchaORM, PartidaORM.fk_id_cancha == CanchaORM.id_cancha
+        ).outerjoin(
+            EquipoORM, PartidaORM.fk_id_equipo_a == EquipoORM.id_equipo
+        )
+
         if sport_id:
             query = query.filter(PartidaORM.fk_id_deporte == sport_id)
         if status:
             query = query.filter(PartidaORM.estatus_partida == status)
         
-        orms = query.all()
-        return [self._to_entity(orm) for orm in orms]
+        results = query.all()
+        
+        entities = []
+        for orm, team_name, team_logo, user_name, court_name in results:
+            entity = self._to_entity(orm)
+            entity.nombre_equipo_a = team_name
+            entity.logo_equipo_a = team_logo
+            entity.nombre_capitan_a = user_name
+            entity.nombre_cancha = court_name
+            entities.append(entity)
+            
+        return entities
 
     def update(self, match_id: int, data: dict) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()

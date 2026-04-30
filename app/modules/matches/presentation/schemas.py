@@ -34,5 +34,11 @@ class MatchResponse(BaseModel):
     propuesta_fecha_b: Optional[datetime] = None
     propuesta_costo_b: Optional[float] = None
 
+    # Campos enriquecidos
+    nombre_equipo_a: Optional[str] = None
+    logo_equipo_a: Optional[str] = None
+    nombre_capitan_a: Optional[str] = None
+    nombre_cancha: Optional[str] = None
+
     class Config:
         from_attributes = True

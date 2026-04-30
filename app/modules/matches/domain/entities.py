@@ -24,6 +24,12 @@ class MatchEntity:
     propuesta_fecha_b: Optional[datetime] = None
     propuesta_costo_b: Optional[float] = None
 
+    # Campos enriquecidos para visualización
+    nombre_equipo_a: Optional[str] = None
+    logo_equipo_a: Optional[str] = None
+    nombre_capitan_a: Optional[str] = None
+    nombre_cancha: Optional[str] = None
+
     def can_transition_to_pending_payment(self) -> bool:
         """Verifica si ambas propuestas coinciden para avanzar a pendiente_pago."""
         if not self.propuesta_fecha_a or not self.propuesta_fecha_b:
