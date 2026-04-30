@@ -2,7 +2,7 @@
 # MATCHDAY API SPECIFICATION (V1)
 # ==============================================================================
 # Base URL: https://matchday-backend-3qot.onrender.com/api/v1
-# Protocol: HTTPS | Format: JSON | Auth: JWT (Bearer)
+# Protocol: HTTPS | Format: JSON | Auth: JWT (Bearer Token)
 # ==============================================================================
 
 ---
@@ -12,145 +12,93 @@
 
 ### 0.1 Iniciar Sesión con Google
 - **Endpoint:** `POST /auth/google`
-- **Descripción:** Intercambia un `idToken` de Google por un JWT interno.
+- **Descripción:** Intercambia un `idToken` de Google por un JWT interno de MatchDay.
 - **Payload:** `{ "id_token": "string" }`
-- **Response:** `{ "access_token": "JWT", "token_type": "bearer" }`
 
 ### 0.2 Registro Local (Email/Password)
 - **Endpoint:** `POST /auth/register`
-- **Payload:**
-  ```json
-  {
-    "nombre_usuario": "Nombre",
-    "email": "user@example.com",
-    "password": "password123"
-  }
-  ```
+- **Payload:** `{ "nombre_usuario": "string", "email": "string", "password": "string" }`
 
-### 0.3 Iniciar Sesión (Email/Password)
+### 0.3 Iniciar Sesión Local
 - **Endpoint:** `POST /auth/login`
-- **Payload:** `{ "email": "user@example.com", "password": "password123" }`
+- **Payload:** `{ "email": "string", "password": "string" }`
 
-### 0.4 Solicitar Recuperación de Contraseña
-- **Endpoint:** `POST /auth/forgot-password`
-- **Payload:** `{ "email": "user@example.com" }`
-
-### 0.5 Restablecer Contraseña (vía Token)
-- **Endpoint:** `POST /auth/reset-password`
-- **Payload:** `{ "token": "string_token", "new_password": "nueva_clave" }`
+### 0.4 Recuperación de Contraseña
+- **Endpoint:** `POST /auth/forgot-password` | `POST /auth/reset-password`
 
 ---
 
 ## 👤 1. MÓDULO: USUARIOS (`/users`)
-*Gestión del perfil del jugador.*
+*Gestión del perfil del jugador y tokens de dispositivo.*
 
-### 1.1 Obtener Perfil Autenticado
-- **Endpoint:** `GET /users/me`
-- **Auth:** Requerido (Bearer)
-- **Response:** Información completa del usuario logueado.
+### 1.1 Mi Perfil
+- **Endpoint:** `GET /users/me` | `PUT /users/me`
+- **Campos:** `nombre_usuario`, `telefono_usuario`, `url_foto_perfil`.
 
-### 1.2 Actualizar Datos del Perfil
-- **Endpoint:** `PUT /users/me`
-- **Auth:** Requerido (Bearer)
-- **Payload:**
-  ```json
-  {
-    "nombre_usuario": "Nombre Actualizado",
-    "telefono_usuario": "1234567890",
-    "url_foto_perfil": "https://..."
-  }
-  ```
-
-### 1.3 Registrar Token FCM
+### 1.2 Notificaciones Push
 - **Endpoint:** `POST /users/fcm-token`
-- **Auth:** Requerido (Bearer)
 - **Payload:** `{ "fcm_token": "string" }`
-- **Response:** `{ "message": "Token FCM registrado con éxito" }`
 
 ---
-
 
 ## 🛡️ 2. MÓDULO: EQUIPOS (`/teams`)
-*Gestión de clubes y membresías.*
+*Gestión integral de equipos, membresías y administración.*
 
-### 2.0 Explorar Equipos
-- **Endpoint:** `GET /teams`
-- **Auth:** Requerido (Bearer)
-- **Descripción:** Obtiene la lista de todos los equipos que están reclutando miembros.
-- **Response:** Lista de equipos.
+### 2.1 Exploración y Creación
+- **GET /teams**: Lista equipos en modo reclutamiento.
+- **POST /teams**: Crea un equipo (El creador se asigna como Capitán).
+- **GET /teams/me**: Lista los equipos donde el usuario es miembro activo.
+- **GET /teams/{id_equipo}**: Obtiene el detalle completo de un equipo específico.
 
+### 2.2 Gestión de Miembros
+- **GET /teams/{id_equipo}/members**: Lista los miembros aceptados del equipo.
+- **POST /teams/{id_equipo}/join**: Solicita unirse al equipo (Estatus: Pendiente).
+- **DELETE /teams/{id_equipo}/leave**: Abandona el equipo (Solo Jugadores).
+- **DELETE /teams/{id_equipo}/members/{id_usuario}**: Expulsa a un miembro (Solo Capitán).
 
-### 2.1 Crear un Equipo
-- **Endpoint:** `POST /teams`
-- **Payload:**
-  ```json
-  {
-    "nombre_equipo": "Elite Strikers",
-    "fk_id_deporte": 1,
-    "url_logo_equipo": "https://...",
-    "descripcion_equipo": "Motto del equipo",
-    "esta_reclutando": true,
-    "max_miembros": 15
-  }
-  ```
+### 2.3 Administración (Solo Capitán)
+- **PUT /teams/{id_equipo}**: Actualiza metadatos (Logo, Nombre, Reclutamiento, etc.).
+- **DELETE /teams/{id_equipo}**: Disuelve el equipo por completo.
+- **PUT /teams/{id_equipo}/transfer-captain/{id_nuevo_capitan}**: Cede el rol de Capitán.
 
-### 2.2 Ver Mis Equipos
-- **Endpoint:** `GET /teams/me`
-- **Descripción:** Lista los equipos donde el usuario es miembro aceptado o creador.
-- **Response:** Lista de equipos con objeto `deporte` anidado.
-
-### 2.3 Generar Link de Invitación
-- **Endpoint:** `GET /teams/{id_equipo}/invite-token`
-- **Descripción:** Genera un token JWT (expira en 30m) para compartir. Solo para el Capitán.
-- **Response:** `{ "invitation_token": "string_token" }`
-
-### 2.4 Unirse vía Token (Entrada Directa)
-- **Endpoint:** `POST /teams/join-with-token?token=string_token`
-- **Nota:** El token se envía como Query Parameter. El usuario entra automáticamente.
-
-### 2.5 Solicitar Unirse (Manual)
-- **Endpoint:** `POST /teams/{id_equipo}/join`
-- **Descripción:** El usuario solicita entrar. Queda en estatus `pendiente`.
-
-### 2.6 Ver Solicitudes Pendientes (Solo Capitán)
-- **Endpoint:** `GET /teams/{id_equipo}/requests`
-- **Response:** Lista de usuarios esperando aprobación.
-
-### 2.7 Responder a Solicitud (Solo Capitán)
-- **Endpoint:** `PUT /teams/{id_equipo}/requests/{id_usuario}`
-- **Payload:** `{ "accept": true }`
-- **Nota:** Si `accept` es `false`, la solicitud se elimina de la DB.
+### 2.4 Invitaciones y Solicitudes
+- **GET /teams/{id_equipo}/invite-token**: Genera token de invitación directa.
+- **POST /teams/join-with-token?token={token}**: Unión inmediata vía invitación.
+- **GET /teams/{id_equipo}/requests**: Lista solicitudes de unión pendientes.
+- **PUT /teams/{id_equipo}/requests/{id_usuario}**: Acepta o rechaza a un aspirante.
 
 ---
 
-## 📚 3. MÓDULO: CATÁLOGOS (`/catalogs`)
-*Tablas maestras y datos estáticos.*
+## 💸 3. MÓDULO: PAGOS (`/payments`)
+*Control de recaudación de partidos.*
 
-### 3.1 Listar Deportes
-- **Endpoint:** `GET /catalogs/sports`
-- **Auth:** No requerida.
-- **Response:** `[{"id_deporte": 1, "nombre_deporte": "Fútbol"}, ...]`
+- **GET /payments/me**: Lista de pagos pendientes e historial del usuario.
 
 ---
 
-## ⚽ 4. MÓDULO: PARTIDOS (`/matches`) [PLANIFICADO]
-*Orquestación de retos y pagos.*
+## 📚 4. MÓDULO: CATÁLOGOS (`/catalogs`)
+*Datos estáticos y maestros.*
 
-*(Próximamente...)*
+- **GET /catalogs/sports**: Lista los deportes disponibles en la plataforma.
 
 ---
 
-## 🛠️ ESTÁNDAR DE RESPUESTAS DE ERROR
-Todas las fallas siguen el esquema `{"detail": "mensaje"}`.
+## ⚽ 5. MÓDULO: PARTIDOS (`/matches`)
+*Orquestación de retos.*
 
-| HTTP | Escenario |
+- **PLANIFICADO / EN DESARROLLO**
+
+---
+
+## 🛠️ ESTÁNDAR DE ERRORES (HTTP)
+Todas las respuestas de error siguen el formato: `{"detail": "Descripción del error"}`.
+
+| Status | Significado |
 | :--- | :--- |
-| **400** | Datos inválidos o lógica de negocio fallida (ej: ya eres miembro). |
-| **401** | Sesión expirada o token inexistente. |
-| **403** | Acción prohibida (ej: no eres el capitán de este equipo). |
-| **404** | Recurso no encontrado. |
-| **409** | Conflicto (ej: el equipo ya tiene el máximo de miembros). |
+| **400** | Error de lógica de negocio o datos mal formados. |
+| **401** | No autenticado (Token faltante o inválido). |
+| **403** | No autorizado (No eres capitán o no tienes permiso). |
+| **404** | El recurso (Equipo, Usuario, Pago) no existe. |
+| **409** | Conflicto (Ej: El equipo ya está lleno). |
 
-# ==============================================================================
-# REGLA DE ORO: Las fechas siempre en formato ISO 8601 (UTC).
 # ==============================================================================

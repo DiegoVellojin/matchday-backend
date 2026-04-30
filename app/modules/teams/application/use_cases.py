@@ -26,7 +26,8 @@ class CreateTeamUseCase:
         url_logo: Optional[str] = None,
         descripcion: Optional[str] = None,
         esta_reclutando: bool = True,
-        max_miembros: int = 11
+        max_miembros: int = 11,
+        url_chat: Optional[str] = None
     ) -> Equipo:
         """
         Ejecuta la lógica para crear un equipo y registrar a su capitán.
@@ -38,6 +39,7 @@ class CreateTeamUseCase:
         :param descripcion: Descripción opcional del equipo.
         :param esta_reclutando: Indica si el equipo acepta nuevas solicitudes.
         :param max_miembros: Capacidad máxima de jugadores.
+        :param url_chat: URL opcional del grupo de chat (WhatsApp/Telegram).
         :return: La entidad del equipo creado.
         """
         # 1. Crear el equipo
@@ -49,7 +51,8 @@ class CreateTeamUseCase:
             url_logo_equipo=url_logo,
             descripcion_equipo=descripcion,
             esta_reclutando=esta_reclutando,
-            max_miembros=max_miembros
+            max_miembros=max_miembros,
+            url_chat_equipo=url_chat
         )
         equipo_creado = self.repository.create(nuevo_equipo)
 

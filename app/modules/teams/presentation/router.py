@@ -32,7 +32,8 @@ def create_team(
         url_logo=request.url_logo_equipo,
         descripcion=request.descripcion_equipo,
         esta_reclutando=request.esta_reclutando,
-        max_miembros=request.max_miembros
+        max_miembros=request.max_miembros,
+        url_chat=request.url_chat_equipo
     )
     
     eq_dict = equipo.__dict__.copy()
