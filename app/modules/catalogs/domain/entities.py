@@ -5,3 +5,16 @@ class Deporte:
     def __init__(self, id_deporte: int, nombre_deporte: str):
         self.id_deporte = id_deporte
         self.nombre_deporte = nombre_deporte
+
+class Region:
+    def __init__(self, id_region: int, nombre_region: str, fk_id_region: int = None):
+        self.id_region = id_region
+        self.nombre_region = nombre_region
+        self.fk_id_region = fk_id_region
+
+class Cancha:
+    def __init__(self, id_cancha: int, nombre_cancha: str, direccion_cancha: str, fk_id_region: int):
+        self.id_cancha = id_cancha
+        self.nombre_cancha = nombre_cancha
+        self.direccion_cancha = direccion_cancha
+        self.fk_id_region = fk_id_region
