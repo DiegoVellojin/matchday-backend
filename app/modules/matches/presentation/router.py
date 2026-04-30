@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user_id
 from app.modules.matches.presentation.schemas import MatchCreateRequest, MatchResponse, ProposeTermsRequest
 from app.modules.matches.application.use_cases import (
     CreateMatchUseCase, GetMatchesUseCase, GetMatchDetailsUseCase, 
@@ -17,13 +17,13 @@ router = APIRouter(prefix="/matches", tags=["Matches"])
 def create_match(
     request: MatchCreateRequest,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user_id: int = Depends(get_current_user_id)
 ):
     repository = MatchRepositoryImpl(db)
     use_case = CreateMatchUseCase(repository)
     
     match_data = request.model_dump()
-    match_data["fk_id_usuario_org"] = current_user.id_usuario
+    match_data["fk_id_usuario_org"] = current_user_id
     
     return use_case.execute(match_data)
 
@@ -54,7 +54,7 @@ def accept_match(
     match_id: int,
     team_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user_id: int = Depends(get_current_user_id)
 ):
     repository = MatchRepositoryImpl(db)
     use_case = AcceptEncounterUseCase(repository)
@@ -66,14 +66,14 @@ def propose_terms(
     match_id: int,
     request: ProposeTermsRequest,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user_id: int = Depends(get_current_user_id)
 ):
     repository = MatchRepositoryImpl(db)
     use_case = ProposeTermsUseCase(repository)
     try:
         return use_case.execute(
             match_id, 
-            current_user.id_usuario, 
+            current_user_id, 
             request.fecha_acordada, 
             request.costo_total
         )
@@ -85,11 +85,11 @@ def join_match(
     match_id: int,
     team_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user_id: int = Depends(get_current_user_id)
 ):
     repository = MatchRepositoryImpl(db)
     use_case = JoinMatchUseCase(repository)
-    success = use_case.execute(match_id, current_user.id_usuario, team_id)
+    success = use_case.execute(match_id, current_user_id, team_id)
     if not success:
         raise HTTPException(status_code=400, detail="No se pudo unir al partido")
     return {"message": "Te has unido al partido"}
