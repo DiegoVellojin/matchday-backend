@@ -21,6 +21,7 @@ class TeamUpdateRequest(BaseModel):
     esta_reclutando: Optional[bool] = None
     max_miembros: Optional[int] = None
     url_chat_equipo: Optional[str] = None
+    fk_id_deporte: Optional[int] = None
 
 class TeamResponse(BaseModel):
 
