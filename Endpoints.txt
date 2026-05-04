@@ -47,7 +47,7 @@
 ---
 ## 📊 4. RESULTADOS Y RANKINGS (`/results`, `/rankings`)
 - **POST /matches/{id}/results** | Declarar victoria/derrota/goles.
-- **GET  /rankings/teams**       | Tabla general de posiciones.
+- **GET  /rankings/team-leaderboard** | Tabla general de posiciones.
 
 ---
 ## 💸 5. MÓDULO: PAGOS (`/payments`)

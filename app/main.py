@@ -9,6 +9,7 @@ from app.modules.catalogs.presentation.router import router as catalogs_router
 from app.modules.notifications.presentation.router import router as notifications_router
 from app.modules.payments.presentation.router import router as payments_router
 from app.modules.matches.presentation.router import router as matches_router
+from app.modules.rankings.presentation.router import router as rankings_router
 
 
 import json
@@ -59,4 +60,5 @@ app.include_router(catalogs_router, prefix="/api/v1/catalogs", tags=["Catalogs"]
 app.include_router(notifications_router, prefix="/api/v1", tags=["Notifications"])
 app.include_router(payments_router, prefix="/api/v1", tags=["Payments"])
 app.include_router(matches_router, prefix="/api/v1", tags=["Matches"])
+app.include_router(rankings_router, prefix="/api/v1", tags=["Rankings"])
 
