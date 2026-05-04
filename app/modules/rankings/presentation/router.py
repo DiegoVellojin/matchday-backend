@@ -14,6 +14,7 @@ class LeaderboardEntry(BaseModel):
     id_equipo: int
     nombre_equipo: str
     url_logo_equipo: str | None
+    deporte: str
     puntos_totales: int
     partidos_jugados: int
     victorias: int
