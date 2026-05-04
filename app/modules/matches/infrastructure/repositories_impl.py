@@ -177,3 +177,36 @@ class MatchRepositoryImpl(IMatchRepository):
         self.db.commit()
         self.db.refresh(orm)
         return self._to_entity(orm)
+
+    def register_result(self, match_id: int, team_a_id: int, team_b_id: int, goals_a: int, goals_b: int) -> None:
+        from app.modules.matches.infrastructure.orm_models import ResultadoORM
+        
+        # Puntos
+        pts_a, pts_b = 1, 1
+        txt_a, txt_b = "Empate", "Empate"
+        if goals_a > goals_b:
+            pts_a, txt_a = 3, "Victoria"
+            pts_b, txt_b = 0, "Derrota"
+        elif goals_b > goals_a:
+            pts_a, txt_a = 0, "Derrota"
+            pts_b, txt_b = 3, "Victoria"
+            
+        res_a = ResultadoORM(
+            fk_id_partida=match_id, fk_id_equipo=team_a_id,
+            goles_favor=goals_a, goles_contra=goals_b,
+            puntos_obtenidos=pts_a, resultado_texto=txt_a
+        )
+        res_b = ResultadoORM(
+            fk_id_partida=match_id, fk_id_equipo=team_b_id,
+            goles_favor=goals_b, goles_contra=goals_a,
+            puntos_obtenidos=pts_b, resultado_texto=txt_b
+        )
+        
+        self.db.add_all([res_a, res_b])
+        
+        # Marcar partida completada
+        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
+        if orm:
+            orm.estatus_partida = "completada"
+            
+        self.db.commit()

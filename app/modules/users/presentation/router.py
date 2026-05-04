@@ -21,10 +21,8 @@ def get_my_profile(
     
     usuario = use_case.execute(current_user_id)
     if not usuario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuario no encontrado"
-        )
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Usuario no encontrado")
     return usuario
 
 @router.put("/me", response_model=UserResponse)
@@ -39,21 +37,14 @@ def update_my_profile(
     repo = UsuarioRepositoryImpl(db)
     use_case = UpdateUserProfileUseCase(repo)
     
-    try:
-        usuario = use_case.execute(
-            id_usuario=current_user_id,
-            nombre=request.nombre_usuario,
-            telefono=request.telefono_usuario,
-            foto_url=request.url_foto_perfil,
-            password=request.password
-        )
-
-        return usuario
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
+    usuario = use_case.execute(
+        id_usuario=current_user_id,
+        nombre=request.nombre_usuario,
+        telefono=request.telefono_usuario,
+        foto_url=request.url_foto_perfil,
+        password=request.password
+    )
+    return usuario
 
 from app.modules.users.infrastructure.repositories_impl import FCMRepositoryImpl
 from app.modules.users.presentation.schemas import FCMTokenRequest

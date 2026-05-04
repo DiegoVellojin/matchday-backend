@@ -1,53 +1,26 @@
 # ==============================================================================
-# MATCHDAY BACKEND - ARQUITECTURA DE SOFTWARE (CLEAN)
-# ==============================================================================
-# Este proyecto implementa una Arquitectura Limpia (Clean Architecture) orientada
-# a Dominios (Domain-Driven Design Lite), permitiendo un código altamente 
-# escalable, testeable e independiente de frameworks externos.
+# MATCHDAY BACKEND - ARQUITECTURA CLEAN ESTANDARIZADA
 # ==============================================================================
 
 backend/
 ├── app/
-│   ├── main.py              # Punto de entrada FastAPI: Inicialización y registro de rutas globales.
-│   ├── core/                # Componentes Transversales: Lógica compartida por toda la aplicación.
-│   │   ├── config.py        # Gestión de variables de entorno y constantes con Pydantic Settings.
-│   │   ├── database.py      # Configuración de Engine y SessionLocal de SQLAlchemy para Neon.db.
-│   │   ├── security.py      # Criptografía: Generación/Validación de JWT y lógica de OAuth2 con Google.
-│   │   └── mail.py          # Motor de Mensajería: Configuración SMTP para envío de correos.
-│   ├── modules/             # Capa de Negocio: Dividida por dominios funcionales (Módulos).
-│   │   ├── auth/            # Seguridad: Registro local, Google Login y recuperación.
-│   │   ├── users/           # Perfiles: Gestión de identidad y estadísticas de jugador.
-│   │   ├── teams/           # Equipos: Estructura de grupos, rosters y administración avanzada.
-│   │   ├── matches/         # Partidos: Orquestación de creación y convocatoria.
-│   │   ├── payments/        # Finanzas: Control de recaudos y validación de deudas.
-│   │   ├── rankings/        # Competición: Algoritmos de puntuación y posiciones.
-│   │   └── notifications/   # Notificaciones: Lógica de envío de alertas push y mensajes.
-│   └── shared/              # Utilidades Genéricas: Helpers, formateadores y decoradores.
-├── requirements.txt         # Manifiesto de dependencias.
-├── .env                     # Secrets: Credenciales sensibles (Excluido de Git).
-└── MatchDay_db.sql          # Snapshot SQL: Estructura de la base de datos para referencia.
-
-# ------------------------------------------------------------------------------
-# ANATOMÍA DE UN MÓDULO (Ejemplo: teams/)
-# ------------------------------------------------------------------------------
-# Cada módulo se divide en 4 capas para garantizar la separación de conceptos:
-# ------------------------------------------------------------------------------
-
-modules/teams/
-├── domain/                  # CAPA 1: EL CORAZÓN (Lógica Pura)
-│   ├── entities.py          # Modelos de dominio (Objetos de negocio puros).
-│   ├── exceptions.py        # Errores específicos (Ej: CaptainRequiredException).
-│   └── interfaces.py        # Contratos: Definición de qué debe hacer el repositorio.
-├── application/             # CAPA 2: CASOS DE USO (Orquestación)
-│   └── use_cases.py         # Implementación de la lógica (TransferirCapitaniaUseCase).
-├── infrastructure/          # CAPA 3: IMPLEMENTACIÓN (Detalles Técnicos)
-│   ├── orm_models.py        # Definición de tablas SQLAlchemy.
-│   └── repositories_impl.py # Implementación real que habla con la DB.
-└── presentation/            # CAPA 4: PUERTA DE ENTRADA (FastAPI)
-    ├── router.py            # Controladores: Definición de rutas y verbos HTTP.
-    └── schemas.py           # DTOs: Validaciones Pydantic de entrada y salida.
-
-# ==============================================================================
-# REGLA DE ORO: Las dependencias siempre apuntan HACIA ADENTRO.
-# El dominio es el núcleo y no debe conocer nada de FastAPI ni de SQLAlchemy.
-# ==============================================================================
+│   ├── main.py              # Punto de entrada FastAPI.
+│   ├── core/                # Infraestructura Base (Config, DB, JWT, Correo)
+│   │   ├── exceptions.py    # Excepciones globales personalizadas (DRY).
+│   │   ├── database.py      # Abstract UnitOfWork y SQLAlchemy configs.
+│   │   └── security.py      # Autenticación, JWT, utilidades.
+│   ├── shared/              # Utilidades Genéricas (Evita repetición)
+│   │   ├── domain/          # Entidades transversales.
+│   │   └── presentation/    # DTOs globales (Paginación, Errores estándar).
+│   └── modules/             # Capa de Negocio Modular (DDD Clean)
+│       ├── auth/
+│       ├── users/
+│       ├── teams/
+│       ├── matches/
+│       ├── results/
+│       ├── payments/
+│       ├── rankings/
+│       ├── notifications/
+│       └── catalogs/
+...
+# Cada módulo respeta: domain/, application/, infrastructure/, presentation/

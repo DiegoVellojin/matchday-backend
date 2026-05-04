@@ -21,13 +21,24 @@ if os.path.exists(cred_path):
 
 
 
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from app.core.exceptions import MatchDayException
+
 # Inicializamos la aplicación FastAPI
 app = FastAPI(
-
     title="MatchDay API",
     description="Backend en Clean Architecture para la gestión de retos y equipos de fútbol",
     version="1.0.0",
 )
+
+@app.exception_handler(MatchDayException)
+async def matchday_exception_handler(request: Request, exc: MatchDayException):
+    return JSONResponse(
+        status_code=exc.code,
+        content={"detail": exc.message},
+    )
+
 
 @app.get("/", tags=["Health"])
 async def health_check():

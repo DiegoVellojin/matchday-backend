@@ -2,6 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 from app.modules.matches.domain.interfaces import IMatchRepository
 from app.modules.matches.domain.entities import MatchEntity
+from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException
 
 class CreateMatchUseCase:
     """Caso de uso para crear un nuevo partido."""
@@ -65,7 +66,7 @@ class ProposeTermsUseCase:
     def execute(self, match_id: int, user_id: int, fecha: datetime, costo: float) -> MatchEntity:
         match = self.repository.get_by_id(match_id)
         if not match:
-            raise ValueError("Partido no encontrado")
+            raise NotFoundException("Partido no encontrado")
 
         # Determinar si el usuario es capitán del equipo A o B
         is_captain_a = match.fk_id_usuario_org == user_id
@@ -93,3 +94,31 @@ class JoinMatchUseCase:
 
     def execute(self, match_id: int, user_id: int, team_id: Optional[int] = None) -> bool:
         return self.repository.add_player(match_id, user_id, team_id)
+
+class RegisterMatchResultUseCase:
+    """Caso de uso para registrar un resultado."""
+    def __init__(self, repository: IMatchRepository):
+        self.repository = repository
+
+    def execute(self, match_id: int, current_user_id: int, goals_a: int, goals_b: int) -> None:
+        match = self.repository.get_by_id(match_id)
+        if not match:
+            raise NotFoundException("Partido no encontrado")
+            
+        if match.estatus_partida != 'confirmada':
+            raise ConflictException("El partido debe estar 'confirmada' para registrar un resultado")
+            
+        if not match.fk_id_equipo_a or not match.fk_id_equipo_b:
+            raise ConflictException("El partido debe tener dos equipos para registrar un resultado")
+
+        # Solo el organizador o administrador debería poder, simplificado: solo organizador (Capitán A)
+        if match.fk_id_usuario_org != current_user_id:
+            raise UnauthorizedException("Solo el organizador puede registrar el resultado")
+
+        self.repository.register_result(
+            match_id, 
+            match.fk_id_equipo_a, 
+            match.fk_id_equipo_b, 
+            goals_a, 
+            goals_b
+        )

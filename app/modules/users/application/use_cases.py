@@ -54,12 +54,13 @@ class UpdateUserProfileUseCase:
         :param telefono: Nuevo teléfono (opcional).
         :param foto_url: Nueva URL de foto de perfil (opcional).
         :param password: Nueva contraseña en texto plano (opcional, será hasheada).
-        :raises ValueError: Si el usuario no existe en el sistema.
+        :raises NotFoundException: Si el usuario no existe en el sistema.
         :return: La entidad Usuario actualizada.
         """
         usuario = self.usuario_repository.get_by_id(id_usuario)
         if not usuario:
-            raise ValueError("Usuario no encontrado")
+            from app.core.exceptions import NotFoundException
+            raise NotFoundException("Usuario no encontrado")
 
         if nombre:
             usuario.nombre_usuario = nombre

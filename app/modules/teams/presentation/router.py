@@ -118,7 +118,8 @@ def get_team_detail(
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo:
-        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado.")
         
     from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
     
@@ -152,31 +153,29 @@ def join_team(
     use_case = RequestJoinTeamUseCase(repo)
     
     if not repo.get_by_id(id_equipo):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Equipo no encontrado")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado")
         
-    try:
-        resultado = use_case.execute(id_equipo=id_equipo, id_usuario=current_user_id)
+    resultado = use_case.execute(id_equipo=id_equipo, id_usuario=current_user_id)
+    
+    # Notificar al capitán de la nueva solicitud
+    equipo = repo.get_by_id(id_equipo)
+    if equipo and equipo.fk_id_usuario_capitan:
+        from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
+        from app.modules.notifications.application.use_cases import CreateNotificationUseCase
         
-        # Notificar al capitán de la nueva solicitud
-        equipo = repo.get_by_id(id_equipo)
-        if equipo and equipo.fk_id_usuario_capitan:
-            from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
-            from app.modules.notifications.application.use_cases import CreateNotificationUseCase
-            
-            notif_repo = NotificacionRepositoryImpl(db)
-            notif_use_case = CreateNotificationUseCase(notif_repo)
-            mensaje = f"Un nuevo jugador ha solicitado unirse a tu equipo '{equipo.nombre_equipo}'."
-            notif_use_case.execute(
-                id_usuario=equipo.fk_id_usuario_capitan,
-                mensaje=mensaje,
-                tipo="join_request",
-                referencia_id=id_equipo,
-                db=db
-            )
-            
-        return resultado
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        notif_repo = NotificacionRepositoryImpl(db)
+        notif_use_case = CreateNotificationUseCase(notif_repo)
+        mensaje = f"Un nuevo jugador ha solicitado unirse a tu equipo '{equipo.nombre_equipo}'."
+        notif_use_case.execute(
+            id_usuario=equipo.fk_id_usuario_capitan,
+            mensaje=mensaje,
+            tipo="join_request",
+            referencia_id=id_equipo,
+            db=db
+        )
+        
+    return resultado
 
 
 @router.get("/{id_equipo}/invite-token")
@@ -193,10 +192,12 @@ def get_invite_token(
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo:
-        raise HTTPException(status_code=404, detail="Equipo no encontrado")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        raise HTTPException(status_code=403, detail="Solo el capitán puede generar invitaciones.")
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("Solo el capitán puede generar invitaciones.")
     
     from app.core.security import create_team_invitation_token
     token = create_team_invitation_token(id_equipo)
@@ -217,13 +218,16 @@ def kick_member(
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo:
-        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado.")
         
     if equipo.fk_id_usuario_capitan != current_user_id:
-        raise HTTPException(status_code=403, detail="No eres el capitán de este equipo.")
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("No eres el capitán de este equipo.")
         
     if id_usuario == current_user_id:
-        raise HTTPException(status_code=400, detail="No puedes expulsarte a ti mismo. Usa el endpoint de abandono.")
+        from app.core.exceptions import ConflictException
+        raise ConflictException("No puedes expulsarte a ti mismo. Usa el endpoint de abandono.")
 
     from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
     
@@ -246,11 +250,7 @@ def join_with_token(
     """
     repo = EquipoRepositoryImpl(db)
     use_case = JoinTeamWithTokenUseCase(repo)
-    
-    try:
-        return use_case.execute(token=token, id_usuario=current_user_id)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return use_case.execute(token=token, id_usuario=current_user_id)
 
 @router.get("/{id_equipo}/requests", response_model=List[MemberResponse])
 def get_pending_requests(
@@ -265,7 +265,8 @@ def get_pending_requests(
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo or equipo.fk_id_usuario_capitan != current_user_id:
-        raise HTTPException(status_code=403, detail="Acceso denegado.")
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("Acceso denegado.")
         
     from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
     from app.modules.users.infrastructure.orm_models import UsuarioORM
@@ -334,13 +335,15 @@ def respond_to_request(
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo or equipo.fk_id_usuario_capitan != current_user_id:
-        raise HTTPException(status_code=403, detail="Acceso denegado.")
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("Acceso denegado.")
     
     use_case = RespondToJoinRequestUseCase(repo)
     success = use_case.execute(id_equipo, id_usuario, request.accept)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Solicitud no encontrada.")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Solicitud no encontrada.")
         
     # Notificar al jugador sobre la decisión
     from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
@@ -410,15 +413,18 @@ def update_team(
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
-        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado.")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        raise HTTPException(status_code=403, detail="No eres el capitán de este equipo.")
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("No eres el capitán de este equipo.")
     
     use_case = UpdateTeamUseCase(repo)
     updated = use_case.execute(id_equipo, request.model_dump(exclude_none=True))
     if not updated:
-        raise HTTPException(status_code=400, detail="No se pudo actualizar el equipo.")
+        from app.core.exceptions import ConflictException
+        raise ConflictException("No se pudo actualizar el equipo.")
     
     from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
     count = db.query(EquipoUsuarioORM).filter(
@@ -445,20 +451,24 @@ def transfer_captain(
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
-        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado.")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        raise HTTPException(status_code=403, detail="Solo el capitán puede transferir su rol.")
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("Solo el capitán puede transferir su rol.")
     
     members = repo.get_members(id_equipo)
     es_miembro = any(m.fk_id_usuario == id_nuevo_capitan and m.estatus_miembro == "aceptado" for m in members)
     if not es_miembro:
-        raise HTTPException(status_code=400, detail="El nuevo capitán debe ser un miembro aceptado del equipo.")
+        from app.core.exceptions import ConflictException
+        raise ConflictException("El nuevo capitán debe ser un miembro aceptado del equipo.")
 
     use_case = TransferCaptainUseCase(repo)
     if use_case.execute(id_equipo, id_nuevo_capitan):
         return {"message": "Capitanía transferida con éxito."}
-    raise HTTPException(status_code=400, detail="No se pudo transferir la capitanía.")
+    from app.core.exceptions import ConflictException
+    raise ConflictException("No se pudo transferir la capitanía.")
 
 @router.delete("/{id_equipo}/leave")
 def leave_team(
@@ -473,14 +483,17 @@ def leave_team(
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
-        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado.")
     
     if equipo.fk_id_usuario_capitan == current_user_id:
-        raise HTTPException(status_code=400, detail="El capitán no puede salirse sin transferir su rol o eliminar el equipo.")
+        from app.core.exceptions import ConflictException
+        raise ConflictException("El capitán no puede salirse sin transferir su rol o eliminar el equipo.")
 
     if repo.delete_member(id_equipo, current_user_id):
         return {"message": "Has salido del equipo correctamente."}
-    raise HTTPException(status_code=400, detail="No eres miembro de este equipo o no se pudo procesar.")
+    from app.core.exceptions import ConflictException
+    raise ConflictException("No eres miembro de este equipo o no se pudo procesar.")
 
 @router.delete("/{id_equipo}")
 def delete_team(
@@ -494,12 +507,15 @@ def delete_team(
     repo = EquipoRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
-        raise HTTPException(status_code=404, detail="Equipo no encontrado.")
+        from app.core.exceptions import NotFoundException
+        raise NotFoundException("Equipo no encontrado.")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        raise HTTPException(status_code=403, detail="Solo el capitán puede eliminar el equipo.")
+        from app.core.exceptions import UnauthorizedException
+        raise UnauthorizedException("Solo el capitán puede eliminar el equipo.")
 
     use_case = DeleteTeamUseCase(repo)
     if use_case.execute(id_equipo):
         return {"message": "Equipo eliminado con éxito."}
-    raise HTTPException(status_code=400, detail="No se pudo eliminar el equipo.")
+    from app.core.exceptions import ConflictException
+    raise ConflictException("No se pudo eliminar el equipo.")

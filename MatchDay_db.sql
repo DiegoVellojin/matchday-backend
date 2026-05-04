@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Partida_Usuario"(
     fk_id_usuario INT NOT NULL,
     estatus_pago VARCHAR(20) DEFAULT 'pendiente',
     url_recibo_pago VARCHAR(255),
+    referencia_pago VARCHAR(100) NULL,
     fk_id_equipo_asignado INT NULL, 
     PRIMARY KEY (fk_id_partida, fk_id_usuario),
     CONSTRAINT fk_partida_usuario_partida FOREIGN KEY (fk_id_partida) REFERENCES bd_matchday."Partida"(id_partida) ON DELETE CASCADE,

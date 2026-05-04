@@ -6,99 +6,66 @@
 # ==============================================================================
 
 ---
-
 ## 🔐 0. MÓDULO: AUTENTICACIÓN (`/auth`)
-*Gestión de identidad, sesiones seguras y recuperación de acceso.*
-
-### 0.1 Iniciar Sesión con Google
-- **Endpoint:** `POST /auth/google`
-- **Descripción:** Intercambia un `idToken` de Google por un JWT interno de MatchDay.
-- **Payload:** `{ "id_token": "string" }`
-
-### 0.2 Registro Local (Email/Password)
-- **Endpoint:** `POST /auth/register`
-- **Payload:** `{ "nombre_usuario": "string", "email": "string", "password": "string" }`
-
-### 0.3 Iniciar Sesión Local
-- **Endpoint:** `POST /auth/login`
-- **Payload:** `{ "email": "string", "password": "string" }`
-
-### 0.4 Recuperación de Contraseña
-- **Endpoint:** `POST /auth/forgot-password` | `POST /auth/reset-password`
+- **POST /auth/google**          | Login con idToken de Google.
+- **POST /auth/register**        | Registro local.
+- **POST /auth/login**           | Iniciar sesión local.
+- **POST /auth/forgot-password** | Recuperación de cuenta.
 
 ---
-
 ## 👤 1. MÓDULO: USUARIOS (`/users`)
-*Gestión del perfil del jugador y tokens de dispositivo.*
-
-### 1.1 Mi Perfil
-- **Endpoint:** `GET /users/me` | `PUT /users/me`
-- **Campos:** `nombre_usuario`, `telefono_usuario`, `url_foto_perfil`.
-
-### 1.2 Notificaciones Push
-- **Endpoint:** `POST /users/fcm-token`
-- **Payload:** `{ "fcm_token": "string" }`
+- **GET  /users/me**             | Perfil del jugador actual.
+- **PUT  /users/me**             | Actualizar perfil.
+- **POST /users/fcm-token**      | Registrar dispositivo para push.
 
 ---
-
 ## 🛡️ 2. MÓDULO: EQUIPOS (`/teams`)
-*Gestión integral de equipos, membresías y administración.*
-
-### 2.1 Exploración y Creación
-- **GET /teams**: Lista equipos en modo reclutamiento.
-- **POST /teams**: Crea un equipo (El creador se asigna como Capitán).
-- **GET /teams/me**: Lista los equipos donde el usuario es miembro activo.
-- **GET /teams/{id_equipo}**: Obtiene el detalle completo de un equipo específico.
-
-### 2.2 Gestión de Miembros
-- **GET /teams/{id_equipo}/members**: Lista los miembros aceptados del equipo.
-- **POST /teams/{id_equipo}/join**: Solicita unirse al equipo (Estatus: Pendiente).
-- **DELETE /teams/{id_equipo}/leave**: Abandona el equipo (Solo Jugadores).
-- **DELETE /teams/{id_equipo}/members/{id_usuario}**: Expulsa a un miembro (Solo Capitán).
-
-### 2.3 Administración (Solo Capitán)
-- **PUT /teams/{id_equipo}**: Actualiza metadatos (Logo, Nombre, Reclutamiento, etc.).
-- **DELETE /teams/{id_equipo}**: Disuelve el equipo por completo.
-- **PUT /teams/{id_equipo}/transfer-captain/{id_nuevo_capitan}**: Cede el rol de Capitán.
-
-### 2.4 Invitaciones y Solicitudes
-- **GET /teams/{id_equipo}/invite-token**: Genera token de invitación directa.
-- **POST /teams/join-with-token?token={token}**: Unión inmediata vía invitación.
-- **GET /teams/{id_equipo}/requests**: Lista solicitudes de unión pendientes.
-- **PUT /teams/{id_equipo}/requests/{id_usuario}**: Acepta o rechaza a un aspirante.
+- **GET  /teams**                | Explorar equipos (reclutando).
+- **POST /teams**                | Crear equipo nuevo.
+- **GET  /teams/me**             | Mis equipos.
+- **GET  /teams/{id}**           | Detalle de equipo.
+- **GET  /teams/{id}/members**   | Jugadores activos en el equipo.
+- **POST /teams/{id}/join**      | Enviar solicitud de ingreso.
+- **DELETE /teams/{id}/leave**   | Abandonar equipo.
+- **DELETE /teams/{id}/members/{id_user}** | Expulsar jugador (Admin).
+- **PUT  /teams/{id}**           | Actualizar equipo.
+- **DELETE /teams/{id}**         | Disolver equipo.
+- **GET  /teams/{id}/requests**  | Ver aspirantes pendientes.
+- **PUT  /teams/{id}/requests/{id_user}** | Aceptar/Rechazar aspirante.
 
 ---
-
-## 💸 3. MÓDULO: PAGOS (`/payments`)
-*Control de recaudación de partidos.*
-
-- **GET /payments/me**: Lista de pagos pendientes e historial del usuario.
-
----
-
-## 📚 4. MÓDULO: CATÁLOGOS (`/catalogs`)
-*Datos estáticos y maestros.*
-
-- **GET /catalogs/sports**: Lista los deportes disponibles en la plataforma.
+## ⚽ 3. MÓDULO: PARTIDOS (`/matches`)
+- **POST /matches**              | Publicar nueva partida (retos).
+- **GET  /matches**              | Feed de partidas disponibles.
+- **GET  /matches/{id}**         | Info completa de la partida.
+- **PUT  /matches/{id}/status**  | Cambiar estado (confirmada, cancelada).
+- **POST /matches/{id}/proposals** | Negociar fecha/costo (Equipo rival).
+- **PUT  /matches/{id}/accept-proposal** | Aceptar nueva condición.
+- **POST /matches/{id}/join**    | Equipo se une al reto.
+- **POST /matches/{id}/players** | Jugador individual se inscribe.
 
 ---
-
-## ⚽ 5. MÓDULO: PARTIDOS (`/matches`)
-*Orquestación de retos.*
-
-- **PLANIFICADO / EN DESARROLLO**
+## 📊 4. RESULTADOS Y RANKINGS (`/results`, `/rankings`)
+- **POST /matches/{id}/results** | Declarar victoria/derrota/goles.
+- **GET  /rankings/teams**       | Tabla general de posiciones.
 
 ---
+## 💸 5. MÓDULO: PAGOS (`/payments`)
+- **GET  /payments/me**          | Estado de cuenta del usuario (pendientes).
+- **PUT  /matches/{id}/players/{id_user}/payment** | Subir recibo y referencia.
+- **PUT  /payments/{id}/verify** | Confirmar recepción de dinero (Admin).
 
+---
+## 🔔 6. MÓDULO: NOTIFICACIONES (`/notifications`)
+- **GET  /notifications/me**     | Historial de notificaciones.
+- **PUT  /notifications/{id}/read** | Marcar como leída.
+
+---
+## 📚 7. MÓDULO: CATÁLOGOS (`/catalogs`)
+- **GET  /catalogs/sports**      | Lista de deportes.
+- **GET  /catalogs/regions**     | Regiones geográficas.
+- **GET  /catalogs/courts**      | Canchas registradas.
+
+---
 ## 🛠️ ESTÁNDAR DE ERRORES (HTTP)
-Todas las respuestas de error siguen el formato: `{"detail": "Descripción del error"}`.
-
-| Status | Significado |
-| :--- | :--- |
-| **400** | Error de lógica de negocio o datos mal formados. |
-| **401** | No autenticado (Token faltante o inválido). |
-| **403** | No autorizado (No eres capitán o no tienes permiso). |
-| **404** | El recurso (Equipo, Usuario, Pago) no existe. |
-| **409** | Conflicto (Ej: El equipo ya está lleno). |
-
-# ==============================================================================
+**400**: Bad Request | **401**: Unauthorized | **403**: Forbidden | **404**: Not Found | **409**: Conflict

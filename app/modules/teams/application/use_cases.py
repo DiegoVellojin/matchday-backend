@@ -87,13 +87,14 @@ class RequestJoinTeamUseCase:
         
         :param id_equipo: ID del equipo al que se desea unir.
         :param id_usuario: ID del usuario que solicita la unión.
-        :raises ValueError: Si el usuario ya pertenece al equipo o tiene solicitud previa.
+        :raises ConflictException: Si el usuario ya pertenece al equipo o tiene solicitud previa.
         :return: La entidad de membresía creada.
         """
         # Verificar si ya es miembro o tiene solicitud pendiente
         miembros = self.repository.get_members(id_equipo)
         if any(m.fk_id_usuario == id_usuario for m in miembros):
-            raise ValueError("Ya eres miembro de este equipo o tienes una solicitud pendiente.")
+            from app.core.exceptions import ConflictException
+            raise ConflictException("Ya eres miembro de este equipo o tienes una solicitud pendiente.")
 
         membresia = EquipoUsuario(
             fk_id_equipo=id_equipo,
@@ -138,19 +139,22 @@ class JoinTeamWithTokenUseCase:
         
         :param token: Token de invitación firmado.
         :param id_usuario: ID del usuario que usa el token.
-        :raises ValueError: Si el token es inválido, expirado o el usuario ya es miembro.
+        :raises UnauthorizedException: Si el token es inválido o expirado.
+        :raises ConflictException: Si el usuario ya es miembro.
         :return: La entidad de membresía creada.
         """
         from app.core.security import verify_team_invitation_token
         
         id_equipo = verify_team_invitation_token(token)
         if not id_equipo:
-            raise ValueError("El enlace de invitación es inválido o ha expirado.")
+            from app.core.exceptions import UnauthorizedException
+            raise UnauthorizedException("El enlace de invitación es inválido o ha expirado.")
 
         # Verificar si ya es miembro
         miembros = self.repository.get_members(id_equipo)
         if any(m.fk_id_usuario == id_usuario for m in miembros):
-            raise ValueError("Ya eres miembro de este equipo.")
+            from app.core.exceptions import ConflictException
+            raise ConflictException("Ya eres miembro de este equipo.")
 
         membresia = EquipoUsuario(
             fk_id_equipo=id_equipo,

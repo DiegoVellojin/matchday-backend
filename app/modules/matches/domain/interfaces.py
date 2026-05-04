@@ -45,3 +45,8 @@ class IMatchRepository(ABC):
     def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> MatchEntity:
         """Actualiza los términos propuestos por un capitán."""
         pass
+
+    @abstractmethod
+    def register_result(self, match_id: int, team_a_id: int, team_b_id: int, goals_a: int, goals_b: int) -> None:
+        """Registra el resultado final del partido en la tabla Resultado."""
+        pass

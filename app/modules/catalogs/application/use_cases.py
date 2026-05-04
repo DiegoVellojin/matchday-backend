@@ -3,22 +3,47 @@ from app.modules.catalogs.domain.entities import Deporte, Region, Cancha
 from app.modules.catalogs.domain.interfaces import IDeporteRepository, IRegionRepository, ICanchaRepository
 
 class GetSportsUseCase:
+    """
+    Caso de uso para obtener todos los deportes disponibles.
+    """
     def __init__(self, repository: IDeporteRepository):
         self.repository = repository
 
     def execute(self) -> List[Deporte]:
+        """
+        Ejecuta la obtención de la lista completa de deportes.
+        
+        :return: Lista de entidades Deporte.
+        """
         return self.repository.get_all()
 
 class GetRegionsUseCase:
+    """
+    Caso de uso para obtener todas las regiones geográficas.
+    """
     def __init__(self, repository: IRegionRepository):
         self.repository = repository
 
     def execute(self) -> List[Region]:
+        """
+        Ejecuta la obtención de la lista completa de regiones.
+        
+        :return: Lista de entidades Region.
+        """
         return self.repository.get_all()
 
 class GetCanchasUseCase:
+    """
+    Caso de uso para obtener las canchas, opcionalmente filtradas por región.
+    """
     def __init__(self, repository: ICanchaRepository):
         self.repository = repository
 
     def execute(self, region_id: int = None) -> List[Cancha]:
+        """
+        Ejecuta la consulta de canchas.
+        
+        :param region_id: (Opcional) ID de la región para filtrar los resultados.
+        :return: Lista de entidades Cancha.
+        """
         return self.repository.get_all(region_id=region_id)

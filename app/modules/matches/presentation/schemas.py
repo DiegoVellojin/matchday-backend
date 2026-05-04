@@ -15,6 +15,11 @@ class ProposeTermsRequest(BaseModel):
     fecha_acordada: datetime
     costo_total: float
 
+class RegisterResultRequest(BaseModel):
+    """Esquema para registrar el resultado final."""
+    goles_a: int
+    goles_b: int
+
 class MatchResponse(BaseModel):
     """Esquema de respuesta de un partido."""
     id: int

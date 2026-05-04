@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_user_id
-from app.modules.matches.presentation.schemas import MatchCreateRequest, MatchResponse, ProposeTermsRequest
+from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException
+from app.modules.matches.presentation.schemas import MatchCreateRequest, MatchResponse, ProposeTermsRequest, RegisterResultRequest
 from app.modules.matches.application.use_cases import (
     CreateMatchUseCase, GetMatchesUseCase, GetMatchDetailsUseCase, 
-    AcceptEncounterUseCase, ProposeTermsUseCase, JoinMatchUseCase
+    AcceptEncounterUseCase, ProposeTermsUseCase, JoinMatchUseCase,
+    RegisterMatchResultUseCase
 )
 from app.modules.matches.infrastructure.repositories_impl import MatchRepositoryImpl
 
@@ -57,7 +59,7 @@ def get_match(
     use_case = GetMatchDetailsUseCase(repository)
     match = use_case.execute(match_id)
     if not match:
-        raise HTTPException(status_code=404, detail="Partido no encontrado")
+        raise NotFoundException("Partido no encontrado")
     return match
 
 @router.post("/{match_id}/accept/{team_id}", response_model=MatchResponse)
@@ -81,15 +83,13 @@ def propose_terms(
 ):
     repository = MatchRepositoryImpl(db)
     use_case = ProposeTermsUseCase(repository)
-    try:
-        return use_case.execute(
-            match_id, 
-            current_user_id, 
-            request.fecha_acordada, 
-            request.costo_total
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    
+    return use_case.execute(
+        match_id, 
+        current_user_id, 
+        request.fecha_acordada, 
+        request.costo_total
+    )
 
 @router.post("/{match_id}/join")
 def join_match(
@@ -102,5 +102,17 @@ def join_match(
     use_case = JoinMatchUseCase(repository)
     success = use_case.execute(match_id, current_user_id, team_id)
     if not success:
-        raise HTTPException(status_code=400, detail="No se pudo unir al partido")
+        raise ConflictException("No se pudo unir al partido")
     return {"message": "Te has unido al partido"}
+
+@router.post("/{match_id}/results", status_code=status.HTTP_201_CREATED)
+def register_result(
+    match_id: int,
+    request: RegisterResultRequest,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id)
+):
+    repository = MatchRepositoryImpl(db)
+    use_case = RegisterMatchResultUseCase(repository)
+    use_case.execute(match_id, current_user_id, request.goles_a, request.goles_b)
+    return {"message": "Resultado registrado exitosamente"}

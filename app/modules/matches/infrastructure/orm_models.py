@@ -41,3 +41,17 @@ class PartidaUsuarioORM(Base):
     estatus_pago = Column(String(20), default="pendiente")
     url_recibo_pago = Column(String(255), nullable=True)
     fk_id_equipo_asignado = Column(Integer, ForeignKey("bd_matchday.Equipo.id_equipo"), nullable=True)
+
+class ResultadoORM(Base):
+    """Modelo ORM para la tabla 'Resultado'."""
+    __tablename__ = "Resultado"
+    __table_args__ = {"schema": "bd_matchday"}
+
+    id_resultado = Column(Integer, primary_key=True, index=True)
+    fk_id_partida = Column(Integer, ForeignKey("bd_matchday.Partida.id_partida"), nullable=False)
+    fk_id_equipo = Column(Integer, ForeignKey("bd_matchday.Equipo.id_equipo"), nullable=False)
+    goles_favor = Column(Integer, default=0)
+    goles_contra = Column(Integer, default=0)
+    puntos_obtenidos = Column(Integer, nullable=False)
+    resultado_texto = Column(String(10), nullable=False)
+    fecha_registro = Column(DateTime, server_default=func.now())

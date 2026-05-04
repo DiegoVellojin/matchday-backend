@@ -15,28 +15,10 @@ def google_login(request: GoogleAuthRequest, db: Session = Depends(get_db)):
     """
     Endpoint para autenticar a un usuario con Google Sign-In.
     """
-    # 1. Instanciamos el repositorio con la BD inyectada
     usuario_repo = UsuarioRepositoryImpl(db)
-    
-    # 2. Instanciamos el caso de uso
     use_case = GoogleLoginUseCase(usuario_repository=usuario_repo)
-    
-    # 3. Ejecutamos el caso de uso
-    try:
-        token = use_case.execute(id_token=request.id_token)
-        return AuthResponse(access_token=token)
-    except InvalidGoogleTokenException as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except Exception as e:
-        # En caso de error de base de datos u otro error genérico
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error en el servidor al autenticar: {str(e)}"
-        )
+    token = use_case.execute(id_token=request.id_token)
+    return AuthResponse(access_token=token)
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 def register_user(request: RegisterRequest, db: Session = Depends(get_db)):
@@ -45,25 +27,13 @@ def register_user(request: RegisterRequest, db: Session = Depends(get_db)):
     """
     usuario_repo = UsuarioRepositoryImpl(db)
     use_case = RegisterUserUseCase(usuario_repository=usuario_repo)
-    
-    try:
-        token = use_case.execute(
-            nombre_usuario=request.nombre_usuario,
-            email=request.email,
-            password=request.password,
-            telefono=request.telefono
-        )
-        return AuthResponse(access_token=token)
-    except EmailAlreadyExistsException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al registrar usuario: {str(e)}"
-        )
+    token = use_case.execute(
+        nombre_usuario=request.nombre_usuario,
+        email=request.email,
+        password=request.password,
+        telefono=request.telefono
+    )
+    return AuthResponse(access_token=token)
 
 @router.post("/login", response_model=AuthResponse, status_code=status.HTTP_200_OK)
 def login_user(request: LoginRequest, db: Session = Depends(get_db)):
@@ -72,25 +42,8 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     """
     usuario_repo = UsuarioRepositoryImpl(db)
     use_case = LoginUserUseCase(usuario_repository=usuario_repo)
-    
-    try:
-        token = use_case.execute(email=request.email, password=request.password)
-        return AuthResponse(access_token=token)
-    except InvalidCredentialsException as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except AuthException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error en el servidor al autenticar: {str(e)}"
-        )
+    token = use_case.execute(email=request.email, password=request.password)
+    return AuthResponse(access_token=token)
 
 @router.get("/reset-password-redirect")
 def reset_password_redirect(token: str):
@@ -135,30 +88,19 @@ def forgot_password(request: ForgotPasswordRequest, background_tasks: Background
     usuario_repo = UsuarioRepositoryImpl(db)
     use_case = RequestPasswordResetUseCase(usuario_repository=usuario_repo)
     
-    try:
-        token = use_case.execute(email=request.email)
-        if token:
-            from app.core.mail import send_password_reset_email
-            from app.core.config import settings
+    token = use_case.execute(email=request.email)
+    if token:
+        from app.core.mail import send_password_reset_email
+        from app.core.config import settings
 
-            # Obtener el nombre del usuario para personalizar el saludo
-            usuario = usuario_repo.get_by_email(request.email)
-            nombre = usuario.nombre_usuario if usuario else "Jugador"
+        # Obtener el nombre del usuario para personalizar el saludo
+        usuario = usuario_repo.get_by_email(request.email)
+        nombre = usuario.nombre_usuario if usuario else "Jugador"
 
-            # El link apunta al endpoint web del backend, que luego redirige al deep link.
-            # Así los clientes de correo (Gmail, Outlook) permiten que el botón funcione.
-            reset_link = f"{settings.BASE_URL}/api/v1/auth/reset-password-redirect?token={token}"
-            background_tasks.add_task(send_password_reset_email, request.email, reset_link, nombre)
-        
-        # Siempre retornamos un mensaje genérico por seguridad
-        return {"message": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."}
-    except AuthException as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al solicitar recuperación: {str(e)}"
-        )
+        reset_link = f"{settings.BASE_URL}/api/v1/auth/reset-password-redirect?token={token}"
+        background_tasks.add_task(send_password_reset_email, request.email, reset_link, nombre)
+    
+    return {"message": "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."}
 
 @router.post("/reset-password", status_code=status.HTTP_200_OK)
 def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db)):
@@ -167,17 +109,5 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
     """
     usuario_repo = UsuarioRepositoryImpl(db)
     use_case = ResetPasswordUseCase(usuario_repository=usuario_repo)
-    
-    try:
-        use_case.execute(token=request.token, new_password=request.new_password)
-        return {"message": "Contraseña actualizada exitosamente."}
-    except AuthException as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al restablecer contraseña: {str(e)}"
-        )
+    use_case.execute(token=request.token, new_password=request.new_password)
+    return {"message": "Contraseña actualizada exitosamente."}

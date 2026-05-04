@@ -99,8 +99,9 @@ def verify_password_reset_token(token: str) -> Optional[str]:
     except jwt.PyJWTError:
         return None
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, status
 from fastapi.security import OAuth2PasswordBearer
+from app.core.exceptions import UnauthorizedException
 
 # Esquema de seguridad para la extracción automática del token del header Authorization.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
@@ -112,23 +113,17 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     Decodifica el JWT, valida su integridad y extrae el campo 'sub' (User ID).
     
     :param token: Token extraído del header por oauth2_scheme.
-    :raises HTTPException 401: Si el token es inválido o no contiene el ID del usuario.
+    :raises UnauthorizedException: Si el token es inválido o no contiene el ID del usuario.
     :return: ID del usuario como entero.
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token inválido: No se encontró el ID de usuario",
-            )
+            raise UnauthorizedException("Token inválido: No se encontró el ID de usuario")
         return int(user_id)
     except (jwt.PyJWTError, ValueError):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado",
-        )
+        raise UnauthorizedException("Token inválido o expirado")
 
 def create_team_invitation_token(team_id: int) -> str:
     """
