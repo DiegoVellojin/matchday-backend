@@ -65,6 +65,7 @@
 - **GET  /catalogs/sports**      | Lista de deportes.
 - **GET  /catalogs/regions**     | Regiones geográficas.
 - **GET  /catalogs/courts**      | Canchas registradas.
+- **POST /catalogs/canchas**     | Registrar nueva cancha (Google Maps).
 
 ---
 ## 🛠️ ESTÁNDAR DE ERRORES (HTTP)

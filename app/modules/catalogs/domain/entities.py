@@ -13,8 +13,10 @@ class Region:
         self.fk_id_region = fk_id_region
 
 class Cancha:
-    def __init__(self, id_cancha: int, nombre_cancha: str, direccion_cancha: str, fk_id_region: int):
+    def __init__(self, id_cancha: int, nombre_cancha: str, direccion_cancha: str, fk_id_region: int, latitud_cancha: float = None, longitud_cancha: float = None):
         self.id_cancha = id_cancha
         self.nombre_cancha = nombre_cancha
         self.direccion_cancha = direccion_cancha
         self.fk_id_region = fk_id_region
+        self.latitud_cancha = latitud_cancha
+        self.longitud_cancha = longitud_cancha

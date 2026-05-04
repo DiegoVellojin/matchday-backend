@@ -16,3 +16,7 @@ class ICanchaRepository(ABC):
     @abstractmethod
     def get_all(self, region_id: int = None) -> List[Cancha]:
         pass
+
+    @abstractmethod
+    def create(self, cancha_data: dict) -> Cancha:
+        pass

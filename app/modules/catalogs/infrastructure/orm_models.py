@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Float
 from app.core.database import Base
 
 class DeporteORM(Base):
@@ -24,4 +24,6 @@ class CanchaORM(Base):
     id_cancha = Column(Integer, primary_key=True, index=True)
     nombre_cancha = Column(String(150), nullable=False)
     direccion_cancha = Column(String, nullable=True)
+    latitud_cancha = Column(Float, nullable=True)
+    longitud_cancha = Column(Float, nullable=True)
     fk_id_region = Column(Integer, nullable=False)

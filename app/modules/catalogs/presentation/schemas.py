@@ -20,7 +20,16 @@ class CanchaResponse(BaseModel):
     id_cancha: int
     nombre_cancha: str
     direccion_cancha: Optional[str] = None
+    latitud_cancha: Optional[float] = None
+    longitud_cancha: Optional[float] = None
     fk_id_region: int
 
     class Config:
         from_attributes = True
+
+class CanchaCreate(BaseModel):
+    nombre_cancha: str
+    direccion_cancha: Optional[str] = None
+    latitud_cancha: Optional[float] = None
+    longitud_cancha: Optional[float] = None
+    fk_id_region: int

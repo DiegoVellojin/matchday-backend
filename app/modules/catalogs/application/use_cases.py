@@ -47,3 +47,19 @@ class GetCanchasUseCase:
         :return: Lista de entidades Cancha.
         """
         return self.repository.get_all(region_id=region_id)
+
+class CreateCanchaUseCase:
+    """
+    Caso de uso para insertar una nueva cancha.
+    """
+    def __init__(self, repository: ICanchaRepository):
+        self.repository = repository
+
+    def execute(self, cancha_data: dict) -> Cancha:
+        """
+        Ejecuta la creación de una cancha.
+        
+        :param cancha_data: Datos de la cancha a crear.
+        :return: Entidad Cancha creada.
+        """
+        return self.repository.create(cancha_data)

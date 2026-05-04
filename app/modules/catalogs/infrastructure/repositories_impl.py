@@ -54,4 +54,24 @@ class CanchaRepositoryImpl(ICanchaRepository):
         if region_id:
             query = query.filter(CanchaORM.fk_id_region == region_id)
         orms = query.all()
-        return [Cancha(id_cancha=orm.id_cancha, nombre_cancha=orm.nombre_cancha, direccion_cancha=orm.direccion_cancha, fk_id_region=orm.fk_id_region) for orm in orms]
+        return [Cancha(id_cancha=orm.id_cancha, nombre_cancha=orm.nombre_cancha, direccion_cancha=orm.direccion_cancha, fk_id_region=orm.fk_id_region, latitud_cancha=orm.latitud_cancha, longitud_cancha=orm.longitud_cancha) for orm in orms]
+
+    def create(self, cancha_data: dict) -> Cancha:
+        """
+        Inserta una nueva cancha en la base de datos.
+        
+        :param cancha_data: Diccionario con los datos de la cancha.
+        :return: Entidad de dominio Cancha creada.
+        """
+        nueva_cancha = CanchaORM(**cancha_data)
+        self.db.add(nueva_cancha)
+        self.db.commit()
+        self.db.refresh(nueva_cancha)
+        return Cancha(
+            id_cancha=nueva_cancha.id_cancha,
+            nombre_cancha=nueva_cancha.nombre_cancha,
+            direccion_cancha=nueva_cancha.direccion_cancha,
+            fk_id_region=nueva_cancha.fk_id_region,
+            latitud_cancha=nueva_cancha.latitud_cancha,
+            longitud_cancha=nueva_cancha.longitud_cancha
+        )
