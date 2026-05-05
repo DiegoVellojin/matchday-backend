@@ -24,13 +24,15 @@ class GetMatchesUseCase:
                 status: Optional[str] = "publicada",
                 region_id: Optional[int] = None,
                 cancha_id: Optional[int] = None,
-                fecha: Optional[datetime] = None) -> List[MatchEntity]:
+                fecha: Optional[datetime] = None,
+                user_id: Optional[int] = None) -> List[MatchEntity]:
         return self.repository.get_all(
             sport_id=sport_id, 
             status=status,
             region_id=region_id,
             cancha_id=cancha_id,
-            fecha=fecha
+            fecha=fecha,
+            user_id=user_id
         )
 
 class GetMatchDetailsUseCase:

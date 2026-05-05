@@ -22,7 +22,8 @@ class IMatchRepository(ABC):
                 status: Optional[str] = None,
                 region_id: Optional[int] = None,
                 cancha_id: Optional[int] = None,
-                fecha: Optional[datetime] = None) -> List[MatchEntity]:
+                fecha: Optional[datetime] = None,
+                user_id: Optional[int] = None) -> List[MatchEntity]:
         """Obtiene todos los partidos con filtros opcionales."""
         pass
 

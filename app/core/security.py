@@ -125,6 +125,20 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     except (jwt.PyJWTError, ValueError):
         raise UnauthorizedException("Token inválido o expirado")
 
+# Dependencia opcional para rutas que pueden funcionar sin login pero se benefician de él.
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login", auto_error=False)
+
+def get_optional_user_id(token: Optional[str] = Depends(oauth2_scheme_optional)) -> Optional[int]:
+    """Retorna el ID del usuario si el token es válido, de lo contrario None."""
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        return int(user_id) if user_id else None
+    except:
+        return None
+
 def create_team_invitation_token(team_id: int) -> str:
     """
     Genera un token firmado para invitar a usuarios a un equipo de forma directa.

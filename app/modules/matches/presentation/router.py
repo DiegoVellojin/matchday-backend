@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.core.database import get_db
-from app.core.security import get_current_user_id
+from app.core.security import get_current_user_id, get_optional_user_id
 from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException
 from app.modules.matches.presentation.schemas import MatchCreateRequest, MatchResponse, ProposeTermsRequest, RegisterResultRequest, MatchConfigureRequest
 from app.modules.matches.application.use_cases import (
@@ -40,16 +40,34 @@ def list_matches(
     region_id: Optional[int] = None,
     cancha_id: Optional[int] = None,
     fecha: Optional[datetime] = None,
-    db: Session = Depends(get_db)
+    mine: bool = False,
+    db: Session = Depends(get_db),
+    current_user_id: Optional[int] = Depends(get_optional_user_id)
 ):
     repository = MatchRepositoryImpl(db)
     use_case = GetMatchesUseCase(repository)
+    
+    if mine and not current_user_id:
+        raise UnauthorizedException("Debe iniciar sesión para ver sus partidos")
+    
+    # Si busca sus propios partidos, omitimos el filtro de status "publicada" por defecto
+    # para que vea los que están en negociación, pendientes de pago, etc.
+    final_status = status
+    final_user_id = None
+    
+    if mine and current_user_id:
+        final_user_id = current_user_id
+        # Si no se pasó un status específico, buscamos todos los estados para "mis partidos"
+        if status == "publicada":
+            final_status = None
+            
     return use_case.execute(
         sport_id=sport_id, 
-        status=status,
+        status=final_status,
         region_id=region_id,
         cancha_id=cancha_id,
-        fecha=fecha
+        fecha=fecha,
+        user_id=final_user_id
     )
 
 @router.get("/{match_id}", response_model=MatchResponse)

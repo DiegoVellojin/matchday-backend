@@ -124,6 +124,27 @@ class MatchRepositoryImpl(IMatchRepository):
         if fecha:
             query = query.filter(func.date(PartidaORM.fecha_inicio_estimada) == fecha.date())
         
+        if user_id:
+            from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
+            from app.modules.teams.infrastructure.orm_models import EquipoORM
+            from sqlalchemy import or_, aliased
+            
+            # Alias para los equipos A y B para evitar conflictos en el join
+            EquipoA = aliased(EquipoORM)
+            EquipoB = aliased(EquipoORM)
+            
+            # Búsqueda de involucramiento: Organizador, Jugador registrado, o Capitán de equipo A/B
+            query = query.outerjoin(PartidaUsuarioORM, PartidaORM.id_partida == PartidaUsuarioORM.fk_id_partida)
+            query = query.outerjoin(EquipoA, PartidaORM.fk_id_equipo_a == EquipoA.id_equipo)
+            query = query.outerjoin(EquipoB, PartidaORM.fk_id_equipo_b == EquipoB.id_equipo)
+            
+            query = query.filter(or_(
+                PartidaORM.fk_id_usuario_org == user_id,
+                PartidaUsuarioORM.fk_id_usuario == user_id,
+                EquipoA.fk_id_usuario_capitan == user_id,
+                EquipoB.fk_id_usuario_capitan == user_id
+            )).distinct()
+        
         results = query.all()
         
         entities = []
