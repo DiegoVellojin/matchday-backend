@@ -235,6 +235,7 @@ class MatchRepositoryImpl(IMatchRepository):
                 "nombre_usuario": r.nombre_usuario,
                 "url_foto_perfil": r.url_foto_perfil,
                 "estatus_pago": r[0].estatus_pago,
+                "url_recibo_pago": r[0].url_recibo_pago,
                 "id_equipo": r[0].fk_id_equipo_asignado
             } for r in results
         ]
