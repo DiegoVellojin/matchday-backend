@@ -15,6 +15,14 @@ class ProposeTermsRequest(BaseModel):
     fecha_acordada: datetime
     costo_total: float
 
+class MatchConfigureRequest(BaseModel):
+    """Esquema para configurar partido (Capitán)."""
+    fecha_acordada: datetime
+    costo_total_partida: float
+    banco_receptor: str
+    cedula_receptor: str
+    telefono_receptor: str
+
 class RegisterResultRequest(BaseModel):
     """Esquema para registrar el resultado final."""
     goles_a: int
@@ -38,6 +46,9 @@ class MatchResponse(BaseModel):
     propuesta_costo_a: Optional[float] = None
     propuesta_fecha_b: Optional[datetime] = None
     propuesta_costo_b: Optional[float] = None
+    
+    equipo_a_listo: bool = False
+    equipo_b_listo: bool = False
 
     # Campos enriquecidos
     nombre_equipo_a: Optional[str] = None
