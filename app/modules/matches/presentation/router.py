@@ -5,11 +5,12 @@ from typing import List, Optional
 from app.core.database import get_db
 from app.core.security import get_current_user_id, get_optional_user_id
 from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException
-from app.modules.matches.presentation.schemas import MatchCreateRequest, MatchResponse, ProposeTermsRequest, RegisterResultRequest, MatchConfigureRequest
+from app.modules.matches.presentation.schemas import MatchCreateRequest, MatchResponse, ProposeTermsRequest, RegisterResultRequest, MatchConfigureRequest, MatchPlayerResponse
 from app.modules.matches.application.use_cases import (
-    CreateMatchUseCase, GetMatchesUseCase, GetMatchDetailsUseCase, 
+    CreateMatchUseCase, GetMatchesUseCase, GetMatchDetailsUseCase,
     AcceptEncounterUseCase, ProposeTermsUseCase, ConfigureMatchUseCase,
-    JoinMatchUseCase, RegisterMatchResultUseCase, MarkTeamReadyUseCase
+    JoinMatchUseCase, RegisterMatchResultUseCase, MarkTeamReadyUseCase,
+    GetMatchPlayersUseCase
 )
 from app.modules.matches.infrastructure.repositories_impl import MatchRepositoryImpl
 from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
@@ -179,6 +180,15 @@ def mark_team_ready(
             pass
 
     return match
+
+@router.get("/{match_id}/players", response_model=List[MatchPlayerResponse])
+def get_match_players(
+    match_id: int,
+    db: Session = Depends(get_db)
+):
+    repository = MatchRepositoryImpl(db)
+    use_case = GetMatchPlayersUseCase(repository)
+    return use_case.execute(match_id)
 
 @router.post("/{match_id}/join")
 def join_match(

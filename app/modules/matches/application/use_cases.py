@@ -187,3 +187,11 @@ class RegisterMatchResultUseCase:
         else:
             # Aún falta que el otro capitán ingrese
             pass
+
+class GetMatchPlayersUseCase:
+    """Caso de uso para obtener los jugadores unidos a un partido."""
+    def __init__(self, repository: IMatchRepository):
+        self.repository = repository
+
+    def execute(self, match_id: int) -> List[dict]:
+        return self.repository.get_players(match_id)

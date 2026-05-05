@@ -216,12 +216,26 @@ class MatchRepositoryImpl(IMatchRepository):
         return True
 
     def get_players(self, match_id: int) -> List[dict]:
-        results = self.db.query(PartidaUsuarioORM).filter(PartidaUsuarioORM.fk_id_partida == match_id).all()
+        from app.modules.users.infrastructure.orm_models import UsuarioORM
+        
+        results = self.db.query(
+            PartidaUsuarioORM, 
+            UsuarioORM.nombre_usuario, 
+            UsuarioORM.url_foto_perfil
+        ).join(
+            UsuarioORM, 
+            PartidaUsuarioORM.fk_id_usuario == UsuarioORM.id_usuario
+        ).filter(
+            PartidaUsuarioORM.fk_id_partida == match_id
+        ).all()
+        
         return [
             {
-                "id_usuario": r.fk_id_usuario,
-                "estatus_pago": r.estatus_pago,
-                "id_equipo": r.fk_id_equipo_asignado
+                "id_usuario": r[0].fk_id_usuario,
+                "nombre_usuario": r.nombre_usuario,
+                "url_foto_perfil": r.url_foto_perfil,
+                "estatus_pago": r[0].estatus_pago,
+                "id_equipo": r[0].fk_id_equipo_asignado
             } for r in results
         ]
 

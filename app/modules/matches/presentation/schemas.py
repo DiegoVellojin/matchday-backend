@@ -28,6 +28,14 @@ class RegisterResultRequest(BaseModel):
     goles_a: int
     goles_b: int
 
+class MatchPlayerResponse(BaseModel):
+    """Esquema para un jugador dentro de un partido."""
+    id_usuario: int
+    nombre_usuario: str
+    url_foto_perfil: Optional[str] = None
+    estatus_pago: str
+    id_equipo: Optional[int] = None
+
 class MatchResponse(BaseModel):
     """Esquema de respuesta de un partido."""
     id: int
