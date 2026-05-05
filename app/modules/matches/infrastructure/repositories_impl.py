@@ -43,9 +43,11 @@ class MatchRepositoryImpl(IMatchRepository):
         return entity
 
     def create(self, match: MatchEntity) -> MatchEntity:
+        from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
         orm = PartidaORM(
             fecha_inicio_estimada=match.fecha_inicio_estimada,
             fecha_fin_estimada=match.fecha_fin_estimada,
+            costo_total_partida=match.costo_total_partida,
             fk_id_usuario_org=match.fk_id_usuario_org,
             fk_id_deporte=match.fk_id_deporte,
             fk_id_cancha=match.fk_id_cancha,
@@ -55,6 +57,28 @@ class MatchRepositoryImpl(IMatchRepository):
         self.db.add(orm)
         self.db.commit()
         self.db.refresh(orm)
+
+        # Si el partido se crea con un equipo, agregamos automáticamente a sus miembros
+        if orm.fk_id_equipo_a:
+            members = self.db.query(EquipoUsuarioORM).filter(
+                EquipoUsuarioORM.fk_id_equipo == orm.fk_id_equipo_a,
+                EquipoUsuarioORM.estatus_miembro == 'aceptado'
+            ).all()
+            for m in members:
+                # Evitar duplicados si ya existe por alguna razón
+                exists = self.db.query(PartidaUsuarioORM).filter(
+                    PartidaUsuarioORM.fk_id_partida == orm.id_partida,
+                    PartidaUsuarioORM.fk_id_usuario == m.fk_id_usuario
+                ).first()
+                if not exists:
+                    pu = PartidaUsuarioORM(
+                        fk_id_partida=orm.id_partida,
+                        fk_id_usuario=m.fk_id_usuario,
+                        fk_id_equipo_asignado=orm.fk_id_equipo_a
+                    )
+                    self.db.add(pu)
+            self.db.commit()
+
         return self._to_entity(orm)
 
     def get_by_id(self, match_id: int) -> Optional[MatchEntity]:
