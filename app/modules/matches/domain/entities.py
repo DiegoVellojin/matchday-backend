@@ -23,6 +23,14 @@ class MatchEntity:
     propuesta_costo_a: Optional[float] = None
     propuesta_fecha_b: Optional[datetime] = None
     propuesta_costo_b: Optional[float] = None
+    equipo_a_listo: bool = False
+    equipo_b_listo: bool = False
+
+    # Verificación Cruzada de Resultados
+    resultado_goles_a_cap_a: Optional[int] = None
+    resultado_goles_b_cap_a: Optional[int] = None
+    resultado_goles_a_cap_b: Optional[int] = None
+    resultado_goles_b_cap_b: Optional[int] = None
 
     # Campos enriquecidos para visualización
     nombre_equipo_a: Optional[str] = None

@@ -29,6 +29,12 @@ class MatchRepositoryImpl(IMatchRepository):
             propuesta_costo_a=float(orm.propuesta_costo_a) if orm.propuesta_costo_a else None,
             propuesta_fecha_b=orm.propuesta_fecha_b,
             propuesta_costo_b=float(orm.propuesta_costo_b) if orm.propuesta_costo_b else None,
+            equipo_a_listo=orm.equipo_a_listo,
+            equipo_b_listo=orm.equipo_b_listo,
+            resultado_goles_a_cap_a=orm.resultado_goles_a_cap_a,
+            resultado_goles_b_cap_a=orm.resultado_goles_b_cap_a,
+            resultado_goles_a_cap_b=orm.resultado_goles_a_cap_b,
+            resultado_goles_b_cap_b=orm.resultado_goles_b_cap_b,
         )
 
     def create(self, match: MatchEntity) -> MatchEntity:
@@ -174,6 +180,64 @@ class MatchRepositoryImpl(IMatchRepository):
             orm.propuesta_fecha_b = fecha
             orm.propuesta_costo_b = costo
         
+        self.db.commit()
+        self.db.refresh(orm)
+        return self._to_entity(orm)
+
+    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> MatchEntity:
+        from app.modules.users.infrastructure.orm_models import DatosBancariosORM
+        # Actualizar partida
+        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
+        orm.fecha_acordada = fecha
+        orm.costo_total_partida = costo
+        # Determinar si ya tienen estatus_partida negociando/pendiente_pago
+        if orm.estatus_partida == 'negociando':
+            orm.estatus_partida = 'pendiente_pago'
+            
+        # Actualizar datos bancarios
+        datos_orm = self.db.query(DatosBancariosORM).filter(DatosBancariosORM.fk_id_usuario == user_id).first()
+        if datos_orm:
+            datos_orm.banco = banco
+            datos_orm.cedula = cedula
+            datos_orm.telefono = telefono
+        else:
+            datos_orm = DatosBancariosORM(
+                fk_id_usuario=user_id,
+                banco=banco,
+                cedula=cedula,
+                telefono=telefono
+            )
+            self.db.add(datos_orm)
+            
+        self.db.commit()
+        self.db.refresh(orm)
+        return self._to_entity(orm)
+
+    def mark_team_ready(self, match_id: int, team_id: int) -> MatchEntity:
+        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
+        if orm.fk_id_equipo_a == team_id:
+            orm.equipo_a_listo = True
+        elif orm.fk_id_equipo_b == team_id:
+            orm.equipo_b_listo = True
+            
+        if orm.equipo_a_listo and orm.equipo_b_listo:
+            orm.estatus_partida = "confirmada"
+            
+        self.db.commit()
+        self.db.refresh(orm)
+        return self._to_entity(orm)
+
+    def submit_result_proposal(self, match_id: int, user_id: int, goals_a: int, goals_b: int) -> MatchEntity:
+        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
+        if orm.fk_id_usuario_org == user_id:
+            # Es el capitán A
+            orm.resultado_goles_a_cap_a = goals_a
+            orm.resultado_goles_b_cap_a = goals_b
+        else:
+            # Es el capitán B
+            orm.resultado_goles_a_cap_b = goals_a
+            orm.resultado_goles_b_cap_b = goals_b
+            
         self.db.commit()
         self.db.refresh(orm)
         return self._to_entity(orm)

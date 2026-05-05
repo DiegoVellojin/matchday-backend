@@ -42,6 +42,16 @@ class IMatchRepository(ABC):
         pass
 
     @abstractmethod
+    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> MatchEntity:
+        """Configura los términos del partido e inserta/actualiza los datos bancarios del capitán."""
+        pass
+
+    @abstractmethod
+    def mark_team_ready(self, match_id: int, team_id: int) -> MatchEntity:
+        """Marca un equipo como listo (todos los jugadores verificados)."""
+        pass
+
+    @abstractmethod
     def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> MatchEntity:
         """Actualiza los términos propuestos por un capitán."""
         pass
@@ -49,4 +59,9 @@ class IMatchRepository(ABC):
     @abstractmethod
     def register_result(self, match_id: int, team_a_id: int, team_b_id: int, goals_a: int, goals_b: int) -> None:
         """Registra el resultado final del partido en la tabla Resultado."""
+        pass
+
+    @abstractmethod
+    def submit_result_proposal(self, match_id: int, user_id: int, goals_a: int, goals_b: int) -> MatchEntity:
+        """Sube la propuesta de resultado de un capitán para verificación cruzada."""
         pass

@@ -27,6 +27,14 @@ class PartidaORM(Base):
     propuesta_costo_a = Column(Numeric(10, 2), nullable=True)
     propuesta_fecha_b = Column(DateTime, nullable=True)
     propuesta_costo_b = Column(Numeric(10, 2), nullable=True)
+    equipo_a_listo = Column(Boolean, default=False)
+    equipo_b_listo = Column(Boolean, default=False)
+
+    # Verificación Cruzada de Resultados
+    resultado_goles_a_cap_a = Column(Integer, nullable=True)
+    resultado_goles_b_cap_a = Column(Integer, nullable=True)
+    resultado_goles_a_cap_b = Column(Integer, nullable=True)
+    resultado_goles_b_cap_b = Column(Integer, nullable=True)
 
 class PartidaUsuarioORM(Base):
     """Modelo ORM para la tabla 'Partida_Usuario'."""
