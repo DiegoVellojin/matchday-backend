@@ -39,6 +39,7 @@ class MatchRepositoryImpl(IMatchRepository):
         for key, value in kwargs.items():
             if hasattr(entity, key):
                 setattr(entity, key, value)
+        entity.backend_status = "UPDATED_V3"
         return entity
 
     def create(self, match: MatchEntity) -> MatchEntity:
@@ -67,14 +68,14 @@ class MatchRepositoryImpl(IMatchRepository):
 
         result = self.db.query(
             PartidaORM, 
-            EquipoA.nombre_equipo, 
-            EquipoA.url_logo_equipo,
-            UsuarioORM.nombre_usuario,
-            CanchaORM.nombre_cancha,
-            DeporteORM.nombre_deporte,
-            EquipoB.fk_id_usuario_capitan,
-            EquipoB.nombre_equipo,
-            EquipoB.url_logo_equipo
+            EquipoA.nombre_equipo.label('name_a'), 
+            EquipoA.url_logo_equipo.label('logo_a'),
+            UsuarioORM.nombre_usuario.label('cap_a'),
+            CanchaORM.nombre_cancha.label('cancha'),
+            DeporteORM.nombre_deporte.label('sport'),
+            EquipoB.fk_id_usuario_capitan.label('cap_b_id'),
+            EquipoB.nombre_equipo.label('name_b'),
+            EquipoB.url_logo_equipo.label('logo_b')
         ).join(
             UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
         ).join(
@@ -120,14 +121,14 @@ class MatchRepositoryImpl(IMatchRepository):
         
         query = self.db.query(
             PartidaORM, 
-            EquipoA.nombre_equipo, 
-            EquipoA.url_logo_equipo,
-            UsuarioORM.nombre_usuario,
-            CanchaORM.nombre_cancha,
-            DeporteORM.nombre_deporte,
-            EquipoB.fk_id_usuario_capitan,
-            EquipoB.nombre_equipo,
-            EquipoB.url_logo_equipo
+            EquipoA.nombre_equipo.label('name_a'), 
+            EquipoA.url_logo_equipo.label('logo_a'),
+            UsuarioORM.nombre_usuario.label('cap_a'),
+            CanchaORM.nombre_cancha.label('cancha'),
+            DeporteORM.nombre_deporte.label('sport'),
+            EquipoB.fk_id_usuario_capitan.label('cap_b_id'),
+            EquipoB.nombre_equipo.label('name_b'),
+            EquipoB.url_logo_equipo.label('logo_b')
         ).join(
             UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
         ).join(

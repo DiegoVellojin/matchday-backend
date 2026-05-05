@@ -32,15 +32,16 @@ class MatchEntity:
     resultado_goles_a_cap_b: Optional[int] = None
     resultado_goles_b_cap_b: Optional[int] = None
 
-    # Campos enriquecidos para visualización
+    # Campos enriquecidos para visualización (Movidos arriba para verificar serialización)
+    id_capitan_b: Optional[int] = None
+    nombre_equipo_b: Optional[str] = None
+    logo_equipo_b: Optional[str] = None
     nombre_equipo_a: Optional[str] = None
     logo_equipo_a: Optional[str] = None
     nombre_capitan_a: Optional[str] = None
     nombre_cancha: Optional[str] = None
     nombre_deporte: Optional[str] = None
-    id_capitan_b: Optional[int] = None
-    nombre_equipo_b: Optional[str] = None
-    logo_equipo_b: Optional[str] = None
+    backend_status: str = "UPDATED_V3"
 
     def can_transition_to_pending_payment(self) -> bool:
         """Verifica si ambas propuestas coinciden para avanzar a pendiente_pago."""
