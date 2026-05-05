@@ -91,7 +91,8 @@ class MatchRepositoryImpl(IMatchRepository):
                 status: Optional[str] = None,
                 region_id: Optional[int] = None,
                 cancha_id: Optional[int] = None,
-                fecha: Optional[datetime] = None) -> List[MatchEntity]:
+                fecha: Optional[datetime] = None,
+                user_id: Optional[int] = None) -> List[MatchEntity]:
         from app.modules.teams.infrastructure.orm_models import EquipoORM
         from app.modules.catalogs.infrastructure.orm_models import CanchaORM, DeporteORM
         from app.modules.users.infrastructure.orm_models import UsuarioORM
