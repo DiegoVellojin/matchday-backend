@@ -31,3 +31,15 @@ class UsuarioFCMORM(Base):
     fcm_token = Column(String, unique=True, nullable=False)
     fecha_registro = Column(DateTime, server_default=func.now())
 
+class DatosBancariosORM(Base):
+    """
+    Modelo ORM que mapea a la tabla bd_matchday."Datos_Bancarios"
+    """
+    __tablename__ = "Datos_Bancarios"
+    __table_args__ = {"schema": "bd_matchday"}
+
+    id_datos = Column(Integer, primary_key=True, index=True)
+    fk_id_usuario = Column(Integer, nullable=False)
+    banco = Column(String(100), nullable=False)
+    cedula = Column(String(50), nullable=False)
+    telefono = Column(String(50), nullable=False)
