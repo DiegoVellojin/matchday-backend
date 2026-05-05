@@ -128,7 +128,8 @@ class MatchRepositoryImpl(IMatchRepository):
         if user_id:
             from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
             from app.modules.teams.infrastructure.orm_models import EquipoORM
-            from sqlalchemy import or_, aliased
+            from sqlalchemy import or_
+            from sqlalchemy.orm import aliased
             
             # Alias para los equipos A y B para evitar conflictos en el join
             EquipoA = aliased(EquipoORM)
