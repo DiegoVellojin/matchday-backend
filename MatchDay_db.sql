@@ -50,6 +50,15 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Usuario"(
     fecha_creacion_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS bd_matchday."Datos_Bancarios"(
+    id_datos SERIAL PRIMARY KEY,
+    fk_id_usuario INT NOT NULL,
+    banco VARCHAR(100) NOT NULL,
+    cedula VARCHAR(50) NOT NULL,
+    telefono VARCHAR(50) NOT NULL,
+    CONSTRAINT fk_datos_usuario FOREIGN KEY (fk_id_usuario) REFERENCES bd_matchday."Usuario"(id_usuario) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS bd_matchday."Equipo"(
     id_equipo SERIAL PRIMARY KEY,
     nombre_equipo VARCHAR(100) NOT NULL,
@@ -91,7 +100,10 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Partida"(
     propuesta_fecha_a TIMESTAMP NULL,
     propuesta_costo_a DECIMAL(10, 2) NULL,
     propuesta_fecha_b TIMESTAMP NULL,
-    propuesta_costo_b DECIMAL(10, 2) NULL,fk_id_usuario_org INT NOT NULL,
+    propuesta_costo_b DECIMAL(10, 2) NULL,
+    equipo_a_listo BOOLEAN DEFAULT FALSE,
+    equipo_b_listo BOOLEAN DEFAULT FALSE,
+    fk_id_usuario_org INT NOT NULL,
     fk_id_deporte INT NOT NULL,
     fk_id_cancha INT NOT NULL,              
     fk_id_equipo_a INT NULL,
