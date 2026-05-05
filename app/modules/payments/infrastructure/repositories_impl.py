@@ -38,14 +38,15 @@ class PaymentRepositoryImpl(IPaymentRepository):
             })
         return payments
 
-    def upload_receipt(self, id_partida: int, user_id: int, url_recibo_pago: str) -> None:
+    def upload_receipt(self, id_partida: int, user_id: int, url_recibo_pago: str, referencia_pago: str) -> None:
         query = """
         UPDATE bd_matchday."Partida_Usuario"
-        SET url_recibo_pago = :url, estatus_pago = 'reportado'
+        SET url_recibo_pago = :url, referencia_pago = :referencia, estatus_pago = 'reportado'
         WHERE fk_id_partida = :id_partida AND fk_id_usuario = :user_id
         """
         self.db.execute(text(query), {
             "url": url_recibo_pago,
+            "referencia": referencia_pago,
             "id_partida": id_partida,
             "user_id": user_id
         })

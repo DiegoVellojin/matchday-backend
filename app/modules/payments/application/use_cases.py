@@ -16,8 +16,8 @@ class UploadReceiptUseCase:
     def __init__(self, repository: IPaymentRepository):
         self.repository = repository
 
-    def execute(self, id_partida: int, user_id: int, url_recibo_pago: str) -> None:
-        self.repository.upload_receipt(id_partida, user_id, url_recibo_pago)
+    def execute(self, id_partida: int, user_id: int, url_recibo_pago: str, referencia_pago: str) -> None:
+        self.repository.upload_receipt(id_partida, user_id, url_recibo_pago, referencia_pago)
 
 
 class GetTeamPaymentsToValidateUseCase:
