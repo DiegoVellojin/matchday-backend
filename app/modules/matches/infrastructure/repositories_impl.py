@@ -209,15 +209,33 @@ class MatchRepositoryImpl(IMatchRepository):
 
     def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> MatchEntity:
         from app.modules.users.infrastructure.orm_models import DatosBancariosORM
-        # Actualizar partida
+        from app.modules.teams.infrastructure.orm_models import EquipoORM
+        
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
-        orm.fecha_acordada = fecha
-        orm.costo_total_partida = costo
-        # Determinar si ya tienen estatus_partida negociando/pendiente_pago
-        if orm.estatus_partida == 'negociando':
+        
+        # Identificar roles
+        is_capitan_a = orm.fk_id_usuario_org == user_id
+        
+        # Verificar si es capitán del equipo B
+        equipo_b = self.db.query(EquipoORM).filter(EquipoORM.id_equipo == orm.fk_id_equipo_b).first()
+        is_capitan_b = equipo_b and equipo_b.fk_id_usuario_capitan == user_id
+        
+        if is_capitan_a:
+            orm.propuesta_fecha_a = fecha
+            orm.propuesta_costo_a = costo
+        elif is_capitan_b:
+            orm.propuesta_fecha_b = fecha
+            orm.propuesta_costo_b = costo
+            
+        # Verificar acuerdo mutuo para cambiar a pendiente_pago
+        if orm.propuesta_fecha_a and orm.propuesta_fecha_b and \
+           orm.propuesta_costo_a == orm.propuesta_costo_b and \
+           orm.propuesta_fecha_a == orm.propuesta_fecha_b:
+            orm.fecha_acordada = orm.propuesta_fecha_a
+            orm.costo_total_partida = orm.propuesta_costo_a
             orm.estatus_partida = 'pendiente_pago'
             
-        # Actualizar datos bancarios
+        # Actualizar datos bancarios del usuario que configura
         datos_orm = self.db.query(DatosBancariosORM).filter(DatosBancariosORM.fk_id_usuario == user_id).first()
         if datos_orm:
             datos_orm.banco = banco
