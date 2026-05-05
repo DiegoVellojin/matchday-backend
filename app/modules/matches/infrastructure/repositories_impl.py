@@ -97,13 +97,20 @@ class MatchRepositoryImpl(IMatchRepository):
         from app.modules.catalogs.infrastructure.orm_models import CanchaORM, DeporteORM
         from app.modules.users.infrastructure.orm_models import UsuarioORM
         from sqlalchemy import func
+        from sqlalchemy.orm import aliased
+        EquipoA = aliased(EquipoORM)
+        EquipoB = aliased(EquipoORM)
+        
         query = self.db.query(
             PartidaORM, 
-            EquipoORM.nombre_equipo, 
-            EquipoORM.url_logo_equipo,
+            EquipoA.nombre_equipo, 
+            EquipoA.url_logo_equipo,
             UsuarioORM.nombre_usuario,
             CanchaORM.nombre_cancha,
-            DeporteORM.nombre_deporte
+            DeporteORM.nombre_deporte,
+            EquipoB.fk_id_usuario_capitan,
+            EquipoB.nombre_equipo,
+            EquipoB.url_logo_equipo
         ).join(
             UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
         ).join(
@@ -111,7 +118,9 @@ class MatchRepositoryImpl(IMatchRepository):
         ).join(
             DeporteORM, PartidaORM.fk_id_deporte == DeporteORM.id_deporte
         ).outerjoin(
-            EquipoORM, PartidaORM.fk_id_equipo_a == EquipoORM.id_equipo
+            EquipoA, PartidaORM.fk_id_equipo_a == EquipoA.id_equipo
+        ).outerjoin(
+            EquipoB, PartidaORM.fk_id_equipo_b == EquipoB.id_equipo
         )
 
         if sport_id:
@@ -150,13 +159,16 @@ class MatchRepositoryImpl(IMatchRepository):
         results = query.all()
         
         entities = []
-        for orm, team_name, team_logo, user_name, court_name, sport_name in results:
+        for orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b in results:
             entity = self._to_entity(orm)
             entity.nombre_equipo_a = team_name
             entity.logo_equipo_a = team_logo
             entity.nombre_capitan_a = user_name
             entity.nombre_cancha = court_name
             entity.nombre_deporte = sport_name
+            entity.id_capitan_b = id_capitan_b
+            entity.nombre_equipo_b = name_b
+            entity.logo_equipo_b = logo_b
             entities.append(entity)
             
         return entities
