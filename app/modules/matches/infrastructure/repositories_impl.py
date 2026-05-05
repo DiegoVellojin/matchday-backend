@@ -11,13 +11,13 @@ class MatchRepositoryImpl(IMatchRepository):
     def __init__(self, db: Session):
         self.db = db
 
-    def _to_entity(self, orm: PartidaORM) -> MatchEntity:
-        return MatchEntity(
+    def _to_entity(self, orm: PartidaORM, **kwargs) -> MatchEntity:
+        entity = MatchEntity(
             id=orm.id_partida,
             fecha_inicio_estimada=orm.fecha_inicio_estimada,
             fecha_fin_estimada=orm.fecha_fin_estimada,
             fecha_acordada=orm.fecha_acordada,
-            costo_total_partida=float(orm.costo_total_partida),
+            costo_total_partida=float(orm.costo_total_partida) if orm.costo_total_partida is not None else 0.0,
             estatus_partida=orm.estatus_partida,
             fk_id_usuario_org=orm.fk_id_usuario_org,
             fk_id_deporte=orm.fk_id_deporte,
@@ -36,6 +36,10 @@ class MatchRepositoryImpl(IMatchRepository):
             resultado_goles_a_cap_b=orm.resultado_goles_a_cap_b,
             resultado_goles_b_cap_b=orm.resultado_goles_b_cap_b,
         )
+        for key, value in kwargs.items():
+            if hasattr(entity, key):
+                setattr(entity, key, value)
+        return entity
 
     def create(self, match: MatchEntity) -> MatchEntity:
         orm = PartidaORM(
@@ -87,16 +91,17 @@ class MatchRepositoryImpl(IMatchRepository):
             return None
             
         orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b = result
-        entity = self._to_entity(orm)
-        entity.nombre_equipo_a = team_name
-        entity.logo_equipo_a = team_logo
-        entity.nombre_capitan_a = user_name
-        entity.nombre_cancha = court_name
-        entity.nombre_deporte = sport_name
-        entity.id_capitan_b = id_capitan_b
-        entity.nombre_equipo_b = name_b
-        entity.logo_equipo_b = logo_b
-        return entity
+        return self._to_entity(
+            orm,
+            nombre_equipo_a=team_name,
+            logo_equipo_a=team_logo,
+            nombre_capitan_a=user_name,
+            nombre_cancha=court_name,
+            nombre_deporte=sport_name,
+            id_capitan_b=id_capitan_b,
+            nombre_equipo_b=name_b,
+            logo_equipo_b=logo_b
+        )
 
     def get_all(self, 
                 sport_id: Optional[int] = None, 
@@ -172,15 +177,17 @@ class MatchRepositoryImpl(IMatchRepository):
         
         entities = []
         for orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b in results:
-            entity = self._to_entity(orm)
-            entity.nombre_equipo_a = team_name
-            entity.logo_equipo_a = team_logo
-            entity.nombre_capitan_a = user_name
-            entity.nombre_cancha = court_name
-            entity.nombre_deporte = sport_name
-            entity.id_capitan_b = id_capitan_b
-            entity.nombre_equipo_b = name_b
-            entity.logo_equipo_b = logo_b
+            entity = self._to_entity(
+                orm,
+                nombre_equipo_a=team_name,
+                logo_equipo_a=team_logo,
+                nombre_capitan_a=user_name,
+                nombre_cancha=court_name,
+                nombre_deporte=sport_name,
+                id_capitan_b=id_capitan_b,
+                nombre_equipo_b=name_b,
+                logo_equipo_b=logo_b
+            )
             entities.append(entity)
             
         return entities
