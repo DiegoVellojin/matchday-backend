@@ -35,6 +35,11 @@ class GetMatchesUseCase:
             user_id=user_id
         )
 
+class GetMatchDetailsUseCase:
+    """Caso de uso para obtener detalles de un partido."""
+    def __init__(self, repository: IMatchRepository):
+        self.repository = repository
+
     def execute(self, match_id: int) -> MatchEntity:
         match = self.repository.get_by_id(match_id)
         if not match:
