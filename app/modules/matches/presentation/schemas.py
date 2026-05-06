@@ -68,6 +68,8 @@ class MatchResponse(BaseModel):
     id_capitan_b: Optional[int] = None
     nombre_equipo_b: Optional[str] = None
     logo_equipo_b: Optional[str] = None
+    telefono_capitan_a: Optional[str] = None
+    telefono_capitan_b: Optional[str] = None
     resultado_goles_a_cap_a: Optional[int] = None
     resultado_goles_b_cap_a: Optional[int] = None
     resultado_goles_a_cap_b: Optional[int] = None
