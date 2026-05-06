@@ -78,10 +78,7 @@ def get_match(
 ):
     repository = MatchRepositoryImpl(db)
     use_case = GetMatchDetailsUseCase(repository)
-    match = use_case.execute(match_id)
-    if not match:
-        raise NotFoundException("Partido no encontrado")
-    return match
+    return use_case.execute(match_id)
 
 @router.post("/{match_id}/accept/{team_id}", response_model=MatchResponse)
 def accept_match(

@@ -22,7 +22,7 @@ if os.path.exists(cred_path):
 
 
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from app.core.exceptions import MatchDayException
 

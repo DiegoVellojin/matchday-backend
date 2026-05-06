@@ -35,13 +35,11 @@ class GetMatchesUseCase:
             user_id=user_id
         )
 
-class GetMatchDetailsUseCase:
-    """Caso de uso para obtener detalles de un partido."""
-    def __init__(self, repository: IMatchRepository):
-        self.repository = repository
-
-    def execute(self, match_id: int) -> Optional[MatchEntity]:
-        return self.repository.get_by_id(match_id)
+    def execute(self, match_id: int) -> MatchEntity:
+        match = self.repository.get_by_id(match_id)
+        if not match:
+            raise NotFoundException("Partido no encontrado")
+        return match
 
 class AcceptEncounterUseCase:
     """
@@ -51,11 +49,19 @@ class AcceptEncounterUseCase:
     def __init__(self, repository: IMatchRepository):
         self.repository = repository
 
-    def execute(self, match_id: int, team_b_id: int) -> Optional[MatchEntity]:
-        return self.repository.update(match_id, {
+    def execute(self, match_id: int, team_b_id: int) -> MatchEntity:
+        match = self.repository.get_by_id(match_id)
+        if not match:
+            raise NotFoundException("Partido no encontrado")
+        
+        if match.estatus_partida != 'publicada':
+            raise ConflictException("El partido ya no está disponible para ser aceptado")
+            
+        updated = self.repository.update(match_id, {
             "fk_id_equipo_b": team_b_id,
             "estatus_partida": "negociando"
         })
+        return updated
 
 class ProposeTermsUseCase:
     """
@@ -143,6 +149,9 @@ class JoinMatchUseCase:
         self.repository = repository
 
     def execute(self, match_id: int, user_id: int, team_id: Optional[int] = None) -> bool:
+        match = self.repository.get_by_id(match_id)
+        if not match:
+            raise NotFoundException("Partido no encontrado")
         return self.repository.add_player(match_id, user_id, team_id)
 
 class RegisterMatchResultUseCase:
@@ -188,10 +197,8 @@ class RegisterMatchResultUseCase:
             # Aún falta que el otro capitán ingrese
             pass
 
-class GetMatchPlayersUseCase:
-    """Caso de uso para obtener los jugadores unidos a un partido."""
-    def __init__(self, repository: IMatchRepository):
-        self.repository = repository
-
     def execute(self, match_id: int) -> List[dict]:
+        match = self.repository.get_by_id(match_id)
+        if not match:
+            raise NotFoundException("Partido no encontrado")
         return self.repository.get_players(match_id)
