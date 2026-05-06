@@ -112,7 +112,7 @@ class MatchRepositoryImpl(IMatchRepository):
         if status:
             query = query.filter(PartidaORM.estatus_partida == status)
         if region_id:
-            query = query.join(CanchaORM).filter(CanchaORM.fk_id_region == region_id)
+            query = query.join(PartidaORM.cancha).filter(CanchaORM.fk_id_region == region_id)
         if cancha_id:
             query = query.filter(PartidaORM.fk_id_cancha == cancha_id)
         if fecha:
