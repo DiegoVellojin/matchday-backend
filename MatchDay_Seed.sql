@@ -15,7 +15,13 @@ INSERT INTO bd_matchday."Deporte" (id_deporte, nombre_deporte, max_jugadores_dep
 (3, 'Basketball', 10),
 (4, 'Tennis', 2),
 (5, 'Pádel', 4),
-(6, 'Volleyball', 12);
+(6, 'Volleyball', 12),
+(7, 'Béisbol', 18),
+(8, 'Softbol', 20),
+(9, 'Futsal', 10),
+(10, 'Pickleball', 4),
+(11, 'Rugby', 30),
+(12, 'Ping Pong', 2);
 
 -- 3. REGIONES
 INSERT INTO bd_matchday."Region" (id_region, nombre_region) VALUES 
