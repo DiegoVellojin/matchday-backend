@@ -43,7 +43,6 @@ class MatchRepositoryImpl(IMatchRepository):
         return entity
 
     def create(self, match: MatchEntity) -> MatchEntity:
-        from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
         orm = PartidaORM(
             fecha_inicio_estimada=match.fecha_inicio_estimada,
             fecha_fin_estimada=match.fecha_fin_estimada,
@@ -52,32 +51,18 @@ class MatchRepositoryImpl(IMatchRepository):
             fk_id_deporte=match.fk_id_deporte,
             fk_id_cancha=match.fk_id_cancha,
             fk_id_equipo_a=match.fk_id_equipo_a,
+            fk_id_equipo_b=match.fk_id_equipo_b,
             estatus_partida=match.estatus_partida
         )
         self.db.add(orm)
         self.db.commit()
         self.db.refresh(orm)
 
-        # Si el partido se crea con un equipo, agregamos automáticamente a sus miembros
+        # Si el partido se crea con equipos, agregamos automáticamente a sus miembros
         if orm.fk_id_equipo_a:
-            members = self.db.query(EquipoUsuarioORM).filter(
-                EquipoUsuarioORM.fk_id_equipo == orm.fk_id_equipo_a,
-                EquipoUsuarioORM.estatus_miembro == 'aceptado'
-            ).all()
-            for m in members:
-                # Evitar duplicados si ya existe por alguna razón
-                exists = self.db.query(PartidaUsuarioORM).filter(
-                    PartidaUsuarioORM.fk_id_partida == orm.id_partida,
-                    PartidaUsuarioORM.fk_id_usuario == m.fk_id_usuario
-                ).first()
-                if not exists:
-                    pu = PartidaUsuarioORM(
-                        fk_id_partida=orm.id_partida,
-                        fk_id_usuario=m.fk_id_usuario,
-                        fk_id_equipo_asignado=orm.fk_id_equipo_a
-                    )
-                    self.db.add(pu)
-            self.db.commit()
+            self._register_team_members(orm.id_partida, orm.fk_id_equipo_a)
+        if orm.fk_id_equipo_b:
+            self._register_team_members(orm.id_partida, orm.fk_id_equipo_b)
 
         return self._to_entity(orm)
 
@@ -222,12 +207,51 @@ class MatchRepositoryImpl(IMatchRepository):
         if not orm:
             return None
         
+        # Guardar estados previos para detectar cambios de equipo
+        old_equipo_a = orm.fk_id_equipo_a
+        old_equipo_b = orm.fk_id_equipo_b
+
         for key, value in data.items():
             if hasattr(orm, key):
                 setattr(orm, key, value)
         
         self.db.commit()
+
+        # Si se asignó un equipo A nuevo, registrar miembros
+        if orm.fk_id_equipo_a and orm.fk_id_equipo_a != old_equipo_a:
+            self._register_team_members(orm.id_partida, orm.fk_id_equipo_a)
+        
+        # Si se asignó un equipo B nuevo (e.g. al aceptar reto), registrar miembros
+        if orm.fk_id_equipo_b and orm.fk_id_equipo_b != old_equipo_b:
+            self._register_team_members(orm.id_partida, orm.fk_id_equipo_b)
+
         return self.get_by_id(match_id)
+
+    def _register_team_members(self, match_id: int, team_id: int):
+        """Registra a todos los miembros aceptados de un equipo en la partida."""
+        from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
+        
+        members = self.db.query(EquipoUsuarioORM).filter(
+            EquipoUsuarioORM.fk_id_equipo == team_id,
+            EquipoUsuarioORM.estatus_miembro == 'aceptado'
+        ).all()
+        
+        for m in members:
+            # Evitar duplicados
+            exists = self.db.query(PartidaUsuarioORM).filter(
+                PartidaUsuarioORM.fk_id_partida == match_id,
+                PartidaUsuarioORM.fk_id_usuario == m.fk_id_usuario
+            ).first()
+            
+            if not exists:
+                pu = PartidaUsuarioORM(
+                    fk_id_partida=match_id,
+                    fk_id_usuario=m.fk_id_usuario,
+                    fk_id_equipo_asignado=team_id
+                )
+                self.db.add(pu)
+        
+        self.db.commit()
 
     def add_player(self, match_id: int, user_id: int, team_id: Optional[int] = None) -> bool:
         orm = PartidaUsuarioORM(

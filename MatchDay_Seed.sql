@@ -64,10 +64,10 @@ END $$;
 
 -- 6. EQUIPOS
 INSERT INTO bd_matchday."Equipo" (id_equipo, nombre_equipo, fk_id_deporte, fk_id_usuario_capitan, url_logo_equipo, max_miembros) VALUES 
-(1, 'Real Madrid', 1, 1, 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/1200px-Real_Madrid_CF.svg.png', 22),
+(1, 'Real Madrid', 1, 1, 'https://cdn-icons-png.flaticon.com/512/3306/3306636.png', 22),
 (2, 'Vellojin Basket', 3, 1, 'https://cdn-icons-png.flaticon.com/512/889/889455.png', 12),
 (3, 'Vellojin Padel', 5, 1, 'https://cdn-icons-png.flaticon.com/512/2860/2860361.png', 4),
-(6, 'Manchester City', 1, 2, 'https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/1200px-Manchester_City_FC_badge.svg.png', 22),
+(6, 'Manchester City', 1, 2, 'https://cdn-icons-png.flaticon.com/512/3306/3306636.png', 22),
 (7, 'City Basketball', 3, 2, 'https://cdn-icons-png.flaticon.com/512/889/889455.png', 12),
 (8, 'City Padel Club', 5, 2, 'https://cdn-icons-png.flaticon.com/512/2860/2860361.png', 4);
 
