@@ -47,7 +47,9 @@ class MatchRepositoryImpl(IMatchRepository):
             nombre_equipo_b=orm.equipo_b.nombre_equipo if orm.equipo_b else None,
             logo_equipo_b=orm.equipo_b.url_logo_equipo if orm.equipo_b else None,
             telefono_capitan_a=orm.organizador.telefono_usuario if orm.organizador else None,
-            telefono_capitan_b=orm.equipo_b.capitan.telefono_usuario if (orm.equipo_b and orm.equipo_b.capitan) else None
+            telefono_capitan_b=orm.equipo_b.capitan.telefono_usuario if (orm.equipo_b and orm.equipo_b.capitan) else None,
+            latitud_cancha=orm.cancha.latitud_cancha if orm.cancha else None,
+            longitud_cancha=orm.cancha.longitud_cancha if orm.cancha else None
         )
 
     def create(self, match: MatchEntity) -> MatchEntity:
@@ -344,3 +346,31 @@ class MatchRepositoryImpl(IMatchRepository):
             orm.estatus_partida = "completada"
             
         self.db.commit()
+
+    def delete(self, match_id: int) -> bool:
+        from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
+        # Eliminar registros relacionados en PartidaUsuario primero
+        self.db.query(PartidaUsuarioORM).filter(PartidaUsuarioORM.fk_id_partida == match_id).delete()
+        
+        # Eliminar el partido
+        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
+        if orm:
+            self.db.delete(orm)
+            self.db.commit()
+            return True
+        return False
+
+    def update(self, match: MatchEntity) -> MatchEntity:
+        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match.id).first()
+        if not orm:
+            return match
+            
+        orm.fk_id_deporte = match.fk_id_deporte
+        orm.fk_id_cancha = match.fk_id_cancha
+        orm.fecha_inicio_estimada = match.fecha_inicio_estimada
+        orm.fecha_fin_estimada = match.fecha_fin_estimada
+        orm.fk_id_equipo_a = match.fk_id_equipo_a
+        
+        self.db.commit()
+        self.db.refresh(orm)
+        return self._to_entity(orm)

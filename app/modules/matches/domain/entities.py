@@ -43,6 +43,8 @@ class MatchEntity:
     nombre_deporte: Optional[str] = None
     telefono_capitan_a: Optional[str] = None
     telefono_capitan_b: Optional[str] = None
+    latitud_cancha: Optional[float] = None
+    longitud_cancha: Optional[float] = None
     backend_status: str = "UPDATED_V3"
 
     def can_transition_to_pending_payment(self) -> bool:

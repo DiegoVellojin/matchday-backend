@@ -242,3 +242,52 @@ def register_result(
         print(f"Error al enviar notificación FCM en register_result: {e}")
         
     return {"message": "Resultado registrado exitosamente"}
+
+@router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_match(
+    match_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id)
+):
+    repository = MatchRepositoryImpl(db)
+    match = repository.get_by_id(match_id)
+    if not match:
+        raise NotFoundException("Partido no encontrado")
+    
+    if match.fk_id_usuario_org != current_user_id:
+        raise UnauthorizedException("Solo el organizador puede cancelar este partido")
+        
+    # Solo permitir cancelar si está en 'publicada' o 'negociando' (antes de pagos)
+    if match.estatus_partida not in ['publicada', 'negociando']:
+        raise ConflictException("No se puede cancelar un partido en este estado")
+        
+    repository.delete(match_id)
+    return None
+
+@router.put("/{match_id}", status_code=status.HTTP_200_OK, response_model=MatchResponse)
+def update_match(
+    match_id: int,
+    request: MatchCreateRequest, # Reutilizamos el esquema de creación para actualización básica
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id)
+):
+    repository = MatchRepositoryImpl(db)
+    match = repository.get_by_id(match_id)
+    if not match:
+        raise NotFoundException("Partido no encontrado")
+    
+    if match.fk_id_usuario_org != current_user_id:
+        raise UnauthorizedException("Solo el organizador puede editar este partido")
+        
+    # Solo permitir editar si está en 'publicada'
+    if match.estatus_partida != 'publicada':
+        raise ConflictException("No se puede editar un partido que ya está en negociación o pago")
+        
+    match.fk_id_deporte = request.fk_id_deporte
+    match.fk_id_cancha = request.fk_id_cancha
+    match.fecha_inicio_estimada = request.fecha_inicio_estimada
+    match.fecha_fin_estimada = request.fecha_fin_estimada
+    match.fk_id_equipo_a = request.fk_id_equipo_a
+    
+    updated_match = repository.update(match)
+    return updated_match

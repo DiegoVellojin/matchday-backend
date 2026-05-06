@@ -74,6 +74,8 @@ class MatchResponse(BaseModel):
     resultado_goles_b_cap_a: Optional[int] = None
     resultado_goles_a_cap_b: Optional[int] = None
     resultado_goles_b_cap_b: Optional[int] = None
+    latitud_cancha: Optional[float] = None
+    longitud_cancha: Optional[float] = None
     backend_status: Optional[str] = None
 
     class Config:
