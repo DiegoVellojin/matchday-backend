@@ -11,8 +11,9 @@ class MatchRepositoryImpl(IMatchRepository):
     def __init__(self, db: Session):
         self.db = db
 
-    def _to_entity(self, orm: PartidaORM, **kwargs) -> MatchEntity:
-        entity = MatchEntity(
+    def _to_entity(self, orm: PartidaORM) -> MatchEntity:
+        """Convierte el modelo ORM de SQLAlchemy a la Entidad de Dominio."""
+        return MatchEntity(
             id=orm.id_partida,
             fecha_inicio_estimada=orm.fecha_inicio_estimada,
             fecha_fin_estimada=orm.fecha_fin_estimada,
@@ -35,12 +36,19 @@ class MatchRepositoryImpl(IMatchRepository):
             resultado_goles_b_cap_a=orm.resultado_goles_b_cap_a,
             resultado_goles_a_cap_b=orm.resultado_goles_a_cap_b,
             resultado_goles_b_cap_b=orm.resultado_goles_b_cap_b,
+            
+            # Campos enriquecidos vía relaciones
+            nombre_equipo_a=orm.equipo_a.nombre_equipo if orm.equipo_a else None,
+            logo_equipo_a=orm.equipo_a.url_logo_equipo if orm.equipo_a else None,
+            nombre_capitan_a=orm.organizador.nombre_usuario if orm.organizador else None,
+            nombre_cancha=orm.cancha.nombre_cancha if orm.cancha else None,
+            nombre_deporte=orm.deporte.nombre_deporte if orm.deporte else None,
+            id_capitan_b=orm.equipo_b.fk_id_usuario_capitan if orm.equipo_b else None,
+            nombre_equipo_b=orm.equipo_b.nombre_equipo if orm.equipo_b else None,
+            logo_equipo_b=orm.equipo_b.url_logo_equipo if orm.equipo_b else None,
+            telefono_capitan_a=orm.organizador.telefono_usuario if orm.organizador else None,
+            telefono_capitan_b=orm.equipo_b.capitan.telefono_usuario if (orm.equipo_b and orm.equipo_b.capitan) else None
         )
-        for key, value in kwargs.items():
-            if hasattr(entity, key):
-                setattr(entity, key, value)
-        entity.backend_status = "UPDATED_V3"
-        return entity
 
     def create(self, match: MatchEntity) -> MatchEntity:
         orm = PartidaORM(
@@ -67,56 +75,17 @@ class MatchRepositoryImpl(IMatchRepository):
         return self._to_entity(orm)
 
     def get_by_id(self, match_id: int) -> Optional[MatchEntity]:
+        from sqlalchemy.orm import joinedload
         from app.modules.teams.infrastructure.orm_models import EquipoORM
-        from app.modules.catalogs.infrastructure.orm_models import CanchaORM, DeporteORM
-        from app.modules.users.infrastructure.orm_models import UsuarioORM
-
-        CapA = aliased(UsuarioORM)
-        CapB = aliased(UsuarioORM)
-
-        result = self.db.query(
-            PartidaORM, 
-            EquipoA.nombre_equipo.label('nombre_equipo_a'), 
-            EquipoA.url_logo_equipo.label('logo_equipo_a'),
-            CapA.nombre_usuario.label('nombre_capitan_a'),
-            CanchaORM.nombre_cancha.label('nombre_cancha'),
-            DeporteORM.nombre_deporte.label('nombre_deporte'),
-            EquipoB.fk_id_usuario_capitan.label('id_capitan_b'),
-            EquipoB.nombre_equipo.label('nombre_equipo_b'),
-            EquipoB.url_logo_equipo.label('logo_equipo_b'),
-            CapA.telefono_usuario.label('telefono_capitan_a'),
-            CapB.telefono_usuario.label('telefono_capitan_b')
-        ).join(
-            CapA, PartidaORM.fk_id_usuario_org == CapA.id_usuario
-        ).join(
-            CanchaORM, PartidaORM.fk_id_cancha == CanchaORM.id_cancha
-        ).join(
-            DeporteORM, PartidaORM.fk_id_deporte == DeporteORM.id_deporte
-        ).outerjoin(
-            EquipoA, PartidaORM.fk_id_equipo_a == EquipoA.id_equipo
-        ).outerjoin(
-            EquipoB, PartidaORM.fk_id_equipo_b == EquipoB.id_equipo
-        ).outerjoin(
-            CapB, EquipoB.fk_id_usuario_capitan == CapB.id_usuario
+        orm = self.db.query(PartidaORM).options(
+            joinedload(PartidaORM.organizador),
+            joinedload(PartidaORM.deporte),
+            joinedload(PartidaORM.cancha),
+            joinedload(PartidaORM.equipo_a),
+            joinedload(PartidaORM.equipo_b).joinedload(EquipoORM.capitan)
         ).filter(PartidaORM.id_partida == match_id).first()
         
-        if not result:
-            return None
-            
-        orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b, tel_a, tel_b = result
-        return self._to_entity(
-            orm,
-            nombre_equipo_a=team_name,
-            logo_equipo_a=team_logo,
-            nombre_capitan_a=user_name,
-            nombre_cancha=court_name,
-            nombre_deporte=sport_name,
-            id_capitan_b=id_capitan_b,
-            nombre_equipo_b=name_b,
-            logo_equipo_b=logo_b,
-            telefono_capitan_a=tel_a,
-            telefono_capitan_b=tel_b
-        )
+        return self._to_entity(orm) if orm else None
 
     def get_all(self, 
                 sport_id: Optional[int] = None, 
@@ -125,40 +94,17 @@ class MatchRepositoryImpl(IMatchRepository):
                 cancha_id: Optional[int] = None,
                 fecha: Optional[datetime] = None,
                 user_id: Optional[int] = None) -> List[MatchEntity]:
+        from app.modules.catalogs.infrastructure.orm_models import CanchaORM
         from app.modules.teams.infrastructure.orm_models import EquipoORM
-        from app.modules.catalogs.infrastructure.orm_models import CanchaORM, DeporteORM
-        from app.modules.users.infrastructure.orm_models import UsuarioORM
-        from sqlalchemy import func
-        from sqlalchemy.orm import aliased
-        EquipoA = aliased(EquipoORM)
-        EquipoB = aliased(EquipoORM)
-        CapA = aliased(UsuarioORM)
-        CapB = aliased(UsuarioORM)
+        from sqlalchemy import func, or_
+        from sqlalchemy.orm import joinedload
         
-        query = self.db.query(
-            PartidaORM, 
-            EquipoA.nombre_equipo.label('nombre_equipo_a'), 
-            EquipoA.url_logo_equipo.label('logo_equipo_a'),
-            CapA.nombre_usuario.label('nombre_capitan_a'),
-            CanchaORM.nombre_cancha.label('nombre_cancha'),
-            DeporteORM.nombre_deporte.label('nombre_deporte'),
-            EquipoB.fk_id_usuario_capitan.label('id_capitan_b'),
-            EquipoB.nombre_equipo.label('nombre_equipo_b'),
-            EquipoB.url_logo_equipo.label('logo_equipo_b'),
-            CapA.telefono_usuario.label('telefono_capitan_a'),
-            CapB.telefono_usuario.label('telefono_capitan_b')
-        ).join(
-            CapA, PartidaORM.fk_id_usuario_org == CapA.id_usuario
-        ).join(
-            CanchaORM, PartidaORM.fk_id_cancha == CanchaORM.id_cancha
-        ).join(
-            DeporteORM, PartidaORM.fk_id_deporte == DeporteORM.id_deporte
-        ).outerjoin(
-            EquipoA, PartidaORM.fk_id_equipo_a == EquipoA.id_equipo
-        ).outerjoin(
-            EquipoB, PartidaORM.fk_id_equipo_b == EquipoB.id_equipo
-        ).outerjoin(
-            CapB, EquipoB.fk_id_usuario_capitan == CapB.id_usuario
+        query = self.db.query(PartidaORM).options(
+            joinedload(PartidaORM.organizador),
+            joinedload(PartidaORM.deporte),
+            joinedload(PartidaORM.cancha),
+            joinedload(PartidaORM.equipo_a),
+            joinedload(PartidaORM.equipo_b).joinedload(EquipoORM.capitan)
         )
 
         if sport_id:
@@ -166,7 +112,7 @@ class MatchRepositoryImpl(IMatchRepository):
         if status:
             query = query.filter(PartidaORM.estatus_partida == status)
         if region_id:
-            query = query.filter(CanchaORM.fk_id_region == region_id)
+            query = query.join(CanchaORM).filter(CanchaORM.fk_id_region == region_id)
         if cancha_id:
             query = query.filter(PartidaORM.fk_id_cancha == cancha_id)
         if fecha:
@@ -174,46 +120,20 @@ class MatchRepositoryImpl(IMatchRepository):
         
         if user_id:
             from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
-            from app.modules.teams.infrastructure.orm_models import EquipoORM
-            from sqlalchemy import or_
-            from sqlalchemy.orm import aliased
-            
-            # Alias para los equipos A y B para evitar conflictos en el join
-            EquipoA = aliased(EquipoORM)
-            EquipoB = aliased(EquipoORM)
             
             # Búsqueda de involucramiento: Organizador, Jugador registrado, o Capitán de equipo A/B
             query = query.outerjoin(PartidaUsuarioORM, PartidaORM.id_partida == PartidaUsuarioORM.fk_id_partida)
-            query = query.outerjoin(EquipoA, PartidaORM.fk_id_equipo_a == EquipoA.id_equipo)
-            query = query.outerjoin(EquipoB, PartidaORM.fk_id_equipo_b == EquipoB.id_equipo)
+            query = query.outerjoin(PartidaORM.equipo_a)
+            query = query.outerjoin(PartidaORM.equipo_b)
             
             query = query.filter(or_(
                 PartidaORM.fk_id_usuario_org == user_id,
                 PartidaUsuarioORM.fk_id_usuario == user_id,
-                EquipoA.fk_id_usuario_capitan == user_id,
-                EquipoB.fk_id_usuario_capitan == user_id
+                EquipoORM.fk_id_usuario_capitan == user_id
             )).distinct()
         
         results = query.all()
-        
-        entities = []
-        for orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b, tel_a, tel_b in results:
-            entity = self._to_entity(
-                orm,
-                nombre_equipo_a=team_name,
-                logo_equipo_a=team_logo,
-                nombre_capitan_a=user_name,
-                nombre_cancha=court_name,
-                nombre_deporte=sport_name,
-                id_capitan_b=id_capitan_b,
-                nombre_equipo_b=name_b,
-                logo_equipo_b=logo_b,
-                telefono_capitan_a=tel_a,
-                telefono_capitan_b=tel_b
-            )
-            entities.append(entity)
-            
-        return entities
+        return [self._to_entity(orm) for orm in results]
 
     def update(self, match_id: int, data: dict) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()

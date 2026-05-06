@@ -36,6 +36,13 @@ class PartidaORM(Base):
     resultado_goles_a_cap_b = Column(Integer, nullable=True)
     resultado_goles_b_cap_b = Column(Integer, nullable=True)
 
+    # Relaciones para evitar joins manuales
+    organizador = relationship("app.modules.users.infrastructure.orm_models.UsuarioORM", foreign_keys=[fk_id_usuario_org])
+    deporte = relationship("app.modules.catalogs.infrastructure.orm_models.DeporteORM", foreign_keys=[fk_id_deporte])
+    cancha = relationship("app.modules.catalogs.infrastructure.orm_models.CanchaORM", foreign_keys=[fk_id_cancha])
+    equipo_a = relationship("app.modules.teams.infrastructure.orm_models.EquipoORM", foreign_keys=[fk_id_equipo_a])
+    equipo_b = relationship("app.modules.teams.infrastructure.orm_models.EquipoORM", foreign_keys=[fk_id_equipo_b])
+
 class PartidaUsuarioORM(Base):
     """Modelo ORM para la tabla 'Partida_Usuario'."""
     __tablename__ = "Partida_Usuario"

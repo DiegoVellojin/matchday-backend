@@ -25,7 +25,7 @@ class EquipoORM(Base):
     max_miembros = Column(Integer, default=11)
 
     # Relaciones (Opcional, para facilitar consultas)
-    # capitan = relationship("UsuarioORM")
+    capitan = relationship("app.modules.users.infrastructure.orm_models.UsuarioORM", foreign_keys=[fk_id_usuario_capitan], overlaps="capitan")
 
 class EquipoUsuarioORM(Base):
     """
