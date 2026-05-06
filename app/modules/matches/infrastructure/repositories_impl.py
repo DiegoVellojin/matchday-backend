@@ -120,16 +120,21 @@ class MatchRepositoryImpl(IMatchRepository):
         
         if user_id:
             from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
+            from sqlalchemy.orm import aliased
+            
+            EqA = aliased(EquipoORM)
+            EqB = aliased(EquipoORM)
             
             # Búsqueda de involucramiento: Organizador, Jugador registrado, o Capitán de equipo A/B
             query = query.outerjoin(PartidaUsuarioORM, PartidaORM.id_partida == PartidaUsuarioORM.fk_id_partida)
-            query = query.outerjoin(PartidaORM.equipo_a)
-            query = query.outerjoin(PartidaORM.equipo_b)
+            query = query.outerjoin(EqA, PartidaORM.fk_id_equipo_a == EqA.id_equipo)
+            query = query.outerjoin(EqB, PartidaORM.fk_id_equipo_b == EqB.id_equipo)
             
             query = query.filter(or_(
                 PartidaORM.fk_id_usuario_org == user_id,
                 PartidaUsuarioORM.fk_id_usuario == user_id,
-                EquipoORM.fk_id_usuario_capitan == user_id
+                EqA.fk_id_usuario_capitan == user_id,
+                EqB.fk_id_usuario_capitan == user_id
             )).distinct()
         
         results = query.all()
