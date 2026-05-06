@@ -71,22 +71,23 @@ class MatchRepositoryImpl(IMatchRepository):
         from app.modules.catalogs.infrastructure.orm_models import CanchaORM, DeporteORM
         from app.modules.users.infrastructure.orm_models import UsuarioORM
 
-        from sqlalchemy.orm import aliased
-        EquipoA = aliased(EquipoORM)
-        EquipoB = aliased(EquipoORM)
+        CapA = aliased(UsuarioORM)
+        CapB = aliased(UsuarioORM)
 
         result = self.db.query(
             PartidaORM, 
-            EquipoA.nombre_equipo.label('name_a'), 
-            EquipoA.url_logo_equipo.label('logo_a'),
-            UsuarioORM.nombre_usuario.label('cap_a'),
-            CanchaORM.nombre_cancha.label('cancha'),
-            DeporteORM.nombre_deporte.label('sport'),
-            EquipoB.fk_id_usuario_capitan.label('cap_b_id'),
-            EquipoB.nombre_equipo.label('name_b'),
-            EquipoB.url_logo_equipo.label('logo_b')
+            EquipoA.nombre_equipo.label('nombre_equipo_a'), 
+            EquipoA.url_logo_equipo.label('logo_equipo_a'),
+            CapA.nombre_usuario.label('nombre_capitan_a'),
+            CanchaORM.nombre_cancha.label('nombre_cancha'),
+            DeporteORM.nombre_deporte.label('nombre_deporte'),
+            EquipoB.fk_id_usuario_capitan.label('id_capitan_b'),
+            EquipoB.nombre_equipo.label('nombre_equipo_b'),
+            EquipoB.url_logo_equipo.label('logo_equipo_b'),
+            CapA.telefono_usuario.label('telefono_capitan_a'),
+            CapB.telefono_usuario.label('telefono_capitan_b')
         ).join(
-            UsuarioORM, PartidaORM.fk_id_usuario_org == UsuarioORM.id_usuario
+            CapA, PartidaORM.fk_id_usuario_org == CapA.id_usuario
         ).join(
             CanchaORM, PartidaORM.fk_id_cancha == CanchaORM.id_cancha
         ).join(
@@ -95,12 +96,14 @@ class MatchRepositoryImpl(IMatchRepository):
             EquipoA, PartidaORM.fk_id_equipo_a == EquipoA.id_equipo
         ).outerjoin(
             EquipoB, PartidaORM.fk_id_equipo_b == EquipoB.id_equipo
+        ).outerjoin(
+            CapB, EquipoB.fk_id_usuario_capitan == CapB.id_usuario
         ).filter(PartidaORM.id_partida == match_id).first()
         
         if not result:
             return None
             
-        orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b = result
+        orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b, tel_a, tel_b = result
         return self._to_entity(
             orm,
             nombre_equipo_a=team_name,
@@ -110,7 +113,9 @@ class MatchRepositoryImpl(IMatchRepository):
             nombre_deporte=sport_name,
             id_capitan_b=id_capitan_b,
             nombre_equipo_b=name_b,
-            logo_equipo_b=logo_b
+            logo_equipo_b=logo_b,
+            telefono_capitan_a=tel_a,
+            telefono_capitan_b=tel_b
         )
 
     def get_all(self, 
@@ -192,7 +197,7 @@ class MatchRepositoryImpl(IMatchRepository):
         results = query.all()
         
         entities = []
-        for orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b in results:
+        for orm, team_name, team_logo, user_name, court_name, sport_name, id_capitan_b, name_b, logo_b, tel_a, tel_b in results:
             entity = self._to_entity(
                 orm,
                 nombre_equipo_a=team_name,
@@ -202,7 +207,9 @@ class MatchRepositoryImpl(IMatchRepository):
                 nombre_deporte=sport_name,
                 id_capitan_b=id_capitan_b,
                 nombre_equipo_b=name_b,
-                logo_equipo_b=logo_b
+                logo_equipo_b=logo_b,
+                telefono_capitan_a=tel_a,
+                telefono_capitan_b=tel_b
             )
             entities.append(entity)
             
