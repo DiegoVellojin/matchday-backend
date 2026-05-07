@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Callable, Dict, Type, Any
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class DomainEvent:
     """Base para todos los eventos de dominio."""
     occurred_on: datetime = field(default_factory=datetime.now)
