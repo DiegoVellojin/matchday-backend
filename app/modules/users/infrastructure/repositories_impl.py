@@ -30,9 +30,19 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
         orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.id_usuario == id_usuario).first()
         if orm_user:
             # Calcular estadísticas en tiempo real
-            partidos_jugados = self.db.query(PartidaUsuarioORM).filter(
+            # Un partido cuenta como "jugado" si el usuario participó (en Partida_Usuario) 
+            # O si fue el organizador del partido, siempre que el partido esté finalizado.
+            ids_participados = self.db.query(PartidaUsuarioORM.fk_id_partida).filter(
                 PartidaUsuarioORM.fk_id_usuario == id_usuario
-            ).join(PartidaORM).filter(PartidaORM.estatus_partida == 'finalizada').count()
+            ).all()
+            ids_participados_list = [r[0] for r in ids_participados]
+
+            partidos_jugados = self.db.query(PartidaORM).filter(
+                PartidaORM.estatus_partida == 'finalizada'
+            ).filter(
+                (PartidaORM.fk_id_usuario_org == id_usuario) | 
+                (PartidaORM.id_partida.in_(ids_participados_list))
+            ).distinct().count()
             
             partidos_organizados = self.db.query(PartidaORM).filter(
                 PartidaORM.fk_id_usuario_org == id_usuario
