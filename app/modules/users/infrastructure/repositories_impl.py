@@ -26,38 +26,40 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
             fecha_creacion_usuario=orm_model.fecha_creacion_usuario
         )
 
+    def _add_stats(self, orm_user: UsuarioORM) -> Usuario:
+        """Calcula y agrega las estadísticas al usuario."""
+        # Un partido cuenta como "jugado" solo si está 'completada'
+        # Y el usuario fue el organizador O participó en él.
+        partidos_jugados = self.db.query(PartidaORM).outerjoin(
+            PartidaUsuarioORM, PartidaORM.id_partida == PartidaUsuarioORM.fk_id_partida
+        ).filter(
+            PartidaORM.estatus_partida == 'completada'
+        ).filter(
+            (PartidaORM.fk_id_usuario_org == orm_user.id_usuario) | 
+            (PartidaUsuarioORM.fk_id_usuario == orm_user.id_usuario)
+        ).distinct().count()
+
+        # Partidos organizados: Todos los que no estén cancelados
+        partidos_organizados = self.db.query(PartidaORM).filter(
+            PartidaORM.fk_id_usuario_org == orm_user.id_usuario,
+            PartidaORM.estatus_partida != 'cancelada'
+        ).count()
+
+        entity = self._to_entity(orm_user)
+        entity.partidos_jugados = partidos_jugados
+        entity.partidos_organizados = partidos_organizados
+        return entity
+
     def get_by_id(self, id_usuario: int) -> Optional[Usuario]:
         orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.id_usuario == id_usuario).first()
         if orm_user:
-            # Calcular estadísticas en tiempo real
-            # Un partido cuenta como "jugado" si el usuario participó (en Partida_Usuario) 
-            # O si fue el organizador del partido, siempre que el partido esté finalizado.
-            ids_participados = self.db.query(PartidaUsuarioORM.fk_id_partida).filter(
-                PartidaUsuarioORM.fk_id_usuario == id_usuario
-            ).all()
-            ids_participados_list = [r[0] for r in ids_participados]
-
-            partidos_jugados = self.db.query(PartidaORM).filter(
-                PartidaORM.estatus_partida == 'finalizada'
-            ).filter(
-                (PartidaORM.fk_id_usuario_org == id_usuario) | 
-                (PartidaORM.id_partida.in_(ids_participados_list))
-            ).distinct().count()
-            
-            partidos_organizados = self.db.query(PartidaORM).filter(
-                PartidaORM.fk_id_usuario_org == id_usuario
-            ).count()
-            
-            entity = self._to_entity(orm_user)
-            entity.partidos_jugados = partidos_jugados
-            entity.partidos_organizados = partidos_organizados
-            return entity
+            return self._add_stats(orm_user)
         return None
 
     def get_by_email(self, email: str) -> Optional[Usuario]:
         orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.email_usuario == email).first()
         if orm_user:
-            return self._to_entity(orm_user)
+            return self._add_stats(orm_user)
         return None
 
     def create(self, usuario: Usuario) -> Usuario:
@@ -87,7 +89,7 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
             
             self.db.commit()
             self.db.refresh(orm_user)
-            return self._to_entity(orm_user)
+            return self._add_stats(orm_user)
         raise ValueError("Usuario no encontrado para actualizar")
 
 from app.modules.users.domain.interfaces import IFCMRepository
