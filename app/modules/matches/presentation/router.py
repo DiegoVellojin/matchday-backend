@@ -42,6 +42,7 @@ def list_matches(
     cancha_id: Optional[int] = None,
     fecha: Optional[datetime] = None,
     mine: bool = False,
+    team_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user_id: Optional[int] = Depends(get_optional_user_id)
 ):
@@ -51,16 +52,18 @@ def list_matches(
     if mine and not current_user_id:
         raise UnauthorizedException("Debe iniciar sesión para ver sus partidos")
     
-    # Si busca sus propios partidos, omitimos el filtro de status "publicada" por defecto
-    # para que vea los que están en negociación, pendientes de pago, etc.
+    # Si busca sus propios partidos o de un equipo, omitimos el filtro de status "publicada" por defecto
+    # para que vea los que están en negociación, pendientes de pago, completados (historial), etc.
     final_status = status
     final_user_id = None
     
-    if mine and current_user_id:
-        final_user_id = current_user_id
-        # Si no se pasó un status específico, buscamos todos los estados para "mis partidos"
+    if (mine and current_user_id) or team_id:
+        # Si no se pasó un status específico, buscamos todos los estados
         if status == "publicada":
             final_status = None
+            
+    if mine and current_user_id:
+        final_user_id = current_user_id
             
     return use_case.execute(
         sport_id=sport_id, 
@@ -68,7 +71,8 @@ def list_matches(
         region_id=region_id,
         cancha_id=cancha_id,
         fecha=fecha,
-        user_id=final_user_id
+        user_id=final_user_id,
+        team_id=team_id
     )
 
 @router.get("/{match_id}", response_model=MatchResponse)

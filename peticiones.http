@@ -32,3 +32,6 @@ Authorization: Bearer {{token}}
 ### 6. Mis Pagos
 GET {{baseUrl}}/payments/my
 Authorization: Bearer {{token}}
+### Listar partidos por equipo (Historial)
+GET {{baseUrl}}/matches/?team_id=1
+Authorization: Bearer {{token}}

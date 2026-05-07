@@ -95,7 +95,8 @@ class MatchRepositoryImpl(IMatchRepository):
                 region_id: Optional[int] = None,
                 cancha_id: Optional[int] = None,
                 fecha: Optional[datetime] = None,
-                user_id: Optional[int] = None) -> List[MatchEntity]:
+                user_id: Optional[int] = None,
+                team_id: Optional[int] = None) -> List[MatchEntity]:
         from app.modules.catalogs.infrastructure.orm_models import CanchaORM
         from app.modules.teams.infrastructure.orm_models import EquipoORM
         from sqlalchemy import func, or_
@@ -120,6 +121,12 @@ class MatchRepositoryImpl(IMatchRepository):
         if fecha:
             query = query.filter(func.date(PartidaORM.fecha_inicio_estimada) == fecha.date())
         
+        if team_id:
+            query = query.filter(or_(
+                PartidaORM.fk_id_equipo_a == team_id,
+                PartidaORM.fk_id_equipo_b == team_id
+            ))
+            
         if user_id:
             from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
             from sqlalchemy.orm import aliased
