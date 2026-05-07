@@ -47,13 +47,22 @@ def get_my_payments(
         fecha = row["fecha_inicio_estimada"].strftime('%d/%m/%Y') if row["fecha_inicio_estimada"] else ""
         concepto = f"Reserva de Cancha - {fecha}"
         
+        # Cálculo de deuda individual
+        total_jugadores = row.get("total_jugadores", 1)
+        costo_total = row.get("costo_total_partida", 0.0)
+        monto_individual = costo_total / total_jugadores if total_jugadores > 0 else costo_total
+        
+        # Si el usuario es el capitán, su deuda es 0
+        if current_user_id == row.get("fk_id_usuario_capitan"):
+            monto_individual = 0.0
+            
         payments.append(PaymentResponse(
             id_partida=row["id_partida"],
             team_name=row["nombre_equipo"] if row["nombre_equipo"] else "Sin Equipo",
             team_logo=row["url_logo_equipo"],
             concepto=concepto,
-            monto=row["costo_total_partida"],
-            is_paid=(row["estatus_pago"] == "verificado"),
+            monto=round(monto_individual, 2),
+            is_paid=(row["estatus_pago"] == "verificado" or monto_individual == 0),
             estatus_pago=row["estatus_pago"],
             url_recibo_pago=row["url_recibo_pago"]
         ))
@@ -118,12 +127,22 @@ def get_team_payments_to_validate(
     payments = []
     for row in raw_payments:
         fecha = row["fecha_inicio_estimada"].strftime('%d/%m/%Y') if row["fecha_inicio_estimada"] else ""
+        
+        # Cálculo de deuda individual
+        total_jugadores = row.get("total_jugadores", 1)
+        costo_total = row.get("costo_total_partida", 0.0)
+        monto_individual = costo_total / total_jugadores if total_jugadores > 0 else costo_total
+        
+        # Si el jugador es el capitán, su deuda es 0
+        if row.get("fk_id_usuario") == row.get("fk_id_usuario_capitan"):
+            monto_individual = 0.0
+            
         payments.append({
             "id_partida": row["fk_id_partida"],
             "id_usuario": row["fk_id_usuario"],
             "nombre_usuario": row["nombre_usuario"],
             "concepto": f"Reserva de Cancha - {fecha}",
-            "monto": row["costo_total_partida"],
+            "monto": round(monto_individual, 2),
             "estatus_pago": row["estatus_pago"],
             "url_recibo_pago": row["url_recibo_pago"]
         })

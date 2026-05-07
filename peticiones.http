@@ -1,1 +1,34 @@
-GET http://127.0.0.1:8000/ping
+@baseUrl = https://matchday-backend-3qot.onrender.com/api/v1
+@token = {{login.response.body.access_token}}
+
+### 0. Health Check
+GET {{baseUrl}}/../../
+
+### 1. Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "user@example.com",
+    "password": "password123"
+}
+
+### 2. Get My Profile
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{token}}
+
+### 3. Get Sports
+GET {{baseUrl}}/catalogs/sports
+
+### 4. Feed de Partidos
+GET {{baseUrl}}/matches?status=publicada
+Authorization: Bearer {{token}}
+
+### 5. Mis Equipos
+GET {{baseUrl}}/teams/me
+Authorization: Bearer {{token}}
+
+### 6. Mis Pagos
+GET {{baseUrl}}/payments/my
+Authorization: Bearer {{token}}

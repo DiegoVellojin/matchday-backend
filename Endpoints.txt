@@ -1,5 +1,5 @@
 # ==============================================================================
-# MATCHDAY API SPECIFICATION (V1)
+# MATCHDAY API SPECIFICATION (V1) - UPDATED 2026-05-06
 # ==============================================================================
 # Base URL: https://matchday-backend-3qot.onrender.com/api/v1
 # Protocol: HTTPS | Format: JSON | Auth: JWT (Bearer Token)
@@ -10,63 +10,73 @@
 - **POST /auth/google**          | Login con idToken de Google.
 - **POST /auth/register**        | Registro local.
 - **POST /auth/login**           | Iniciar sesión local.
-- **POST /auth/forgot-password** | Recuperación de cuenta.
+- **POST /auth/forgot-password** | Recuperación de cuenta (envía email).
+- **POST /auth/reset-password**  | Establecer nueva contraseña con token.
+- **GET  /auth/reset-password-redirect** | Redirección Deep Link para recuperación.
 
 ---
 ## 👤 1. MÓDULO: USUARIOS (`/users`)
 - **GET  /users/me**             | Perfil del jugador actual.
-- **PUT  /users/me**             | Actualizar perfil.
-- **POST /users/fcm-token**      | Registrar dispositivo para push.
+- **PUT  /users/me**             | Actualizar perfil (nombre, tel, foto).
+- **POST /users/fcm-token**      | Registrar token de Firebase Cloud Messaging.
 
 ---
 ## 🛡️ 2. MÓDULO: EQUIPOS (`/teams`)
 - **GET  /teams**                | Explorar equipos (reclutando).
 - **POST /teams**                | Crear equipo nuevo.
-- **GET  /teams/me**             | Mis equipos.
-- **GET  /teams/{id}**           | Detalle de equipo.
-- **GET  /teams/{id}/members**   | Jugadores activos en el equipo.
-- **POST /teams/{id}/join**      | Enviar solicitud de ingreso.
+- **GET  /teams/me**             | Mis equipos activos.
+- **GET  /teams/{id}**           | Detalle completo de equipo.
+- **PUT  /teams/{id}**           | Actualizar equipo (Capitán).
+- **DELETE /teams/{id}**         | Disolver equipo (Capitán).
+- **GET  /teams/{id}/members**   | Lista de miembros aceptados.
+- **POST /teams/{id}/join**      | Solicitar unirse al equipo.
 - **DELETE /teams/{id}/leave**   | Abandonar equipo.
-- **DELETE /teams/{id}/members/{id_user}** | Expulsar jugador (Admin).
-- **PUT  /teams/{id}**           | Actualizar equipo.
-- **DELETE /teams/{id}**         | Disolver equipo.
+- **DELETE /teams/{id}/members/{u_id}** | Expulsar jugador (Capitán).
 - **GET  /teams/{id}/requests**  | Ver aspirantes pendientes.
-- **PUT  /teams/{id}/requests/{id_user}** | Aceptar/Rechazar aspirante.
+- **PUT  /teams/{id}/requests/{u_id}** | Aceptar/Rechazar aspirante.
+- **GET  /teams/{id}/invite-token** | Generar link de invitación (Capitán).
+- **POST /teams/join-with-token**| Unirse directamente con token.
+- **PUT  /teams/{id}/transfer-captain/{u_id}** | Ceder capitanía.
+- **GET  /teams/{id}/share**     | Página de redirección para compartir.
 
 ---
 ## ⚽ 3. MÓDULO: PARTIDOS (`/matches`)
 - **POST /matches**              | Publicar nueva partida (retos).
-- **GET  /matches**              | Feed de partidas disponibles.
+- **GET  /matches**              | Feed de partidas (filtros: sport, status, region, date, mine).
 - **GET  /matches/{id}**         | Info completa de la partida.
-- **PUT  /matches/{id}/status**  | Cambiar estado (confirmada, cancelada).
-- **POST /matches/{id}/proposals** | Negociar fecha/costo (Equipo rival).
-- **PUT  /matches/{id}/accept-proposal** | Aceptar nueva condición.
-- **POST /matches/{id}/join**    | Equipo se une al reto.
-- **POST /matches/{id}/players** | Jugador individual se inscribe.
+- **PUT  /matches/{id}**         | Editar partida publicada (Solo Org).
+- **DELETE /matches/{id}**       | Cancelar/Eliminar partida (Solo Org).
+- **POST /matches/{id}/join**    | Unirse individualmente o con equipo.
+- **POST /matches/{id}/accept/{t_id}** | Aceptar reto de un equipo específico.
+- **PUT  /matches/{id}/configure**| Configurar fecha final, costo y datos de pago (Org).
+- **POST /matches/{id}/ready**   | Marcar equipo como listo (Capitanes).
+- **GET  /matches/{id}/players** | Ver lista de jugadores inscritos y su estatus.
+- **POST /matches/{id}/results** | Registrar resultado (Goles A vs Goles B).
 
 ---
-## 📊 4. RESULTADOS Y RANKINGS (`/results`, `/rankings`)
-- **POST /matches/{id}/results** | Declarar victoria/derrota/goles.
-- **GET  /rankings/team-leaderboard** | Tabla general de posiciones.
+## 📊 4. RESULTADOS Y RANKINGS (`/rankings`)
+- **GET  /rankings/team-leaderboard** | Tabla general de posiciones de equipos.
 
 ---
 ## 💸 5. MÓDULO: PAGOS (`/payments`)
-- **GET  /payments/me**          | Estado de cuenta del usuario (pendientes).
-- **PUT  /matches/{id}/players/{id_user}/payment** | Subir recibo y referencia.
-- **PUT  /payments/{id}/verify** | Confirmar recepción de dinero (Admin).
+- **GET  /payments/my**          | Mis deudas y pagos realizados.
+- **POST /payments/{id_partida}/upload** | Subir comprobante y referencia.
+- **GET  /payments/team/{id_eq}/validate** | Pagos del equipo para validar (Capitán).
+- **PUT  /payments/verify**      | Confirmar recepción de dinero (Capitán).
 
 ---
 ## 🔔 6. MÓDULO: NOTIFICACIONES (`/notifications`)
-- **GET  /notifications/me**     | Historial de notificaciones.
-- **PUT  /notifications/{id}/read** | Marcar como leída.
+- **GET  /notifications/**       | Historial de notificaciones del usuario.
+- **PUT  /notifications/read-all**| Marcar todas como leídas.
+- **PUT  /notifications/{id}/read**| Marcar una como leída.
 
 ---
 ## 📚 7. MÓDULO: CATÁLOGOS (`/catalogs`)
 - **GET  /catalogs/sports**      | Lista de deportes.
 - **GET  /catalogs/regions**     | Regiones geográficas.
-- **GET  /catalogs/courts**      | Canchas registradas.
+- **GET  /catalogs/canchas**      | Canchas registradas.
 - **POST /catalogs/canchas**     | Registrar nueva cancha (Google Maps).
 
 ---
 ## 🛠️ ESTÁNDAR DE ERRORES (HTTP)
-**400**: Bad Request | **401**: Unauthorized | **403**: Forbidden | **404**: Not Found | **409**: Conflict
+**200/201**: Éxito | **400**: Error cliente | **401**: No auth | **403**: Prohibido | **404**: No existe | **409**: Conflicto

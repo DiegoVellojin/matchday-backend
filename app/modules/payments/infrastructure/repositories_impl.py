@@ -17,7 +17,9 @@ class PaymentRepositoryImpl(IPaymentRepository):
             p.fecha_inicio_estimada,
             p.costo_total_partida,
             pu.estatus_pago,
-            pu.url_recibo_pago
+            pu.url_recibo_pago,
+            e.fk_id_usuario_capitan,
+            (SELECT COUNT(*) FROM bd_matchday."Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
         FROM bd_matchday."Partida_Usuario" pu
         JOIN bd_matchday."Partida" p ON pu.fk_id_partida = p.id_partida
         LEFT JOIN bd_matchday."Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
@@ -34,7 +36,9 @@ class PaymentRepositoryImpl(IPaymentRepository):
                 "fecha_inicio_estimada": row.fecha_inicio_estimada,
                 "costo_total_partida": float(row.costo_total_partida) if row.costo_total_partida else 0.0,
                 "estatus_pago": row.estatus_pago,
-                "url_recibo_pago": row.url_recibo_pago
+                "url_recibo_pago": row.url_recibo_pago,
+                "fk_id_usuario_capitan": row.fk_id_usuario_capitan,
+                "total_jugadores": row.total_jugadores
             })
         return payments
 
@@ -78,10 +82,13 @@ class PaymentRepositoryImpl(IPaymentRepository):
             p.fecha_inicio_estimada,
             p.costo_total_partida,
             pu.estatus_pago,
-            pu.url_recibo_pago
+            pu.url_recibo_pago,
+            e.fk_id_usuario_capitan,
+            (SELECT COUNT(*) FROM bd_matchday."Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
         FROM bd_matchday."Partida_Usuario" pu
         JOIN bd_matchday."Partida" p ON pu.fk_id_partida = p.id_partida
         JOIN bd_matchday."Usuario" u ON pu.fk_id_usuario = u.id_usuario
+        JOIN bd_matchday."Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
         WHERE pu.fk_id_equipo_asignado = :id_equipo
         """
         result = self.db.execute(text(query), {"id_equipo": id_equipo}).fetchall()
@@ -95,7 +102,9 @@ class PaymentRepositoryImpl(IPaymentRepository):
                 "fecha_inicio_estimada": row.fecha_inicio_estimada,
                 "costo_total_partida": float(row.costo_total_partida) if row.costo_total_partida else 0.0,
                 "estatus_pago": row.estatus_pago,
-                "url_recibo_pago": row.url_recibo_pago
+                "url_recibo_pago": row.url_recibo_pago,
+                "fk_id_usuario_capitan": row.fk_id_usuario_capitan,
+                "total_jugadores": row.total_jugadores
             })
         return payments
 
