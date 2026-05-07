@@ -10,6 +10,7 @@ from app.modules.notifications.presentation.router import router as notification
 from app.modules.payments.presentation.router import router as payments_router
 from app.modules.matches.presentation.router import router as matches_router
 from app.modules.rankings.presentation.router import router as rankings_router
+from app.modules.matches.application.event_handlers import register_match_event_handlers
 
 
 import json
@@ -61,4 +62,6 @@ app.include_router(notifications_router, prefix="/api/v1", tags=["Notifications"
 app.include_router(payments_router, prefix="/api/v1", tags=["Payments"])
 app.include_router(matches_router, prefix="/api/v1", tags=["Matches"])
 app.include_router(rankings_router, prefix="/api/v1", tags=["Rankings"])
-
+
+# Inicializar despachadores de eventos de dominio
+register_match_event_handlers()

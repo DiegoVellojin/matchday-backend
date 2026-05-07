@@ -1,9 +1,11 @@
 from typing import Optional, List
 from dataclasses import dataclass, field
 from datetime import datetime
+from app.core.events import AggregateRoot
+from app.modules.matches.domain.events import TeamAssignedToMatch
 
 @dataclass
-class MatchEntity:
+class MatchEntity(AggregateRoot):
     """Entidad que representa un partido o encuentro deportivo."""
     id: Optional[int] = None
     fecha_inicio_estimada: datetime = field(default_factory=datetime.now)
@@ -46,6 +48,23 @@ class MatchEntity:
     latitud_cancha: Optional[float] = None
     longitud_cancha: Optional[float] = None
     backend_status: str = "UPDATED_V3"
+
+    def __post_init__(self):
+        super().__init__()
+
+    def assign_team_a(self, team_id: int):
+        """Asigna el equipo A y registra el evento."""
+        if self.fk_id_equipo_a != team_id:
+            self.fk_id_equipo_a = team_id
+            if self.id:
+                self.record_event(TeamAssignedToMatch(match_id=self.id, team_id=team_id))
+
+    def assign_team_b(self, team_id: int):
+        """Asigna el equipo B y registra el evento."""
+        if self.fk_id_equipo_b != team_id:
+            self.fk_id_equipo_b = team_id
+            if self.id:
+                self.record_event(TeamAssignedToMatch(match_id=self.id, team_id=team_id))
 
     def can_transition_to_pending_payment(self) -> bool:
         """Verifica si ambas propuestas coinciden para avanzar a pendiente_pago."""
