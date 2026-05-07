@@ -4,12 +4,20 @@ from datetime import datetime
 from app.modules.matches.domain.entities import MatchEntity
 from app.modules.matches.domain.interfaces import IMatchRepository
 from app.modules.matches.infrastructure.orm_models import PartidaORM, PartidaUsuarioORM
+from app.core.events import EventDispatcher
+from app.core.specification import Specification
 
 class MatchRepositoryImpl(IMatchRepository):
     """Implementación del repositorio de partidos con SQLAlchemy."""
 
     def __init__(self, db: Session):
         self.db = db
+
+    def _dispatch_events(self, entity: MatchEntity):
+        """Despacha todos los eventos acumulados en la entidad."""
+        events = entity.pull_domain_events()
+        for event in events:
+            EventDispatcher.dispatch(event)
 
     def _to_entity(self, orm: PartidaORM) -> MatchEntity:
         """Convierte el modelo ORM de SQLAlchemy a la Entidad de Dominio."""
@@ -67,14 +75,17 @@ class MatchRepositoryImpl(IMatchRepository):
         self.db.add(orm)
         self.db.commit()
         self.db.refresh(orm)
-
-        # Si el partido se crea con equipos, agregamos automáticamente a sus miembros
+        entity = self._to_entity(orm)
+        
+        # Si tiene equipos, podemos disparar los eventos manualmente si la entidad no los capturó
+        # (Ya que al crear desde cero vía ORM la entidad aún no existe)
+        from app.modules.matches.domain.events import TeamAssignedToMatch
         if orm.fk_id_equipo_a:
-            self._register_team_members(orm.id_partida, orm.fk_id_equipo_a)
+            EventDispatcher.dispatch(TeamAssignedToMatch(match_id=orm.id_partida, team_id=orm.fk_id_equipo_a))
         if orm.fk_id_equipo_b:
-            self._register_team_members(orm.id_partida, orm.fk_id_equipo_b)
+            EventDispatcher.dispatch(TeamAssignedToMatch(match_id=orm.id_partida, team_id=orm.fk_id_equipo_b))
 
-        return self._to_entity(orm)
+        return entity
 
     def get_by_id(self, match_id: int) -> Optional[MatchEntity]:
         from sqlalchemy.orm import joinedload
@@ -89,17 +100,8 @@ class MatchRepositoryImpl(IMatchRepository):
         
         return self._to_entity(orm) if orm else None
 
-    def get_all(self, 
-                sport_id: Optional[int] = None, 
-                status: Optional[str] = None,
-                region_id: Optional[int] = None,
-                cancha_id: Optional[int] = None,
-                fecha: Optional[datetime] = None,
-                user_id: Optional[int] = None,
-                team_id: Optional[int] = None) -> List[MatchEntity]:
-        from app.modules.catalogs.infrastructure.orm_models import CanchaORM
+    def find(self, specification: Specification) -> List[MatchEntity]:
         from app.modules.teams.infrastructure.orm_models import EquipoORM
-        from sqlalchemy import func, or_
         from sqlalchemy.orm import joinedload
         
         query = self.db.query(PartidaORM).options(
@@ -109,45 +111,49 @@ class MatchRepositoryImpl(IMatchRepository):
             joinedload(PartidaORM.equipo_a),
             joinedload(PartidaORM.equipo_b).joinedload(EquipoORM.capitan)
         )
-
-        if sport_id:
-            query = query.filter(PartidaORM.fk_id_deporte == sport_id)
-        if status:
-            query = query.filter(PartidaORM.estatus_partida == status)
-        if region_id:
-            query = query.join(PartidaORM.cancha).filter(CanchaORM.fk_id_region == region_id)
-        if cancha_id:
-            query = query.filter(PartidaORM.fk_id_cancha == cancha_id)
-        if fecha:
-            query = query.filter(func.date(PartidaORM.fecha_inicio_estimada) == fecha.date())
         
-        if team_id:
-            query = query.filter(or_(
-                PartidaORM.fk_id_equipo_a == team_id,
-                PartidaORM.fk_id_equipo_b == team_id
-            ))
-            
-        if user_id:
-            from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
-            from sqlalchemy.orm import aliased
-            
-            EqA = aliased(EquipoORM)
-            EqB = aliased(EquipoORM)
-            
-            # Búsqueda de involucramiento: Organizador, Jugador registrado, o Capitán de equipo A/B
-            query = query.outerjoin(PartidaUsuarioORM, PartidaORM.id_partida == PartidaUsuarioORM.fk_id_partida)
-            query = query.outerjoin(EqA, PartidaORM.fk_id_equipo_a == EqA.id_equipo)
-            query = query.outerjoin(EqB, PartidaORM.fk_id_equipo_b == EqB.id_equipo)
-            
-            query = query.filter(or_(
-                PartidaORM.fk_id_usuario_org == user_id,
-                PartidaUsuarioORM.fk_id_usuario == user_id,
-                EqA.fk_id_usuario_capitan == user_id,
-                EqB.fk_id_usuario_capitan == user_id
-            )).distinct()
-        
+        query = specification.apply_to_query(query, PartidaORM)
         results = query.all()
         return [self._to_entity(orm) for orm in results]
+
+    def get_all(self, 
+                sport_id: Optional[int] = None, 
+                status: Optional[str] = None,
+                region_id: Optional[int] = None,
+                cancha_id: Optional[int] = None,
+                fecha: Optional[datetime] = None,
+                user_id: Optional[int] = None,
+                team_id: Optional[int] = None) -> List[MatchEntity]:
+        from app.modules.matches.domain.specifications import (
+            MatchBySport, MatchByStatus, MatchByCancha, MatchByDate, MatchByUserInvolved
+        )
+        
+        specs = []
+        if sport_id: specs.append(MatchBySport(sport_id))
+        if status: specs.append(MatchByStatus(status))
+        if cancha_id: specs.append(MatchByCancha(cancha_id))
+        if fecha: specs.append(MatchByDate(fecha))
+        if user_id: specs.append(MatchByUserInvolved(user_id))
+        
+        if not specs:
+            # Si no hay filtros, creamos una especificación que siempre sea verdadera o simplemente buscamos todos
+            from sqlalchemy.orm import joinedload
+            from app.modules.teams.infrastructure.orm_models import EquipoORM
+            results = self.db.query(PartidaORM).options(
+                joinedload(PartidaORM.organizador),
+                joinedload(PartidaORM.deporte),
+                joinedload(PartidaORM.cancha),
+                joinedload(PartidaORM.equipo_a),
+                joinedload(PartidaORM.equipo_b).joinedload(EquipoORM.capitan)
+            ).all()
+            return [self._to_entity(orm) for orm in results]
+
+        # Combinar todas las especificaciones con AND
+        composite_spec = specs[0]
+        for next_spec in specs[1:]:
+            composite_spec = composite_spec & next_spec
+            
+        return self.find(composite_spec)
 
     def update(self, match_id: int, data: dict) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
@@ -164,15 +170,20 @@ class MatchRepositoryImpl(IMatchRepository):
         
         self.db.commit()
 
-        # Si se asignó un equipo A nuevo, registrar miembros
-        if orm.fk_id_equipo_a and orm.fk_id_equipo_a != old_equipo_a:
-            self._register_team_members(orm.id_partida, orm.fk_id_equipo_a)
-        
-        # Si se asignó un equipo B nuevo (e.g. al aceptar reto), registrar miembros
-        if orm.fk_id_equipo_b and orm.fk_id_equipo_b != old_equipo_b:
-            self._register_team_members(orm.id_partida, orm.fk_id_equipo_b)
+        # Convertir a entidad y disparar eventos registrados en ella
+        entity = self.get_by_id(match_id)
+        if entity:
+            # Detectar cambios de equipo y registrar eventos si no se hizo en la capa superior
+            # (En un sistema ideal, esto se haría en el UseCase llamando a entity.assign_team_x)
+            from app.modules.matches.domain.events import TeamAssignedToMatch
+            if orm.fk_id_equipo_a and orm.fk_id_equipo_a != old_equipo_a:
+                EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=orm.fk_id_equipo_a))
+            if orm.fk_id_equipo_b and orm.fk_id_equipo_b != old_equipo_b:
+                EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=orm.fk_id_equipo_b))
+            
+            self._dispatch_events(entity)
 
-        return self.get_by_id(match_id)
+        return entity
 
     def _register_team_members(self, match_id: int, team_id: int):
         """Registra a todos los miembros aceptados de un equipo en la partida."""

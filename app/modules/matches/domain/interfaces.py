@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from datetime import datetime
 from app.modules.matches.domain.entities import MatchEntity
+from app.core.specification import Specification
 
 class IMatchRepository(ABC):
     """Interfaz para el repositorio de partidos."""
@@ -26,6 +27,11 @@ class IMatchRepository(ABC):
                 user_id: Optional[int] = None,
                 team_id: Optional[int] = None) -> List[MatchEntity]:
         """Obtiene todos los partidos con filtros opcionales."""
+        pass
+
+    @abstractmethod
+    def find(self, specification: Specification) -> List[MatchEntity]:
+        """Busca partidos que cumplan con la especificación dada."""
         pass
 
     @abstractmethod
