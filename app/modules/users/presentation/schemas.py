@@ -10,6 +10,8 @@ class UserResponse(BaseModel):
     url_foto_perfil: Optional[str] = None
     rol_usuario: str
     reliability_score: float
+    partidos_jugados: int
+    partidos_organizados: int
 
     class Config:
         from_attributes = True

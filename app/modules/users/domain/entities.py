@@ -16,7 +16,9 @@ class Usuario:
         url_foto_perfil: Optional[str],
         rol_usuario: str,
         reliability_score: float,
-        fecha_creacion_usuario: Optional[datetime]
+        fecha_creacion_usuario: Optional[datetime],
+        partidos_jugados: int = 0,
+        partidos_organizados: int = 0
     ):
         self.id_usuario = id_usuario
         self.nombre_usuario = nombre_usuario
@@ -27,3 +29,5 @@ class Usuario:
         self.rol_usuario = rol_usuario
         self.reliability_score = reliability_score
         self.fecha_creacion_usuario = fecha_creacion_usuario
+        self.partidos_jugados = partidos_jugados
+        self.partidos_organizados = partidos_organizados

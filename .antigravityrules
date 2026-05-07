@@ -1,21 +1,185 @@
-# MatchDay - Senior Software Engineer Rules & Communication Protocol
+# ============================================================
+#  MatchDay Backend — Reglas para Antigravity (Senior Engineer)
+#  Última actualización: Mayo 2026
+# ============================================================
 
-## Communication & Language
-- **Language:** All responses, explanations, and chat interactions MUST be in SPANISH.
-- **Transparency Protocol:** BEFORE making or suggesting any code change, you must:
-  1. Explain EXACTLY what is being added, modified, or removed.
-  2. Justify WHY the change is necessary (e.g., "to comply with SOLID", "to fix a bug in the Infrastructure layer", etc.).
-  3. Wait for confirmation if the change is structural.
+# ─────────────────────────────────────────────────────────────
+#  COMUNICACIÓN Y LENGUAJE
+# ─────────────────────────────────────────────────────────────
+## Idioma
+- Todas las respuestas, explicaciones y comentarios de chat DEBEN estar en ESPAÑOL.
+- Los mensajes de commit de git también deben estar en español.
+- Los comentarios en código (docstrings, inline) deben estar en español.
 
-## Code Documentation & Professionalism
-- **Mandatory Comments:** All generated code must be professionally commented in Spanish.
-- **Documentation Style:** - Use Docstrings for Python functions/classes.
-  - Use Triple-slash (`///`) comments for Dart/Flutter documentation.
-  - Comments should explain the "Why" (intent) rather than just the "What" (logic).
-- **Clean Code:** Use meaningful variable names. Avoid "magic numbers".
+## Protocolo de Transparencia
+- ANTES de hacer cualquier cambio de código, explicar:
+  1. QUÉ se va a añadir, modificar o eliminar.
+  2. POR QUÉ es necesario (ej. "para cumplir SRP", "para corregir bug en la capa Infra").
+  3. Si el cambio es estructural (nuevo patrón, nuevo módulo), esperar confirmación explícita del usuario.
+- Nunca modificar múltiples archivos sin avisar qué archivos serán tocados.
 
-## Architectural Integrity (Strict)
-- **Clean Architecture:** Respect the 4 layers (Domain, Application, Infrastructure, Presentation).
-- **Dependency Rule:** Inner layers (Domain) must NEVER depend on outer layers.
-- **Cross-Platform Consistency:** - Backend: PascalCase for DB Tables, snake_case for columns.
-  - Frontend: Feature-first folder structure.
+# ─────────────────────────────────────────────────────────────
+#  DOCUMENTACIÓN Y CÓDIGO PROFESIONAL
+# ─────────────────────────────────────────────────────────────
+## Comentarios Obligatorios
+- Todo código generado debe tener comentarios profesionales en español.
+- Usar Docstrings para funciones y clases Python (formato estilo Google Docstrings).
+- Los comentarios deben explicar el PORQUÉ (intención/decisión), no el QUÉ (lógica obvia).
+- Evitar comentarios redundantes como `# retorna el usuario` sobre `return user`.
+
+## Nombres y Estilo
+- Variables, funciones, clases: nombres descriptivos en inglés o español consistente.
+- Sin "números mágicos": usar constantes con nombre (ej. MAX_PLAYERS = 11).
+- Sin abreviaciones crípticas: `usr` → `usuario`, `res` → `resultado`.
+
+## Verificación Post-Cambio
+- Después de CUALQUIER modificación de código Python, ejecutar el servidor en modo
+  local para verificar que no hay errores de importación o de inicio.
+- Si se añade un nuevo módulo o archivo, verificar que los imports funcionan.
+
+# ─────────────────────────────────────────────────────────────
+#  ARQUITECTURA LIMPIA (STRICT)
+# ─────────────────────────────────────────────────────────────
+## Las 4 Capas (No Negociable)
+- DOMAIN: Entidades, Interfaces (ABCs), Excepciones, Eventos y Especificaciones.
+  → Sin imports de FastAPI, SQLAlchemy ni nada externo al dominio.
+- APPLICATION: Casos de uso, Event Handlers, DTOs de entrada/salida.
+  → Solo depende del dominio. Nunca de Infrastructure ni Presentation.
+- INFRASTRUCTURE: Implementaciones ORM, Repositorios, APIs externas.
+  → Implementa las interfaces del dominio. Puede usar SQLAlchemy, httpx, etc.
+- PRESENTATION: Routers FastAPI, esquemas Pydantic, dependencias de inyección.
+  → Solo llama a los Use Cases. Nunca accede directamente a ORM o repositorios.
+
+## Regla de Dependencia
+- Las capas internas (Domain) NUNCA dependen de las externas.
+- Si el Dominio necesita algo externo, usar una interfaz abstracta (ABC).
+
+## Estructura de Módulos
+- Cada módulo sigue: domain/ application/ infrastructure/ presentation/
+- Módulos activos: auth, users, teams, matches, payments, catalogs,
+  notifications, rankings.
+- Nuevos módulos deben seguir la misma estructura sin excepción.
+
+# ─────────────────────────────────────────────────────────────
+#  PATRONES DE DISEÑO IMPLEMENTADOS (Respetar y Extender)
+# ─────────────────────────────────────────────────────────────
+## Patrón State (Estatus de Partido)
+- Los estatus de partida son strings en la BD: 'publicada', 'negociando',
+  'pendiente_pago', 'confirmada', 'completada', 'cancelada'.
+- En el Frontend (Flutter) ya existe la clase MatchStatus con subclases concretas.
+- En el Backend, si se necesita lógica diferenciada por estado, NO usar
+  if/elif cadenas. Crear métodos en la entidad o usar el patrón State.
+
+## Patrón Cadena de Responsabilidad (Presentación Flutter)
+- La lógica del botón CTA de la tarjeta de partido vive en MatchActionHandler.
+- Para añadir comportamiento a un nuevo estado: crear una nueva subclase de
+  _MatchActionLink y encadenarla en MatchActionHandler.resolve().
+- NUNCA añadir if/else directamente en los widgets de la UI para lógica de navegación.
+
+## Patrón Domain Events (Observer / Pub-Sub)
+- Infraestructura en: app/core/events.py (DomainEvent, EventDispatcher, AggregateRoot).
+- Evento específico de partidos: app/modules/matches/domain/events.py.
+- Los handlers se registran en: app/modules/matches/application/event_handlers.py.
+- Los handlers se inicializan al arrancar la app en main.py.
+- Si una acción en el repositorio tiene efectos secundarios (registrar jugadores,
+  enviar notificación, actualizar ranking), ese efecto debe ir en un Handler,
+  no en el repositorio.
+
+## Patrón Specification (Búsquedas en Repositorios)
+- Infraestructura en: app/core/specification.py.
+- Especificaciones de partidos en: app/modules/matches/domain/specifications.py.
+- El repositorio expone el método find(specification: Specification).
+- NUNCA añadir más parámetros al método get_all para filtros nuevos.
+  En su lugar, crear una nueva Specification y combinarla con & (AND).
+- Ejemplo correcto: repo.find(MatchBySport(1) & MatchByStatus('publicada'))
+
+## Patrón Repository
+- Los repositorios implementan la interfaz IXxxRepository del dominio.
+- Las interfaces viven en domain/interfaces.py de cada módulo.
+- Los repositorios NO contienen lógica de negocio. Solo CRUD y consultas.
+
+# ─────────────────────────────────────────────────────────────
+#  BASE DE DATOS Y MODELOS ORM
+# ─────────────────────────────────────────────────────────────
+## Convenciones de Nomenclatura BD
+- Tablas: PascalCase (ej. Partida, EquipoUsuario, PagoPartida).
+- Columnas: snake_case (ej. fecha_inicio_estimada, fk_id_usuario_org).
+- Claves foráneas: prefijo fk_ (ej. fk_id_equipo_a).
+- IDs primarios: id_<nombre_tabla> (ej. id_partida, id_usuario).
+
+## ORM (SQLAlchemy)
+- Los modelos ORM viven en infrastructure/orm_models.py de cada módulo.
+- Usar relationships con lazy loading apropiado. Preferir joinedload explícito
+  en consultas para evitar N+1 queries.
+- Las migraciones de base de datos se aplican en el seed o manualmente.
+  No usar Alembic por ahora (proyecto en desarrollo activo).
+
+## Campos de Estatus en BD
+- Los estatus se almacenan como strings. Valores válidos para partidas:
+  'publicada' | 'negociando' | 'pendiente_pago' | 'confirmada' | 'completada' | 'cancelada'
+- Valores de estatus de pago de jugadores: 'pendiente' | 'enviado' | 'verificado' | 'rechazado'
+- Valores de estatus de miembro de equipo: 'aceptado' | 'pendiente' | 'rechazado'
+
+# ─────────────────────────────────────────────────────────────
+#  FASTAPI Y API REST
+# ─────────────────────────────────────────────────────────────
+## Routers y Endpoints
+- Todos los endpoints tienen el prefijo /api/v1/.
+- Routers de cada módulo se registran en main.py.
+- Los endpoints usan inyección de dependencias (Depends) para obtener la sesión
+  de BD y los Use Cases. No instanciar repositorios directamente en los routers.
+- Las respuestas siguen el esquema Pydantic definido en presentation/schemas.py.
+
+## Autenticación
+- La autenticación es con Firebase JWT tokens.
+- El guard de autenticación se aplica con Depends(get_current_user).
+- El usuario autenticado tiene los campos: id, email, nombre_usuario, etc.
+
+## Manejo de Errores
+- Usar MatchDayException (app/core/exceptions.py) para errores de negocio.
+- El handler global en main.py convierte MatchDayException en respuestas JSON.
+- Los errores HTTP estándar (404, 403) usar HTTPException de FastAPI.
+- NUNCA exponer stack traces al cliente en producción.
+
+## Notificaciones Push
+- El sistema de notificaciones usa Firebase Cloud Messaging.
+- Infraestructura en: app/core/notifications/ y app/modules/notifications/.
+- Para enviar notificaciones desde un Use Case, usar el servicio de notificaciones,
+  no llamar directamente a la API de Firebase.
+
+# ─────────────────────────────────────────────────────────────
+#  FLUJO DE TRABAJO CON GIT
+# ─────────────────────────────────────────────────────────────
+## Commits
+- Mensajes de commit en español con formato Conventional Commits:
+  feat(modulo): descripción → nueva funcionalidad
+  fix(modulo): descripción  → corrección de bug
+  refactor(modulo): descripción → reestructuración sin cambio funcional
+  chore(modulo): descripción → tareas de mantenimiento
+  docs(modulo): descripción → solo documentación
+
+## Push
+- NUNCA hacer push automático sin confirmación del usuario.
+- Agrupar cambios relacionados en commits separados y descriptivos.
+- Un commit = una responsabilidad (SRP aplicado a commits).
+
+# ─────────────────────────────────────────────────────────────
+#  COMPORTAMIENTO DEL ASISTENTE
+# ─────────────────────────────────────────────────────────────
+## Análisis Previo Siempre
+- Antes de proponer soluciones, leer el código existente del módulo afectado.
+- Verificar si el patrón que se va a implementar ya existe en otro módulo.
+- Proponer la solución más consistente con la arquitectura actual.
+
+## SOLID en Todo Momento
+- SRP: Cada clase/función tiene UNA sola responsabilidad.
+- OCP: Extender funcionalidad creando nuevas clases, no modificando las existentes.
+- LSP: Las subclases son sustituibles por sus bases sin romper el sistema.
+- ISP: Interfaces pequeñas y específicas, no genéricas enormes.
+- DIP: Depender de abstracciones (ABCs), no de implementaciones concretas.
+
+## Proactividad
+- Si al revisar código se detecta una violación de arquitectura o un patrón
+  incorrecto, mencionarlo aunque no sea el objetivo principal de la tarea.
+- Sugerir mejoras de patrones cuando aplique, explicando el beneficio concreto.
+- Si se detecta deuda técnica relevante, documentarla para el usuario.

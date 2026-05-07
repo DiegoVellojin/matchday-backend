@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.modules.users.domain.entities import Usuario
 from app.modules.users.domain.interfaces import IUsuarioRepository
 from app.modules.users.infrastructure.orm_models import UsuarioORM
+from app.modules.matches.infrastructure.orm_models import PartidaORM, PartidaUsuarioORM
 
 class UsuarioRepositoryImpl(IUsuarioRepository):
     """
@@ -28,7 +29,19 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
     def get_by_id(self, id_usuario: int) -> Optional[Usuario]:
         orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.id_usuario == id_usuario).first()
         if orm_user:
-            return self._to_entity(orm_user)
+            # Calcular estadísticas en tiempo real
+            partidos_jugados = self.db.query(PartidaUsuarioORM).filter(
+                PartidaUsuarioORM.fk_id_usuario == id_usuario
+            ).join(PartidaORM).filter(PartidaORM.estatus_partida == 'finalizada').count()
+            
+            partidos_organizados = self.db.query(PartidaORM).filter(
+                PartidaORM.fk_id_usuario_org == id_usuario
+            ).count()
+            
+            entity = self._to_entity(orm_user)
+            entity.partidos_jugados = partidos_jugados
+            entity.partidos_organizados = partidos_organizados
+            return entity
         return None
 
     def get_by_email(self, email: str) -> Optional[Usuario]:
