@@ -148,10 +148,13 @@ def get_team_payments_to_validate(
         })
     return payments
 
+class VerifyPaymentRequest(BaseModel):
+    id_partida: int
+    id_usuario: int
+
 @router.put("/verify")
 def verify_user_payment(
-    id_partida: int,
-    id_usuario: int,
+    request: VerifyPaymentRequest,
     current_user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
@@ -159,17 +162,17 @@ def verify_user_payment(
     repository = PaymentRepositoryImpl(db)
     use_case = VerifyUserPaymentUseCase(repository)
     
-    use_case.execute(id_partida, id_usuario, current_user_id)
+    use_case.execute(request.id_partida, request.id_usuario, current_user_id)
     
     # Enviar notificación FCM al jugador
     try:
         notif_repo = NotificacionRepositoryImpl(db)
         notif_use_case = CreateNotificationUseCase(notif_repo)
         notif_use_case.execute(
-            id_usuario=id_usuario,
+            id_usuario=request.id_usuario,
             mensaje=f"Tu pago ha sido verificado exitosamente por el capitán.",
             tipo="payment_verified",
-            referencia_id=id_partida,
+            referencia_id=request.id_partida,
             db=db
         )
     except Exception as e:
