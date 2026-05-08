@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -18,6 +19,9 @@ class UsuarioORM(Base):
     rol_usuario = Column(String(20), nullable=False, default="Standard")
     reliability_score = Column(Float, default=5.00)
     fecha_creacion_usuario = Column(DateTime, server_default=func.now())
+
+    # Relaciones
+    datos_bancarios = relationship("DatosBancariosORM", back_populates="usuario", uselist=False)
 
 class UsuarioFCMORM(Base):
     """
@@ -39,7 +43,10 @@ class DatosBancariosORM(Base):
     __table_args__ = {"schema": "bd_matchday"}
 
     id_datos = Column(Integer, primary_key=True, index=True)
-    fk_id_usuario = Column(Integer, nullable=False)
+    fk_id_usuario = Column(Integer, ForeignKey("bd_matchday.Usuario.id_usuario"), nullable=False)
     banco = Column(String(100), nullable=False)
     cedula = Column(String(50), nullable=False)
     telefono = Column(String(50), nullable=False)
+
+    # Relaciones
+    usuario = relationship("UsuarioORM", back_populates="datos_bancarios")

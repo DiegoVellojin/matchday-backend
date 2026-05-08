@@ -57,7 +57,10 @@ class MatchRepositoryImpl(IMatchRepository):
             telefono_capitan_a=orm.organizador.telefono_usuario if orm.organizador else None,
             telefono_capitan_b=orm.equipo_b.capitan.telefono_usuario if (orm.equipo_b and orm.equipo_b.capitan) else None,
             latitud_cancha=orm.cancha.latitud_cancha if orm.cancha else None,
-            longitud_cancha=orm.cancha.longitud_cancha if orm.cancha else None
+            longitud_cancha=orm.cancha.longitud_cancha if orm.cancha else None,
+            banco_receptor=orm.organizador.datos_bancarios.banco if (orm.organizador and orm.organizador.datos_bancarios) else None,
+            cedula_receptora=orm.organizador.datos_bancarios.cedula if (orm.organizador and orm.organizador.datos_bancarios) else None,
+            telefono_receptor=orm.organizador.datos_bancarios.telefono if (orm.organizador and orm.organizador.datos_bancarios) else None
         )
 
     def create(self, match: MatchEntity) -> MatchEntity:
@@ -90,8 +93,9 @@ class MatchRepositoryImpl(IMatchRepository):
     def get_by_id(self, match_id: int) -> Optional[MatchEntity]:
         from sqlalchemy.orm import joinedload
         from app.modules.teams.infrastructure.orm_models import EquipoORM
+        from app.modules.users.infrastructure.orm_models import UsuarioORM
         orm = self.db.query(PartidaORM).options(
-            joinedload(PartidaORM.organizador),
+            joinedload(PartidaORM.organizador).joinedload(UsuarioORM.datos_bancarios),
             joinedload(PartidaORM.deporte),
             joinedload(PartidaORM.cancha),
             joinedload(PartidaORM.equipo_a),
@@ -102,10 +106,11 @@ class MatchRepositoryImpl(IMatchRepository):
 
     def find(self, specification: Specification) -> List[MatchEntity]:
         from app.modules.teams.infrastructure.orm_models import EquipoORM
+        from app.modules.users.infrastructure.orm_models import UsuarioORM
         from sqlalchemy.orm import joinedload
         
         query = self.db.query(PartidaORM).options(
-            joinedload(PartidaORM.organizador),
+            joinedload(PartidaORM.organizador).joinedload(UsuarioORM.datos_bancarios),
             joinedload(PartidaORM.deporte),
             joinedload(PartidaORM.cancha),
             joinedload(PartidaORM.equipo_a),
@@ -139,8 +144,9 @@ class MatchRepositoryImpl(IMatchRepository):
             # Si no hay filtros, creamos una especificación que siempre sea verdadera o simplemente buscamos todos
             from sqlalchemy.orm import joinedload
             from app.modules.teams.infrastructure.orm_models import EquipoORM
+            from app.modules.users.infrastructure.orm_models import UsuarioORM
             results = self.db.query(PartidaORM).options(
-                joinedload(PartidaORM.organizador),
+                joinedload(PartidaORM.organizador).joinedload(UsuarioORM.datos_bancarios),
                 joinedload(PartidaORM.deporte),
                 joinedload(PartidaORM.cancha),
                 joinedload(PartidaORM.equipo_a),

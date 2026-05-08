@@ -47,6 +47,9 @@ class MatchEntity(AggregateRoot):
     telefono_capitan_b: Optional[str] = None
     latitud_cancha: Optional[float] = None
     longitud_cancha: Optional[float] = None
+    banco_receptor: Optional[str] = None
+    cedula_receptora: Optional[str] = None
+    telefono_receptor: Optional[str] = None
     backend_status: str = "UPDATED_V3"
 
     def __post_init__(self):
