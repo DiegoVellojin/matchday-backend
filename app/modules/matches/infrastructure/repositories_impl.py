@@ -242,6 +242,7 @@ class MatchRepositoryImpl(IMatchRepository):
                 "url_foto_perfil": r.url_foto_perfil,
                 "estatus_pago": r[0].estatus_pago,
                 "url_recibo_pago": r[0].url_recibo_pago,
+                "referencia_pago": r[0].referencia_pago,
                 "id_equipo": r[0].fk_id_equipo_asignado
             } for r in results
         ]
@@ -377,18 +378,3 @@ class MatchRepositoryImpl(IMatchRepository):
             self.db.commit()
             return True
         return False
-
-    def update(self, match: MatchEntity) -> MatchEntity:
-        orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match.id).first()
-        if not orm:
-            return match
-            
-        orm.fk_id_deporte = match.fk_id_deporte
-        orm.fk_id_cancha = match.fk_id_cancha
-        orm.fecha_inicio_estimada = match.fecha_inicio_estimada
-        orm.fecha_fin_estimada = match.fecha_fin_estimada
-        orm.fk_id_equipo_a = match.fk_id_equipo_a
-        
-        self.db.commit()
-        self.db.refresh(orm)
-        return self._to_entity(orm)

@@ -52,8 +52,8 @@ INSERT INTO bd_matchday."Usuario" (id_usuario, nombre_usuario, email_usuario, pa
 (1, 'Diego Vellojin', 'vellojindiego7@gmail.com', '$2b$12$LQv3c1yqBWVHxkd0LqG83eS6U5Q6U5Q6U5Q6U5Q6U5Q6U5Q6U5Q6U', '+584242970648', 'https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/user_photos%2Fphoto_1_1777577535753.jpg?alt=media&token=634c0e39-048c-4d83-b3e3-a7bb70d9f14e', 'Admin', 5.00);
 
 -- Usuario 2 (Diego Alejandro - Principal)
-INSERT INTO bd_matchday."Usuario" (id_usuario, nombre_usuario, email_usuario, password_hash, telefono_usuario, rol_usuario, reliability_score) VALUES 
-(2, 'Diego Alejandro Vellojin Posso', 'davellojin.20@est.ucab.edu.ve', '$2b$12$LQv3c1yqBWVHxkd0LqG83eS6U5Q6U5Q6U5Q6U5Q6U5Q6U5Q6U5Q6U', '+584123456789', 'Standard', 4.80);
+INSERT INTO bd_matchday."Usuario" (id_usuario, nombre_usuario, email_usuario, password_hash, telefono_usuario, url_foto_perfil, rol_usuario, reliability_score) VALUES 
+(2, 'Diego Alejandro Vellojin Posso', 'davellojin.20@est.ucab.edu.ve', '$2b$12$LQv3c1yqBWVHxkd0LqG83eS6U5Q6U5Q6U5Q6U5Q6U5Q6U5Q6U5Q6U', '+584123456789', 'https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/user_photos%2Fphoto_2_1778172042259.jpg?alt=media&token=c944b563-1ce3-4e32-b015-05599610d84b', 'Standard', 4.80);
 
 -- Otros usuarios para llenar equipos
 DO $$
@@ -74,17 +74,19 @@ INSERT INTO bd_matchday."Datos_Bancarios" (fk_id_usuario, banco, cedula, telefon
 -- 6. EQUIPOS
 -- Equipos de Diego (ID 1)
 INSERT INTO bd_matchday."Equipo" (id_equipo, nombre_equipo, fk_id_deporte, fk_id_usuario_capitan, url_logo_equipo, max_miembros) VALUES 
-(1, 'Real Madrid (FC)', 1, 1, 'https://cdn-icons-png.flaticon.com/512/3063/3063171.png', 22),
+(1, 'Real Madrid (FC)', 1, 1, 'https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/team_logos%2Flogo_1_1778185393657.jpg?alt=media&token=2efea338-f17a-4924-a0aa-872ae4a234a3', 22),
 (2, 'Vellojin Basket', 3, 1, 'https://cdn-icons-png.flaticon.com/512/889/889455.png', 12),
-(3, 'Galácticos 5', 2, 1, 'https://cdn-icons-png.flaticon.com/512/3306/3306636.png', 10);
+(3, 'Galácticos 5', 2, 1, 'https://cdn-icons-png.flaticon.com/512/3306/3306636.png', 10),
+(9, 'Padel club', 5, 1, 'https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/team_logos%2Flogo_1778094586637.jpg?alt=media&token=76b734f3-779c-4985-a4cb-b9996b8fd272', 4);
 
 -- Equipos de Diego Alejandro (ID 2)
 INSERT INTO bd_matchday."Equipo" (id_equipo, nombre_equipo, fk_id_deporte, fk_id_usuario_capitan, url_logo_equipo, max_miembros) VALUES 
-(6, 'Manchester City (MC)', 1, 2, 'https://cdn-icons-png.flaticon.com/512/3063/3063171.png', 22),
+(6, 'Manchester City (MC)', 1, 2, 'https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/team_logos%2Flogo_6_1778184313772.jpg?alt=media&token=73da8fa5-22d6-4c0a-a555-6502953f6976', 22),
 (7, 'City Stars Basketball', 3, 2, 'https://cdn-icons-png.flaticon.com/512/889/889455.png', 12),
-(8, 'City Futsal', 2, 2, 'https://cdn-icons-png.flaticon.com/512/3306/3306636.png', 10);
+(8, 'City Futsal', 2, 2, 'https://cdn-icons-png.flaticon.com/512/3306/3306636.png', 10),
+(10, 'Padel Pro Rivals', 5, 3, 'https://cdn-icons-png.flaticon.com/512/2166/2166823.png', 4);
 
-SELECT setval('bd_matchday."Equipo_id_equipo_seq"', 8);
+SELECT setval('bd_matchday."Equipo_id_equipo_seq"', 10);
 
 -- 7. MIEMBROS DE EQUIPOS
 -- Llenar Real Madrid (Equipo 1)
@@ -112,6 +114,14 @@ INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_m
 
 -- Diego (ID 1) también es miembro del Manchester City (Jugador)
 INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_miembro, rol_equipo) VALUES (6, 1, 'aceptado', 'Jugador');
+
+-- CASO DE PRUEBA PADEL: Diego (1) y Diego Alejandro (2) en Padel Club (9)
+INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_miembro, rol_equipo) VALUES (9, 1, 'aceptado', 'Capitan');
+INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_miembro, rol_equipo) VALUES (9, 2, 'aceptado', 'Jugador');
+
+-- Rival Padel (10)
+INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_miembro, rol_equipo) VALUES (10, 3, 'aceptado', 'Capitan');
+INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_miembro, rol_equipo) VALUES (10, 4, 'aceptado', 'Jugador');
 
 -- 8. PARTIDOS (CASOS DE USO)
 
@@ -152,7 +162,12 @@ INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_
 INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, fecha_acordada, costo_total_partida, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a, fk_id_equipo_b) VALUES 
 (8, '2026-05-28 18:00:00', '2026-05-28 20:00:00', '2026-05-28 18:00:00', 100.00, 'pendiente_pago', 2, 1, 1, 6, 1);
 
-SELECT setval('bd_matchday."Partida_id_partida_seq"', 8);
+-- CASE 9: TEST DE PAGOS PADEL (PENDIENTE PAGO - RIVAL LISTO)
+-- Diego (1) vs Padel Rivals (10). 
+INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, fecha_acordada, costo_total_partida, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a, fk_id_equipo_b, equipo_b_listo) VALUES 
+(9, '2026-05-30 19:00:00', '2026-05-30 21:00:00', '2026-05-30 19:00:00', 40.00, 'pendiente_pago', 1, 5, 5, 9, 10, true);
+
+SELECT setval('bd_matchday."Partida_id_partida_seq"', 9);
 
 -- 9. PARTICIPANTES Y PAGOS (Partida_Usuario)
 
@@ -209,6 +224,13 @@ SELECT DISTINCT ON (fk_id_usuario) 8, fk_id_usuario, 'pendiente', fk_id_equipo
 FROM bd_matchday."Equipo_Usuario" 
 WHERE fk_id_equipo IN (1, 6)
 ORDER BY fk_id_usuario, (CASE WHEN rol_equipo = 'Capitan' THEN 0 ELSE 1 END);
+
+-- Partida 9: Pagos de Padel
+INSERT INTO bd_matchday."Partida_Usuario" (fk_id_partida, fk_id_usuario, estatus_pago, fk_id_equipo_asignado) VALUES 
+(9, 3, 'verificado', 10), -- Rival Capitan Pago
+(9, 4, 'verificado', 10), -- Rival Jugador Pago
+(9, 1, 'verificado', 9),  -- Tu Capitan Pago (Tu mismo)
+(9, 2, 'pendiente', 9);   -- Diego Alejandro PENDIENTE (El que tienes que probar)
 
 -- 10. RESULTADOS (Para la partida completada)
 INSERT INTO bd_matchday."Resultado" (fk_id_partida, fk_id_equipo, goles_favor, goles_contra, puntos_obtenidos, resultado_texto) VALUES 

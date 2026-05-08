@@ -35,6 +35,7 @@ class MatchPlayerResponse(BaseModel):
     url_foto_perfil: Optional[str] = None
     estatus_pago: str
     url_recibo_pago: Optional[str] = None
+    referencia_pago: Optional[str] = None
     id_equipo: Optional[int] = None
 
 class MatchResponse(BaseModel):

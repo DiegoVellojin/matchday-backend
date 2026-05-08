@@ -55,6 +55,7 @@ class PartidaUsuarioORM(Base):
     fk_id_usuario = Column(Integer, ForeignKey("bd_matchday.Usuario.id_usuario"), nullable=False)
     estatus_pago = Column(String(20), default="pendiente")
     url_recibo_pago = Column(String(255), nullable=True)
+    referencia_pago = Column(String(100), nullable=True)
     fk_id_equipo_asignado = Column(Integer, ForeignKey("bd_matchday.Equipo.id_equipo"), nullable=True)
 
 class ResultadoORM(Base):
