@@ -42,6 +42,7 @@ class PartidaORM(Base):
     cancha = relationship("app.modules.catalogs.infrastructure.orm_models.CanchaORM", foreign_keys=[fk_id_cancha])
     equipo_a = relationship("app.modules.teams.infrastructure.orm_models.EquipoORM", foreign_keys=[fk_id_equipo_a])
     equipo_b = relationship("app.modules.teams.infrastructure.orm_models.EquipoORM", foreign_keys=[fk_id_equipo_b])
+    participantes = relationship("PartidaUsuarioORM", cascade="all, delete-orphan")
 
 class PartidaUsuarioORM(Base):
     """Modelo ORM para la tabla 'Partida_Usuario'."""

@@ -19,6 +19,8 @@ class MatchEntity(AggregateRoot):
     fk_id_equipo_a: Optional[int] = None
     fk_id_equipo_b: Optional[int] = None
     fecha_creacion_partida: datetime = field(default_factory=datetime.now)
+    cupos_totales: int = 22
+    jugadores_inscritos: int = 0
 
     # Campos para la negociación entre capitanes
     propuesta_fecha_a: Optional[datetime] = None
@@ -57,6 +59,12 @@ class MatchEntity(AggregateRoot):
 
     def __post_init__(self):
         super().__init__()
+
+    @property
+    def cuota_por_jugador(self) -> float:
+        """Propiedad calculada que retorna de forma segura costo_total / max(1, jugadores_inscritos)."""
+        divisor = max(1, getattr(self, 'jugadores_inscritos', 0))
+        return round(self.costo_total_partida / divisor, 2)
 
     def assign_team_a(self, team_id: int):
         """Asigna el equipo A y registra el evento."""

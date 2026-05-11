@@ -60,6 +60,9 @@ class MatchResponse(BaseModel):
     equipo_a_listo: bool = False
     equipo_b_listo: bool = False
 
+    cupos_totales: int
+    cuota_por_jugador: float
+
     # Campos enriquecidos
     nombre_equipo_a: Optional[str] = None
     logo_equipo_a: Optional[str] = None

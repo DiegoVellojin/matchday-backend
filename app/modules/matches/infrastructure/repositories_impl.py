@@ -34,6 +34,8 @@ class MatchRepositoryImpl(IMatchRepository):
             fk_id_equipo_a=cast(Optional[int], orm.fk_id_equipo_a),
             fk_id_equipo_b=cast(Optional[int], orm.fk_id_equipo_b),
             fecha_creacion_partida=cast(datetime, orm.fecha_creacion_partida),
+            cupos_totales=orm.deporte.max_jugadores_deporte if getattr(orm, 'deporte', None) and orm.deporte.max_jugadores_deporte else 22,
+            jugadores_inscritos=len(orm.participantes) if hasattr(orm, 'participantes') else 0,
             propuesta_fecha_a=cast(Optional[datetime], orm.propuesta_fecha_a),
             propuesta_costo_a=cast(Optional[float], orm.propuesta_costo_a),
             propuesta_fecha_b=cast(Optional[datetime], orm.propuesta_fecha_b),
