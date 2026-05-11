@@ -71,3 +71,16 @@ class MatchByUserInvolved(Specification):
             EqA.fk_id_usuario_capitan == self.user_id,
             EqB.fk_id_usuario_capitan == self.user_id
         )).distinct()
+
+class MatchByTeamInvolved(Specification):
+    def __init__(self, team_id: int):
+        self.team_id = team_id
+
+    def is_satisfied_by(self, match) -> bool:
+        return match.fk_id_equipo_a == self.team_id or match.fk_id_equipo_b == self.team_id
+
+    def apply_to_query(self, query, model):
+        return query.filter(or_(
+            model.fk_id_equipo_a == self.team_id,
+            model.fk_id_equipo_b == self.team_id
+        ))

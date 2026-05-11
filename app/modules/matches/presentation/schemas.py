@@ -78,6 +78,12 @@ class MatchResponse(BaseModel):
     latitud_cancha: Optional[float] = None
     longitud_cancha: Optional[float] = None
     backend_status: Optional[str] = None
+    banco_receptor: Optional[str] = None
+    cedula_receptora: Optional[str] = None
+    telefono_receptor: Optional[str] = None
+    banco_capitan_b: Optional[str] = None
+    cedula_capitan_b: Optional[str] = None
+    telefono_capitan_b_pago: Optional[str] = None
 
     class Config:
         from_attributes = True

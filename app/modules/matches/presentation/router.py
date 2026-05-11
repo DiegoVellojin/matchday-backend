@@ -25,8 +25,16 @@ def create_match(
     current_user_id: int = Depends(get_current_user_id)
 ):
     repository = MatchRepositoryImpl(db)
-    use_case = CreateMatchUseCase(repository)
     
+    # Validar que el usuario es capitán del equipo A
+    if request.fk_id_equipo_a:
+        from app.modules.teams.infrastructure.repositories_impl import TeamRepositoryImpl
+        team_repo = TeamRepositoryImpl(db)
+        team = team_repo.get_by_id(request.fk_id_equipo_a)
+        if not team or team.fk_id_usuario_capitan != current_user_id:
+            raise UnauthorizedException("Solo el capitán del equipo puede solicitar un encuentro")
+
+    use_case = CreateMatchUseCase(repository)
     match_data = request.model_dump()
     match_data["fk_id_usuario_org"] = current_user_id
     
@@ -92,8 +100,15 @@ def accept_match(
     current_user_id: int = Depends(get_current_user_id)
 ):
     repository = MatchRepositoryImpl(db)
+    
+    # Validar que el usuario es capitán del equipo que acepta
+    from app.modules.teams.infrastructure.repositories_impl import TeamRepositoryImpl
+    team_repo = TeamRepositoryImpl(db)
+    team = team_repo.get_by_id(team_id)
+    if not team or team.fk_id_usuario_capitan != current_user_id:
+        raise UnauthorizedException("Solo el capitán del equipo puede aceptar un encuentro")
+
     use_case = AcceptEncounterUseCase(repository)
-    # Aquí se podría validar que el usuario es el capitán del equipo_id
     match = use_case.execute(match_id, team_id)
     
     # Enviar notificación FCM al organizador (Capitán A)
@@ -228,7 +243,7 @@ def register_result(
                 team_repo = TeamRepositoryImpl(db)
                 equipo_b = team_repo.get_by_id(match.fk_id_equipo_b)
                 if equipo_b:
-                    cap_b = equipo_b.fk_id_usuario_lider
+                    cap_b = equipo_b.fk_id_usuario_capitan
             
             target_user = cap_b if current_user_id == match.fk_id_usuario_org else match.fk_id_usuario_org
             
@@ -287,6 +302,14 @@ def update_match(
     if match.estatus_partida != 'publicada':
         raise ConflictException("No se puede editar un partido que ya está en negociación o pago")
         
+    # Validar que el usuario es capitán del nuevo equipo A (si cambia)
+    if request.fk_id_equipo_a and request.fk_id_equipo_a != match.fk_id_equipo_a:
+        from app.modules.teams.infrastructure.repositories_impl import TeamRepositoryImpl
+        team_repo = TeamRepositoryImpl(db)
+        team = team_repo.get_by_id(request.fk_id_equipo_a)
+        if not team or team.fk_id_usuario_capitan != current_user_id:
+            raise UnauthorizedException("Solo el capitán del equipo puede asignar su equipo a un encuentro")
+
     match.fk_id_deporte = request.fk_id_deporte
     match.fk_id_cancha = request.fk_id_cancha
     match.fecha_inicio_estimada = request.fecha_inicio_estimada

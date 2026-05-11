@@ -50,6 +50,9 @@ class MatchEntity(AggregateRoot):
     banco_receptor: Optional[str] = None
     cedula_receptora: Optional[str] = None
     telefono_receptor: Optional[str] = None
+    banco_capitan_b: Optional[str] = None
+    cedula_capitan_b: Optional[str] = None
+    telefono_capitan_b_pago: Optional[str] = None
     backend_status: str = "UPDATED_V3"
 
     def __post_init__(self):

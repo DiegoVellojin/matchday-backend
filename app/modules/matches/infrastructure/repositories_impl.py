@@ -60,7 +60,10 @@ class MatchRepositoryImpl(IMatchRepository):
             longitud_cancha=orm.cancha.longitud_cancha if orm.cancha else None,
             banco_receptor=orm.organizador.datos_bancarios.banco if (orm.organizador and orm.organizador.datos_bancarios) else None,
             cedula_receptora=orm.organizador.datos_bancarios.cedula if (orm.organizador and orm.organizador.datos_bancarios) else None,
-            telefono_receptor=orm.organizador.datos_bancarios.telefono if (orm.organizador and orm.organizador.datos_bancarios) else None
+            telefono_receptor=orm.organizador.datos_bancarios.telefono if (orm.organizador and orm.organizador.datos_bancarios) else None,
+            banco_capitan_b=orm.equipo_b.capitan.datos_bancarios.banco if (orm.equipo_b and orm.equipo_b.capitan and orm.equipo_b.capitan.datos_bancarios) else None,
+            cedula_capitan_b=orm.equipo_b.capitan.datos_bancarios.cedula if (orm.equipo_b and orm.equipo_b.capitan and orm.equipo_b.capitan.datos_bancarios) else None,
+            telefono_capitan_b_pago=orm.equipo_b.capitan.datos_bancarios.telefono if (orm.equipo_b and orm.equipo_b.capitan and orm.equipo_b.capitan.datos_bancarios) else None
         )
 
     def create(self, match: MatchEntity) -> MatchEntity:
@@ -139,6 +142,9 @@ class MatchRepositoryImpl(IMatchRepository):
         if cancha_id: specs.append(MatchByCancha(cancha_id))
         if fecha: specs.append(MatchByDate(fecha))
         if user_id: specs.append(MatchByUserInvolved(user_id))
+        if team_id:
+            from app.modules.matches.domain.specifications import MatchByTeamInvolved
+            specs.append(MatchByTeamInvolved(team_id))
         
         if not specs:
             # Si no hay filtros, creamos una especificación que siempre sea verdadera o simplemente buscamos todos
