@@ -50,17 +50,17 @@ class IMatchRepository(ABC):
         pass
 
     @abstractmethod
-    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> MatchEntity:
+    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> Optional[MatchEntity]:
         """Configura los términos del partido e inserta/actualiza los datos bancarios del capitán."""
         pass
 
     @abstractmethod
-    def mark_team_ready(self, match_id: int, team_id: int) -> MatchEntity:
+    def mark_team_ready(self, match_id: int, team_id: int) -> Optional[MatchEntity]:
         """Marca un equipo como listo (todos los jugadores verificados)."""
         pass
 
     @abstractmethod
-    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> MatchEntity:
+    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> Optional[MatchEntity]:
         """Actualiza los términos propuestos por un capitán."""
         pass
 
@@ -70,6 +70,6 @@ class IMatchRepository(ABC):
         pass
 
     @abstractmethod
-    def submit_result_proposal(self, match_id: int, user_id: int, goals_a: int, goals_b: int) -> MatchEntity:
+    def submit_result_proposal(self, match_id: int, user_id: int, goals_a: int, goals_b: int) -> Optional[MatchEntity]:
         """Sube la propuesta de resultado de un capitán para verificación cruzada."""
         pass

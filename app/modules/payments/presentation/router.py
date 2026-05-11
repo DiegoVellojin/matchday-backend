@@ -12,7 +12,7 @@ from app.modules.payments.application.use_cases import (
     GetTeamPaymentsToValidateUseCase, 
     VerifyUserPaymentUseCase
 )
-from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
+from app.modules.notifications.infrastructure.repositories_impl import NotificationRepositoryImpl
 from app.modules.notifications.application.use_cases import CreateNotificationUseCase
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
@@ -88,14 +88,14 @@ def upload_receipt(
         match = match_repo.get_by_id(id_partida)
         if match:
             # Enviar notificación FCM al organizador o capitán
-            notif_repo = NotificacionRepositoryImpl(db)
+            notif_repo = NotificationRepositoryImpl(db)
             notif_use_case = CreateNotificationUseCase(notif_repo)
             
             # Buscamos el nombre del jugador para la notificación
             from app.modules.users.infrastructure.repositories_impl import UserRepositoryImpl
             user_repo = UserRepositoryImpl(db)
-            user = user_repo.get_user_by_id(current_user_id)
-            user_name = user.name if user else "Un jugador"
+            user = user_repo.get_by_id(current_user_id)
+            user_name = user.nombre_usuario if user else "Un jugador"
             
             # Determinamos a quién notificar (al capitán del equipo del usuario, o al organizador)
             # Para simplificar, notificaremos al organizador (quien usualmente gestiona los pagos)
@@ -166,7 +166,7 @@ def verify_user_payment(
     
     # Enviar notificación FCM al jugador
     try:
-        notif_repo = NotificacionRepositoryImpl(db)
+        notif_repo = NotificationRepositoryImpl(db)
         notif_use_case = CreateNotificationUseCase(notif_repo)
         notif_use_case.execute(
             id_usuario=request.id_usuario,

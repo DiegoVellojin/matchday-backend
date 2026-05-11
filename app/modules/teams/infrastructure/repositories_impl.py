@@ -1,12 +1,13 @@
-from typing import Optional, List
+from datetime import datetime
+from typing import cast, Optional, List
 from sqlalchemy.orm import Session
 from app.modules.teams.domain.entities import Equipo, EquipoUsuario
-from app.modules.teams.domain.interfaces import IEquipoRepository
+from app.modules.teams.domain.interfaces import ITeamRepository
 from app.modules.teams.infrastructure.orm_models import EquipoORM, EquipoUsuarioORM
 from app.modules.catalogs.domain.entities import Deporte
 from app.modules.catalogs.infrastructure.orm_models import DeporteORM
 
-class EquipoRepositoryImpl(IEquipoRepository):
+class TeamRepositoryImpl(ITeamRepository):
     """
     Implementación del repositorio de equipos utilizando SQLAlchemy para la persistencia.
     
@@ -27,18 +28,18 @@ class EquipoRepositoryImpl(IEquipoRepository):
         Convierte un objeto ORM de Equipo a su entidad de dominio correspondiente.
         """
         return Equipo(
-            id_equipo=orm.id_equipo,
-            nombre_equipo=orm.nombre_equipo,
-            fk_id_deporte=orm.fk_id_deporte,
-            fk_id_usuario_capitan=orm.fk_id_usuario_capitan,
+            id_equipo=cast(int, orm.id_equipo),
+            nombre_equipo=cast(str, orm.nombre_equipo),
+            fk_id_deporte=cast(int, orm.fk_id_deporte),
+            fk_id_usuario_capitan=cast(int, orm.fk_id_usuario_capitan),
             deporte=deporte,
-            url_logo_equipo=orm.url_logo_equipo,
-            puntos_acumulados=orm.puntos_acumulados,
-            descripcion_equipo=orm.descripcion_equipo,
-            esta_reclutando=orm.esta_reclutando,
-            max_miembros=orm.max_miembros,
-            fecha_creacion_equipo=orm.fecha_creacion_equipo,
-            url_chat_equipo=orm.url_chat_equipo
+            url_logo_equipo=cast(str, orm.url_logo_equipo),
+            puntos_acumulados=cast(int, orm.puntos_acumulados),
+            descripcion_equipo=cast(str, orm.descripcion_equipo),
+            esta_reclutando=cast(bool, orm.esta_reclutando),
+            max_miembros=cast(int, orm.max_miembros),
+            fecha_creacion_equipo=cast(datetime, orm.fecha_creacion_equipo),
+            url_chat_equipo=cast(str, orm.url_chat_equipo)
         )
 
     def _to_membership_entity(self, orm: EquipoUsuarioORM) -> EquipoUsuario:
@@ -46,10 +47,10 @@ class EquipoRepositoryImpl(IEquipoRepository):
         Convierte un objeto ORM de membresía a su entidad de dominio.
         """
         return EquipoUsuario(
-            fk_id_equipo=orm.fk_id_equipo,
-            fk_id_usuario=orm.fk_id_usuario,
-            estatus_miembro=orm.estatus_miembro,
-            rol_equipo=orm.rol_equipo
+            fk_id_equipo=cast(int, orm.fk_id_equipo),
+            fk_id_usuario=cast(int, orm.fk_id_usuario),
+            estatus_miembro=cast(str, orm.estatus_miembro),
+            rol_equipo=cast(str, orm.rol_equipo)
         )
 
     def create(self, equipo: Equipo) -> Equipo:
@@ -75,7 +76,7 @@ class EquipoRepositoryImpl(IEquipoRepository):
         
         # Recuperar información del deporte para la respuesta completa
         deporte_orm = self.db.query(DeporteORM).filter(DeporteORM.id_deporte == equipo.fk_id_deporte).first()
-        deporte = Deporte(deporte_orm.id_deporte, deporte_orm.nombre_deporte) if deporte_orm else None
+        deporte = Deporte(cast(int, deporte_orm.id_deporte), cast(str, deporte_orm.nombre_deporte)) if deporte_orm else None
         
         return self._to_entity(orm_equipo, deporte)
 
@@ -131,8 +132,8 @@ class EquipoRepositoryImpl(IEquipoRepository):
             EquipoUsuarioORM.fk_id_usuario == id_usuario
         ).first()
         if orm:
-            orm.estatus_miembro = status
-            orm.rol_equipo = role
+            setattr(orm, "estatus_miembro", status)
+            setattr(orm, "rol_equipo", role)
             self.db.commit()
             return True
         return False
@@ -211,17 +212,17 @@ class EquipoRepositoryImpl(IEquipoRepository):
         if not equipo_orm:
             return False
         
-        viejo_capitan_id = equipo_orm.fk_id_usuario_capitan
-        equipo_orm.fk_id_usuario_capitan = id_nuevo_capitan
+        viejo_capitan_id = cast(Optional[int], equipo_orm.fk_id_usuario_capitan)
+        setattr(equipo_orm, "fk_id_usuario_capitan", id_nuevo_capitan)
         
         # Degradar antiguo capitán
-        if viejo_capitan_id:
+        if viejo_capitan_id is not None:
             viejo_miembro = self.db.query(EquipoUsuarioORM).filter(
                 EquipoUsuarioORM.fk_id_equipo == id_equipo,
                 EquipoUsuarioORM.fk_id_usuario == viejo_capitan_id
             ).first()
             if viejo_miembro:
-                viejo_miembro.rol_equipo = "Jugador"
+                setattr(viejo_miembro, "rol_equipo", "Jugador")
         
         # Ascender nuevo capitán
         nuevo_miembro = self.db.query(EquipoUsuarioORM).filter(
@@ -229,8 +230,8 @@ class EquipoRepositoryImpl(IEquipoRepository):
             EquipoUsuarioORM.fk_id_usuario == id_nuevo_capitan
         ).first()
         if nuevo_miembro:
-            nuevo_miembro.rol_equipo = "Capitán"
-            nuevo_miembro.estatus_miembro = "aceptado"
+            setattr(nuevo_miembro, "rol_equipo", "Capitán")
+            setattr(nuevo_miembro, "estatus_miembro", "aceptado")
         
         self.db.commit()
         return True

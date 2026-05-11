@@ -1,4 +1,4 @@
-from app.modules.users.domain.interfaces import IUsuarioRepository
+from app.modules.users.domain.interfaces import IUserRepository
 from app.modules.users.domain.entities import Usuario
 from typing import Optional
 from app.core.security import get_password_hash
@@ -9,7 +9,7 @@ class GetUserProfileUseCase:
     Caso de uso para recuperar la información de perfil de un usuario.
     """
     
-    def __init__(self, usuario_repository: IUsuarioRepository):
+    def __init__(self, usuario_repository: IUserRepository):
         """
         :param usuario_repository: Implementación del repositorio de usuarios.
         """
@@ -32,7 +32,7 @@ class UpdateUserProfileUseCase:
     foto de perfil y contraseña.
     """
     
-    def __init__(self, usuario_repository: IUsuarioRepository):
+    def __init__(self, usuario_repository: IUserRepository):
         """
         :param usuario_repository: Implementación del repositorio de usuarios.
         """

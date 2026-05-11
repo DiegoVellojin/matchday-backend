@@ -1,11 +1,12 @@
-from typing import Optional
+from datetime import datetime
+from typing import cast, Optional
 from sqlalchemy.orm import Session
 from app.modules.users.domain.entities import Usuario
-from app.modules.users.domain.interfaces import IUsuarioRepository
+from app.modules.users.domain.interfaces import IUserRepository
 from app.modules.users.infrastructure.orm_models import UsuarioORM
 from app.modules.matches.infrastructure.orm_models import PartidaORM, PartidaUsuarioORM
 
-class UsuarioRepositoryImpl(IUsuarioRepository):
+class UserRepositoryImpl(IUserRepository):
     """
     Implementación concreta del repositorio de usuarios utilizando SQLAlchemy.
     """
@@ -15,15 +16,15 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
     def _to_entity(self, orm_model: UsuarioORM) -> Usuario:
         """Convierte el modelo ORM de SQLAlchemy a la Entidad de Dominio."""
         return Usuario(
-            id_usuario=orm_model.id_usuario,
-            nombre_usuario=orm_model.nombre_usuario,
-            email_usuario=orm_model.email_usuario,
-            password_hash=orm_model.password_hash,
-            telefono_usuario=orm_model.telefono_usuario,
-            url_foto_perfil=orm_model.url_foto_perfil,
-            rol_usuario=orm_model.rol_usuario,
-            reliability_score=orm_model.reliability_score,
-            fecha_creacion_usuario=orm_model.fecha_creacion_usuario
+            id_usuario=cast(int, orm_model.id_usuario),
+            nombre_usuario=cast(str, orm_model.nombre_usuario),
+            email_usuario=cast(str, orm_model.email_usuario),
+            password_hash=cast(str, orm_model.password_hash),
+            telefono_usuario=cast(Optional[str], orm_model.telefono_usuario),
+            url_foto_perfil=cast(Optional[str], orm_model.url_foto_perfil),
+            rol_usuario=cast(str, orm_model.rol_usuario),
+            reliability_score=cast(float, orm_model.reliability_score),
+            fecha_creacion_usuario=cast(Optional[datetime], orm_model.fecha_creacion_usuario)
         )
 
     def _add_stats(self, orm_user: UsuarioORM) -> Usuario:
@@ -80,12 +81,12 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
     def update(self, usuario: Usuario) -> Usuario:
         orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.id_usuario == usuario.id_usuario).first()
         if orm_user:
-            orm_user.nombre_usuario = usuario.nombre_usuario
-            orm_user.telefono_usuario = usuario.telefono_usuario
-            orm_user.url_foto_perfil = usuario.url_foto_perfil
+            setattr(orm_user, "nombre_usuario", usuario.nombre_usuario)
+            setattr(orm_user, "telefono_usuario", usuario.telefono_usuario)
+            setattr(orm_user, "url_foto_perfil", usuario.url_foto_perfil)
             # rol_usuario y reliability_score podrían no actualizarse desde este caso de uso simple
             if usuario.password_hash:
-                orm_user.password_hash = usuario.password_hash
+                setattr(orm_user, "password_hash", usuario.password_hash)
             
             self.db.commit()
             self.db.refresh(orm_user)
@@ -105,8 +106,8 @@ class FCMRepositoryImpl(IFCMRepository):
     def save_token(self, id_usuario: int, fcm_token: str) -> None:
         existing = self.db.query(UsuarioFCMORM).filter(UsuarioFCMORM.fcm_token == fcm_token).first()
         if existing:
-            if existing.fk_id_usuario != id_usuario:
-                existing.fk_id_usuario = id_usuario
+            if cast(int, existing.fk_id_usuario) != id_usuario:
+                setattr(existing, "fk_id_usuario", id_usuario)
                 self.db.commit()
             return
         
@@ -125,5 +126,5 @@ class FCMRepositoryImpl(IFCMRepository):
 
     def get_tokens_by_user(self, id_usuario: int) -> list[str]:
         records = self.db.query(UsuarioFCMORM).filter(UsuarioFCMORM.fk_id_usuario == id_usuario).all()
-        return [r.fcm_token for r in records]
+        return [cast(str, r.fcm_token) for r in records]
 

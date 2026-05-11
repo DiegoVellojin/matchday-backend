@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user_id
-from app.modules.users.infrastructure.repositories_impl import UsuarioRepositoryImpl
+from app.modules.users.infrastructure.repositories_impl import UserRepositoryImpl
 from app.modules.users.application.use_cases import GetUserProfileUseCase, UpdateUserProfileUseCase
 from app.modules.users.presentation.schemas import UserResponse, UpdateUserRequest
 
@@ -16,7 +16,7 @@ def get_my_profile(
     """
     Retorna el perfil del usuario autenticado.
     """
-    repo = UsuarioRepositoryImpl(db)
+    repo = UserRepositoryImpl(db)
     use_case = GetUserProfileUseCase(repo)
     
     usuario = use_case.execute(current_user_id)
@@ -34,7 +34,7 @@ def update_my_profile(
     """
     Actualiza los datos del perfil del usuario (nombre, teléfono, foto).
     """
-    repo = UsuarioRepositoryImpl(db)
+    repo = UserRepositoryImpl(db)
     use_case = UpdateUserProfileUseCase(repo)
     
     usuario = use_case.execute(

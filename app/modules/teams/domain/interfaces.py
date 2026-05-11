@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List
 from app.modules.teams.domain.entities import Equipo, EquipoUsuario
 
-class IEquipoRepository(ABC):
+class ITeamRepository(ABC):
     """
     Interfaz para el repositorio de equipos.
     """

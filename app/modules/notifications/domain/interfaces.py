@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from app.modules.notifications.domain.entities import Notificacion
 
-class INotificacionRepository(ABC):
+class INotificationRepository(ABC):
     @abstractmethod
     def create(self, notificacion: Notificacion) -> Notificacion:
         pass

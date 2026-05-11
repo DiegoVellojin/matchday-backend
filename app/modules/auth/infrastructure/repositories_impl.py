@@ -1,10 +1,11 @@
-from typing import Optional
+from datetime import datetime
+from typing import Optional, cast
 from sqlalchemy.orm import Session
 from app.modules.users.domain.entities import Usuario
-from app.modules.auth.domain.interfaces import IUsuarioRepository
+from app.modules.auth.domain.interfaces import IUserRepository
 from app.modules.users.infrastructure.orm_models import UsuarioORM
 
-class UsuarioRepositoryImpl(IUsuarioRepository):
+class UserRepositoryImpl(IUserRepository):
     """
     Implementación del repositorio de usuarios orientada a la autenticación.
     
@@ -26,15 +27,15 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
         :return: Entidad de dominio Usuario.
         """
         return Usuario(
-            id_usuario=orm_model.id_usuario,
-            nombre_usuario=orm_model.nombre_usuario,
-            email_usuario=orm_model.email_usuario,
-            password_hash=orm_model.password_hash,
-            telefono_usuario=orm_model.telefono_usuario,
-            url_foto_perfil=orm_model.url_foto_perfil,
-            rol_usuario=orm_model.rol_usuario,
-            reliability_score=orm_model.reliability_score,
-            fecha_creacion_usuario=orm_model.fecha_creacion_usuario
+            id_usuario=cast(int, orm_model.id_usuario),
+            nombre_usuario=cast(str, orm_model.nombre_usuario),
+            email_usuario=cast(str, orm_model.email_usuario),
+            password_hash=cast(Optional[str], orm_model.password_hash),
+            telefono_usuario=cast(Optional[str], orm_model.telefono_usuario),
+            url_foto_perfil=cast(Optional[str], orm_model.url_foto_perfil),
+            rol_usuario=cast(str, orm_model.rol_usuario),
+            reliability_score=cast(float, orm_model.reliability_score),
+            fecha_creacion_usuario=cast(Optional[datetime], orm_model.fecha_creacion_usuario)
         )
 
     def get_by_email(self, email: str) -> Optional[Usuario]:
@@ -80,13 +81,17 @@ class UsuarioRepositoryImpl(IUsuarioRepository):
         """
         orm_user = self.db.query(UsuarioORM).filter(UsuarioORM.id_usuario == usuario.id_usuario).first()
         if orm_user:
-            orm_user.nombre_usuario = usuario.nombre_usuario
-            orm_user.email_usuario = usuario.email_usuario
-            orm_user.password_hash = usuario.password_hash
-            orm_user.telefono_usuario = usuario.telefono_usuario
-            orm_user.url_foto_perfil = usuario.url_foto_perfil
-            orm_user.rol_usuario = usuario.rol_usuario
-            orm_user.reliability_score = usuario.reliability_score
+            for field in (
+                "nombre_usuario",
+                "email_usuario",
+                "password_hash",
+                "telefono_usuario",
+                "url_foto_perfil",
+                "rol_usuario",
+                "reliability_score"
+            ):
+                setattr(orm_user, field, getattr(usuario, field))
+
             self.db.commit()
             self.db.refresh(orm_user)
             return self._to_entity(orm_user)

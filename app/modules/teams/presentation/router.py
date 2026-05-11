@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
 from app.core.security import get_current_user_id
-from app.modules.teams.infrastructure.repositories_impl import EquipoRepositoryImpl
+from app.modules.teams.infrastructure.repositories_impl import TeamRepositoryImpl
 from app.modules.teams.application.use_cases import CreateTeamUseCase, RequestJoinTeamUseCase, GetMyTeamsUseCase, JoinTeamWithTokenUseCase, GetPendingMembersUseCase, RespondToJoinRequestUseCase, GetDiscoverableTeamsUseCase, UpdateTeamUseCase, DeleteTeamUseCase, TransferCaptainUseCase
 
 from app.modules.teams.presentation.schemas import TeamCreateRequest, TeamResponse, MemberResponse, RespondRequest, TeamUpdateRequest
@@ -22,7 +22,7 @@ def create_team(
     El proceso incluye la creación del registro del equipo y la inserción 
     automática del creador en la tabla de miembros con estatus 'aceptado'.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     use_case = CreateTeamUseCase(repo)
     
     equipo = use_case.execute(
@@ -52,7 +52,7 @@ def get_discoverable_teams(
     Incluye metadatos adicionales como si el usuario actual ya es miembro 
     y el conteo de jugadores aceptados.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     use_case = GetDiscoverableTeamsUseCase(repo)
     equipos = use_case.execute()
     
@@ -86,7 +86,7 @@ def get_my_teams(
     """
     Obtiene los equipos donde el usuario autenticado tiene una membresía activa.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     use_case = GetMyTeamsUseCase(repo)
     equipos = use_case.execute(id_usuario=current_user_id)
     
@@ -114,7 +114,7 @@ def get_team_detail(
     """
     Retorna la información completa de un equipo específico identificado por su ID.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo:
@@ -149,7 +149,7 @@ def join_team(
     """
     Inicia un proceso de unión a un equipo enviando una solicitud pendiente al capitán.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     use_case = RequestJoinTeamUseCase(repo)
     
     if not repo.get_by_id(id_equipo):
@@ -161,10 +161,10 @@ def join_team(
     # Notificar al capitán de la nueva solicitud
     equipo = repo.get_by_id(id_equipo)
     if equipo and equipo.fk_id_usuario_capitan:
-        from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
+        from app.modules.notifications.infrastructure.repositories_impl import NotificationRepositoryImpl
         from app.modules.notifications.application.use_cases import CreateNotificationUseCase
         
-        notif_repo = NotificacionRepositoryImpl(db)
+        notif_repo = NotificationRepositoryImpl(db)
         notif_use_case = CreateNotificationUseCase(notif_repo)
         mensaje = f"Un nuevo jugador ha solicitado unirse a tu equipo '{equipo.nombre_equipo}'."
         notif_use_case.execute(
@@ -188,7 +188,7 @@ def get_invite_token(
     Genera un token de acceso directo para invitar jugadores al equipo. 
     Requiere permisos de Capitán.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo:
@@ -214,7 +214,7 @@ def kick_member(
     Remueve forzosamente a un miembro del equipo. 
     Restringido al Capitán del equipo.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo:
@@ -248,7 +248,7 @@ def join_with_token(
     """
     Procesa un token de invitación para unir al usuario inmediatamente como miembro aceptado.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     use_case = JoinTeamWithTokenUseCase(repo)
     return use_case.execute(token=token, id_usuario=current_user_id)
 
@@ -261,7 +261,7 @@ def get_pending_requests(
     """
     Lista todas las solicitudes de unión pendientes de aprobación para un equipo.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo or equipo.fk_id_usuario_capitan != current_user_id:
@@ -331,7 +331,7 @@ def respond_to_request(
     Permite al capitán aceptar o rechazar una solicitud de unión. 
     Notifica al jugador sobre el resultado.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo or equipo.fk_id_usuario_capitan != current_user_id:
@@ -346,10 +346,10 @@ def respond_to_request(
         raise NotFoundException("Solicitud no encontrada.")
         
     # Notificar al jugador sobre la decisión
-    from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
+    from app.modules.notifications.infrastructure.repositories_impl import NotificationRepositoryImpl
     from app.modules.notifications.application.use_cases import CreateNotificationUseCase
     
-    notif_repo = NotificacionRepositoryImpl(db)
+    notif_repo = NotificationRepositoryImpl(db)
     notif_use_case = CreateNotificationUseCase(notif_repo)
     
     accion = "aceptada" if request.accept else "rechazada"
@@ -410,7 +410,7 @@ def update_team(
     """
     Actualiza la configuración y metadatos del equipo. Exclusivo para el Capitán.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
         from app.core.exceptions import NotFoundException
@@ -448,7 +448,7 @@ def transfer_captain(
     Cede la capitanía del equipo a otro miembro aceptado. 
     Requiere que el actual capitán realice la petición.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
         from app.core.exceptions import NotFoundException
@@ -480,7 +480,7 @@ def leave_team(
     Permite que el usuario actual abandone el equipo. 
     Los capitanes no pueden abandonar sin transferir su rol previamente.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
         from app.core.exceptions import NotFoundException
@@ -504,7 +504,7 @@ def delete_team(
     """
     Disuelve el equipo por completo. Acción irreversible y exclusiva del Capitán.
     """
-    repo = EquipoRepositoryImpl(db)
+    repo = TeamRepositoryImpl(db)
     equipo = repo.get_by_id(id_equipo)
     if not equipo:
         from app.core.exceptions import NotFoundException

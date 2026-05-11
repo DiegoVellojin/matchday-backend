@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Mapping, Optional
 import jwt
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -49,7 +49,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-def verify_google_token(token: str) -> dict:
+def verify_google_token(token: str) -> Mapping[str, Any]:
     """
     Verifica el idToken proporcionado por el flujo de Google Sign-In.
     
@@ -118,7 +118,7 @@ def get_current_user_id(token: str = Depends(oauth2_scheme)) -> int:
     """
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id: Optional[str] = payload.get("sub")
         if user_id is None:
             raise UnauthorizedException("Token inválido: No se encontró el ID de usuario")
         return int(user_id)
@@ -162,6 +162,11 @@ def verify_team_invitation_token(token: str) -> Optional[int]:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if payload.get("type") != "team_invitation":
             return None
-        return payload.get("team_id")
+        team_id = payload.get("team_id")
+        if isinstance(team_id, int):
+            return team_id
+        if isinstance(team_id, str) and team_id.isdigit():
+            return int(team_id)
+        return None
     except jwt.PyJWTError:
         return None

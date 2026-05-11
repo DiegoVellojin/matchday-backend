@@ -1,10 +1,11 @@
-from typing import List
+from datetime import datetime
+from typing import cast, List
 from sqlalchemy.orm import Session
 from app.modules.notifications.domain.entities import Notificacion
-from app.modules.notifications.domain.interfaces import INotificacionRepository
+from app.modules.notifications.domain.interfaces import INotificationRepository
 from app.modules.notifications.infrastructure.orm_models import NotificacionORM
 
-class NotificacionRepositoryImpl(INotificacionRepository):
+class NotificationRepositoryImpl(INotificationRepository):
     """
     Implementación del repositorio de notificaciones utilizando SQLAlchemy.
     
@@ -26,13 +27,13 @@ class NotificacionRepositoryImpl(INotificacionRepository):
         :return: Entidad Notificacion.
         """
         return Notificacion(
-            id_notificacion=orm.id_notificacion,
-            fk_id_usuario=orm.fk_id_usuario,
-            mensaje=orm.mensaje,
-            leida=orm.leida,
-            fecha_creacion=orm.fecha_creacion,
-            tipo=orm.tipo,
-            referencia_id=orm.referencia_id
+            id_notificacion=cast(int, orm.id_notificacion),
+            fk_id_usuario=cast(int, orm.fk_id_usuario),
+            mensaje=cast(str, orm.mensaje),
+            leida=cast(bool, orm.leida),
+            fecha_creacion=cast(datetime, orm.fecha_creacion),
+            tipo=cast(str, orm.tipo),
+            referencia_id=cast(int, orm.referencia_id)
         )
 
     def create(self, notificacion: Notificacion) -> Notificacion:
@@ -80,7 +81,7 @@ class NotificacionRepositoryImpl(INotificacionRepository):
             NotificacionORM.fk_id_usuario == id_usuario
         ).first()
         if orm:
-            orm.leida = True
+            setattr(orm, "leida", True)
             self.db.commit()
             return True
         return False
@@ -97,6 +98,6 @@ class NotificacionRepositoryImpl(INotificacionRepository):
             NotificacionORM.leida == False
         ).all()
         for orm in orms:
-            orm.leida = True
+            setattr(orm, "leida", True)
         self.db.commit()
         return True

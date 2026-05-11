@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 from app.modules.catalogs.domain.entities import Deporte, Region, Cancha
 
-class IDeporteRepository(ABC):
+class ISportRepository(ABC):
     @abstractmethod
     def get_all(self) -> List[Deporte]:
         pass
@@ -12,9 +12,9 @@ class IRegionRepository(ABC):
     def get_all(self) -> List[Region]:
         pass
 
-class ICanchaRepository(ABC):
+class ICourtRepository(ABC):
     @abstractmethod
-    def get_all(self, region_id: int = None) -> List[Cancha]:
+    def get_all(self, region_id: Optional[int] = None) -> List[Cancha]:
         pass
 
     @abstractmethod

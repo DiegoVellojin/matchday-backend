@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from app.modules.users.domain.entities import Usuario
 
-class IUsuarioRepository(ABC):
+class IUserRepository(ABC):
     """
     Contrato/Interfaz para el repositorio de usuarios.
     Define los métodos que la infraestructura debe implementar.

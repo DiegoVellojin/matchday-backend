@@ -1,5 +1,5 @@
 from typing import List, Optional
-from app.modules.teams.domain.interfaces import IEquipoRepository
+from app.modules.teams.domain.interfaces import ITeamRepository
 from app.modules.teams.domain.entities import Equipo, EquipoUsuario
 
 class CreateTeamUseCase:
@@ -10,7 +10,7 @@ class CreateTeamUseCase:
     como el Capitán del equipo con estatus de membresía 'aceptado'.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         """
         Inicializa el caso de uso con el repositorio de equipos.
         
@@ -55,6 +55,7 @@ class CreateTeamUseCase:
             url_chat_equipo=url_chat
         )
         equipo_creado = self.repository.create(nuevo_equipo)
+        assert equipo_creado.id_equipo is not None
 
         # 2. Agregar al creador como miembro Capitán aceptado
         membresia = EquipoUsuario(
@@ -75,7 +76,7 @@ class RequestJoinTeamUseCase:
     aprobado por el capitán del equipo.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         """
         :param repository: Implementación del repositorio de equipos.
         """
@@ -110,7 +111,7 @@ class GetMyTeamsUseCase:
     Caso de uso para recuperar los equipos vinculados a un usuario específico.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self, id_usuario: int) -> List[Equipo]:
@@ -130,7 +131,7 @@ class JoinTeamWithTokenUseCase:
     la entrada inmediata como miembro 'aceptado'.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self, token: str, id_usuario: int) -> EquipoUsuario:
@@ -169,7 +170,7 @@ class GetPendingMembersUseCase:
     Caso de uso para listar las solicitudes de unión que aguardan aprobación.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self, id_equipo: int) -> List[EquipoUsuario]:
@@ -187,7 +188,7 @@ class RespondToJoinRequestUseCase:
     Caso de uso para procesar la respuesta del capitán a una solicitud de unión.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self, id_equipo: int, id_usuario: int, aceptar: bool) -> bool:
@@ -214,7 +215,7 @@ class GetDiscoverableTeamsUseCase:
     Caso de uso para obtener todos los equipos con reclutamiento activo.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self) -> List[Equipo]:
@@ -230,7 +231,7 @@ class UpdateTeamUseCase:
     Caso de uso para modificar los metadatos de un equipo existente.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self, id_equipo: int, data: dict) -> Optional[Equipo]:
@@ -248,7 +249,7 @@ class DeleteTeamUseCase:
     Caso de uso para la eliminación definitiva de un equipo y sus datos asociados.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self, id_equipo: int) -> bool:
@@ -265,7 +266,7 @@ class TransferCaptainUseCase:
     Caso de uso para ceder el rol de capitán a otro miembro del equipo.
     """
     
-    def __init__(self, repository: IEquipoRepository):
+    def __init__(self, repository: ITeamRepository):
         self.repository = repository
 
     def execute(self, id_equipo: int, id_nuevo_capitan: int) -> bool:

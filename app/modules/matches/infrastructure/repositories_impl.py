@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, cast, Any
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.modules.matches.domain.entities import MatchEntity
@@ -22,28 +22,28 @@ class MatchRepositoryImpl(IMatchRepository):
     def _to_entity(self, orm: PartidaORM) -> MatchEntity:
         """Convierte el modelo ORM de SQLAlchemy a la Entidad de Dominio."""
         return MatchEntity(
-            id=orm.id_partida,
-            fecha_inicio_estimada=orm.fecha_inicio_estimada,
-            fecha_fin_estimada=orm.fecha_fin_estimada,
-            fecha_acordada=orm.fecha_acordada,
-            costo_total_partida=float(orm.costo_total_partida) if orm.costo_total_partida is not None else 0.0,
-            estatus_partida=orm.estatus_partida,
-            fk_id_usuario_org=orm.fk_id_usuario_org,
-            fk_id_deporte=orm.fk_id_deporte,
-            fk_id_cancha=orm.fk_id_cancha,
-            fk_id_equipo_a=orm.fk_id_equipo_a,
-            fk_id_equipo_b=orm.fk_id_equipo_b,
-            fecha_creacion_partida=orm.fecha_creacion_partida,
-            propuesta_fecha_a=orm.propuesta_fecha_a,
-            propuesta_costo_a=float(orm.propuesta_costo_a) if orm.propuesta_costo_a else None,
-            propuesta_fecha_b=orm.propuesta_fecha_b,
-            propuesta_costo_b=float(orm.propuesta_costo_b) if orm.propuesta_costo_b else None,
-            equipo_a_listo=orm.equipo_a_listo,
-            equipo_b_listo=orm.equipo_b_listo,
-            resultado_goles_a_cap_a=orm.resultado_goles_a_cap_a,
-            resultado_goles_b_cap_a=orm.resultado_goles_b_cap_a,
-            resultado_goles_a_cap_b=orm.resultado_goles_a_cap_b,
-            resultado_goles_b_cap_b=orm.resultado_goles_b_cap_b,
+            id=cast(Optional[int], orm.id_partida),
+            fecha_inicio_estimada=cast(datetime, orm.fecha_inicio_estimada),
+            fecha_fin_estimada=cast(datetime, orm.fecha_fin_estimada),
+            fecha_acordada=cast(Optional[datetime], orm.fecha_acordada),
+            costo_total_partida=cast(float, orm.costo_total_partida) if orm.costo_total_partida is not None else 0.0,
+            estatus_partida=cast(str, orm.estatus_partida),
+            fk_id_usuario_org=cast(int, orm.fk_id_usuario_org),
+            fk_id_deporte=cast(int, orm.fk_id_deporte),
+            fk_id_cancha=cast(int, orm.fk_id_cancha),
+            fk_id_equipo_a=cast(Optional[int], orm.fk_id_equipo_a),
+            fk_id_equipo_b=cast(Optional[int], orm.fk_id_equipo_b),
+            fecha_creacion_partida=cast(datetime, orm.fecha_creacion_partida),
+            propuesta_fecha_a=cast(Optional[datetime], orm.propuesta_fecha_a),
+            propuesta_costo_a=cast(Optional[float], orm.propuesta_costo_a),
+            propuesta_fecha_b=cast(Optional[datetime], orm.propuesta_fecha_b),
+            propuesta_costo_b=cast(Optional[float], orm.propuesta_costo_b),
+            equipo_a_listo=cast(bool, orm.equipo_a_listo),
+            equipo_b_listo=cast(bool, orm.equipo_b_listo),
+            resultado_goles_a_cap_a=cast(Optional[int], orm.resultado_goles_a_cap_a),
+            resultado_goles_b_cap_a=cast(Optional[int], orm.resultado_goles_b_cap_a),
+            resultado_goles_a_cap_b=cast(Optional[int], orm.resultado_goles_a_cap_b),
+            resultado_goles_b_cap_b=cast(Optional[int], orm.resultado_goles_b_cap_b),
             
             # Campos enriquecidos vía relaciones
             nombre_equipo_a=orm.equipo_a.nombre_equipo if orm.equipo_a else None,
@@ -86,10 +86,12 @@ class MatchRepositoryImpl(IMatchRepository):
         # Si tiene equipos, podemos disparar los eventos manualmente si la entidad no los capturó
         # (Ya que al crear desde cero vía ORM la entidad aún no existe)
         from app.modules.matches.domain.events import TeamAssignedToMatch
-        if orm.fk_id_equipo_a:
-            EventDispatcher.dispatch(TeamAssignedToMatch(match_id=orm.id_partida, team_id=orm.fk_id_equipo_a))
-        if orm.fk_id_equipo_b:
-            EventDispatcher.dispatch(TeamAssignedToMatch(match_id=orm.id_partida, team_id=orm.fk_id_equipo_b))
+        fk_a = cast(Optional[int], orm.fk_id_equipo_a)
+        fk_b = cast(Optional[int], orm.fk_id_equipo_b)
+        if fk_a is not None:
+            EventDispatcher.dispatch(TeamAssignedToMatch(match_id=cast(int, orm.id_partida), team_id=fk_a))
+        if fk_b is not None:
+            EventDispatcher.dispatch(TeamAssignedToMatch(match_id=cast(int, orm.id_partida), team_id=fk_b))
 
         return entity
 
@@ -120,7 +122,7 @@ class MatchRepositoryImpl(IMatchRepository):
             joinedload(PartidaORM.equipo_b).joinedload(EquipoORM.capitan)
         )
         
-        query = specification.apply_to_query(query, PartidaORM)
+        query = cast(Any, specification.apply_to_query(query, PartidaORM))
         results = query.all()
         return [self._to_entity(orm) for orm in results]
 
@@ -173,8 +175,8 @@ class MatchRepositoryImpl(IMatchRepository):
             return None
         
         # Guardar estados previos para detectar cambios de equipo
-        old_equipo_a = orm.fk_id_equipo_a
-        old_equipo_b = orm.fk_id_equipo_b
+        old_equipo_a = cast(Optional[int], orm.fk_id_equipo_a)
+        old_equipo_b = cast(Optional[int], orm.fk_id_equipo_b)
 
         for key, value in data.items():
             if hasattr(orm, key):
@@ -188,10 +190,12 @@ class MatchRepositoryImpl(IMatchRepository):
             # Detectar cambios de equipo y registrar eventos si no se hizo en la capa superior
             # (En un sistema ideal, esto se haría en el UseCase llamando a entity.assign_team_x)
             from app.modules.matches.domain.events import TeamAssignedToMatch
-            if orm.fk_id_equipo_a and orm.fk_id_equipo_a != old_equipo_a:
-                EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=orm.fk_id_equipo_a))
-            if orm.fk_id_equipo_b and orm.fk_id_equipo_b != old_equipo_b:
-                EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=orm.fk_id_equipo_b))
+            fk_a = cast(Optional[int], orm.fk_id_equipo_a)
+            fk_b = cast(Optional[int], orm.fk_id_equipo_b)
+            if fk_a is not None and fk_a != old_equipo_a:
+                EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=fk_a))
+            if fk_b is not None and fk_b != old_equipo_b:
+                EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=fk_b))
             
             self._dispatch_events(entity)
 
@@ -259,53 +263,64 @@ class MatchRepositoryImpl(IMatchRepository):
             } for r in results
         ]
 
-    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> MatchEntity:
+    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
+        if not orm:
+            return None
         if is_captain_a:
-            orm.propuesta_fecha_a = fecha
-            orm.propuesta_costo_a = costo
+            setattr(orm, "propuesta_fecha_a", fecha)
+            setattr(orm, "propuesta_costo_a", costo)
         else:
-            orm.propuesta_fecha_b = fecha
-            orm.propuesta_costo_b = costo
+            setattr(orm, "propuesta_fecha_b", fecha)
+            setattr(orm, "propuesta_costo_b", costo)
         
         self.db.commit()
         self.db.refresh(orm)
         return self._to_entity(orm)
 
-    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> MatchEntity:
+    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> Optional[MatchEntity]:
         from app.modules.users.infrastructure.orm_models import DatosBancariosORM
         from app.modules.teams.infrastructure.orm_models import EquipoORM
         
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
+        if not orm:
+            return None
         
         # Identificar roles
-        is_capitan_a = orm.fk_id_usuario_org == user_id
+        organizador_id = cast(int, orm.fk_id_usuario_org)
+        fk_b = cast(Optional[int], orm.fk_id_equipo_b)
+        is_capitan_a = organizador_id == user_id
         
         # Verificar si es capitán del equipo B
-        equipo_b = self.db.query(EquipoORM).filter(EquipoORM.id_equipo == orm.fk_id_equipo_b).first()
-        is_capitan_b = equipo_b and equipo_b.fk_id_usuario_capitan == user_id
-        
+        equipo_b = self.db.query(EquipoORM).filter(EquipoORM.id_equipo == fk_b).first() if fk_b is not None else None
+        is_capitan_b = bool(equipo_b and equipo_b.fk_id_usuario_capitan == user_id)
+
         if is_capitan_a:
-            orm.propuesta_fecha_a = fecha
-            orm.propuesta_costo_a = costo
+            setattr(orm, "propuesta_fecha_a", fecha)
+            setattr(orm, "propuesta_costo_a", costo)
         elif is_capitan_b:
-            orm.propuesta_fecha_b = fecha
-            orm.propuesta_costo_b = costo
-            
+            setattr(orm, "propuesta_fecha_b", fecha)
+            setattr(orm, "propuesta_costo_b", costo)
         # Verificar acuerdo mutuo para cambiar a pendiente_pago
-        if orm.propuesta_fecha_a and orm.propuesta_fecha_b and \
-           orm.propuesta_costo_a == orm.propuesta_costo_b and \
-           orm.propuesta_fecha_a == orm.propuesta_fecha_b:
-            orm.fecha_acordada = orm.propuesta_fecha_a
-            orm.costo_total_partida = orm.propuesta_costo_a
-            orm.estatus_partida = 'pendiente_pago'
+        propuesta_fecha_a = cast(Optional[datetime], orm.propuesta_fecha_a)
+        propuesta_fecha_b = cast(Optional[datetime], orm.propuesta_fecha_b)
+        propuesta_costo_a = cast(Optional[float], orm.propuesta_costo_a)
+        propuesta_costo_b = cast(Optional[float], orm.propuesta_costo_b)
+
+        if propuesta_fecha_a is not None and propuesta_fecha_b is not None and \
+           propuesta_costo_a is not None and propuesta_costo_b is not None and \
+           propuesta_costo_a == propuesta_costo_b and \
+           propuesta_fecha_a == propuesta_fecha_b:
+            setattr(orm, "fecha_acordada", propuesta_fecha_a)
+            setattr(orm, "costo_total_partida", propuesta_costo_a)
+            setattr(orm, "estatus_partida", 'pendiente_pago')
             
         # Actualizar datos bancarios del usuario que configura
         datos_orm = self.db.query(DatosBancariosORM).filter(DatosBancariosORM.fk_id_usuario == user_id).first()
         if datos_orm:
-            datos_orm.banco = banco
-            datos_orm.cedula = cedula
-            datos_orm.telefono = telefono
+            setattr(datos_orm, "banco", banco)
+            setattr(datos_orm, "cedula", cedula)
+            setattr(datos_orm, "telefono", telefono)
         else:
             datos_orm = DatosBancariosORM(
                 fk_id_usuario=user_id,
@@ -318,29 +333,39 @@ class MatchRepositoryImpl(IMatchRepository):
         self.db.commit()
         return self.get_by_id(match_id)
 
-    def mark_team_ready(self, match_id: int, team_id: int) -> MatchEntity:
+    def mark_team_ready(self, match_id: int, team_id: int) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
-        if orm.fk_id_equipo_a == team_id:
-            orm.equipo_a_listo = True
-        elif orm.fk_id_equipo_b == team_id:
-            orm.equipo_b_listo = True
+        if not orm:
+            return None
+
+        fk_a = cast(Optional[int], orm.fk_id_equipo_a)
+        fk_b = cast(Optional[int], orm.fk_id_equipo_b)
+        if fk_a == team_id:
+            setattr(orm, "equipo_a_listo", True)
+        elif fk_b == team_id:
+            setattr(orm, "equipo_b_listo", True)
             
-        if orm.equipo_a_listo and orm.equipo_b_listo:
-            orm.estatus_partida = "confirmada"
+        equipo_a_listo = cast(bool, orm.equipo_a_listo)
+        equipo_b_listo = cast(bool, orm.equipo_b_listo)
+        if equipo_a_listo and equipo_b_listo:
+            setattr(orm, "estatus_partida", "confirmada")
             
         self.db.commit()
         return self.get_by_id(match_id)
 
-    def submit_result_proposal(self, match_id: int, user_id: int, goals_a: int, goals_b: int) -> MatchEntity:
+    def submit_result_proposal(self, match_id: int, user_id: int, goals_a: int, goals_b: int) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
-        if orm.fk_id_usuario_org == user_id:
+        if not orm:
+            return None
+        organizador_id = cast(int, orm.fk_id_usuario_org)
+        if organizador_id == user_id:
             # Es el capitán A
-            orm.resultado_goles_a_cap_a = goals_a
-            orm.resultado_goles_b_cap_a = goals_b
+            setattr(orm, "resultado_goles_a_cap_a", goals_a)
+            setattr(orm, "resultado_goles_b_cap_a", goals_b)
         else:
             # Es el capitán B
-            orm.resultado_goles_a_cap_b = goals_a
-            orm.resultado_goles_b_cap_b = goals_b
+            setattr(orm, "resultado_goles_a_cap_b", goals_a)
+            setattr(orm, "resultado_goles_b_cap_b", goals_b)
             
         self.db.commit()
         return self.get_by_id(match_id)
@@ -374,7 +399,7 @@ class MatchRepositoryImpl(IMatchRepository):
         # Marcar partida completada
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
         if orm:
-            orm.estatus_partida = "completada"
+            setattr(orm, "estatus_partida", "completada")
             
         self.db.commit()
 

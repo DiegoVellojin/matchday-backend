@@ -1,5 +1,5 @@
-from typing import List
-from app.modules.notifications.domain.interfaces import INotificacionRepository
+from typing import List, Optional, Any
+from app.modules.notifications.domain.interfaces import INotificationRepository
 from app.modules.notifications.domain.entities import Notificacion
 
 class GetMyNotificationsUseCase:
@@ -7,7 +7,7 @@ class GetMyNotificationsUseCase:
     Caso de uso para recuperar el historial de notificaciones de un usuario.
     """
     
-    def __init__(self, repository: INotificacionRepository):
+    def __init__(self, repository: INotificationRepository):
         """
         :param repository: Implementación del repositorio de notificaciones.
         """
@@ -27,7 +27,7 @@ class MarkNotificationAsReadUseCase:
     Caso de uso para marcar una notificación específica como leída.
     """
     
-    def __init__(self, repository: INotificacionRepository):
+    def __init__(self, repository: INotificationRepository):
         self.repository = repository
 
     def execute(self, id_notificacion: int, id_usuario: int) -> bool:
@@ -45,7 +45,7 @@ class MarkAllNotificationsAsReadUseCase:
     Caso de uso para marcar masivamente todas las notificaciones de un usuario como leídas.
     """
     
-    def __init__(self, repository: INotificacionRepository):
+    def __init__(self, repository: INotificationRepository):
         self.repository = repository
 
     def execute(self, id_usuario: int) -> bool:
@@ -66,10 +66,10 @@ class CreateNotificationUseCase:
     notificaciones push mediante Firebase Cloud Messaging (FCM).
     """
     
-    def __init__(self, repository: INotificacionRepository):
+    def __init__(self, repository: INotificationRepository):
         self.repository = repository
 
-    def execute(self, id_usuario: int, mensaje: str, tipo: str = None, referencia_id: int = None, db = None) -> Notificacion:
+    def execute(self, id_usuario: int, mensaje: str, tipo: Optional[str] = None, referencia_id: Optional[int] = None, db: Any = None) -> Notificacion:
         """
         Crea una notificación y opcionalmente envía un mensaje push.
         

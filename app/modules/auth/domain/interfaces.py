@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from app.modules.users.domain.entities import Usuario
 
-class IUsuarioRepository(ABC):
+class IUserRepository(ABC):
     """
     Contrato (Puerto) para el repositorio de Usuarios.
     Define las operaciones permitidas sin saber cómo se implementan (Base de datos).

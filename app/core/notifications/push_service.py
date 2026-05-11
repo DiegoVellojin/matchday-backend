@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.modules.users.infrastructure.repositories_impl import FCMRepositoryImpl
@@ -11,7 +12,7 @@ class PushNotificationService:
         self.db = db
         self.fcm_repo = FCMRepositoryImpl(db)
 
-    def send_notification(self, fk_id_usuario: int, mensaje: str, tipo: str = "General", referencia_id: int = None) -> bool:
+    def send_notification(self, fk_id_usuario: int, mensaje: str, tipo: str = "General", referencia_id: Optional[int] = None) -> bool:
         """
         Guarda la notificación en BD y simula el envío a FCM.
         """

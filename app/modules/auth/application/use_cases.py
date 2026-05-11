@@ -1,5 +1,5 @@
 from app.core.security import verify_google_token, create_access_token, get_password_hash, verify_password
-from app.modules.auth.domain.interfaces import IUsuarioRepository
+from app.modules.auth.domain.interfaces import IUserRepository
 from app.modules.users.domain.entities import Usuario
 from app.modules.auth.domain.exceptions import InvalidGoogleTokenException, EmailAlreadyExistsException, InvalidCredentialsException, AuthException
 from typing import Optional
@@ -12,7 +12,7 @@ class GoogleLoginUseCase:
     repositorio de usuarios y la generación del token de acceso local (JWT).
     """
     
-    def __init__(self, usuario_repository: IUsuarioRepository):
+    def __init__(self, usuario_repository: IUserRepository):
         """
         :param usuario_repository: Implementación del repositorio de usuarios.
         """
@@ -73,7 +73,7 @@ class RegisterUserUseCase:
     Caso de uso para el registro de nuevos usuarios mediante credenciales locales.
     """
     
-    def __init__(self, usuario_repository: IUsuarioRepository):
+    def __init__(self, usuario_repository: IUserRepository):
         self.usuario_repository = usuario_repository
 
     def execute(self, nombre_usuario: str, email: str, password: str, telefono: Optional[str] = None) -> str:
@@ -122,7 +122,7 @@ class LoginUserUseCase:
     Caso de uso para la autenticación de usuarios mediante email y contraseña.
     """
     
-    def __init__(self, usuario_repository: IUsuarioRepository):
+    def __init__(self, usuario_repository: IUserRepository):
         self.usuario_repository = usuario_repository
 
     def execute(self, email: str, password: str) -> str:
@@ -158,7 +158,7 @@ class RequestPasswordResetUseCase:
     Caso de uso para iniciar el flujo de recuperación de cuenta.
     """
     
-    def __init__(self, usuario_repository: IUsuarioRepository):
+    def __init__(self, usuario_repository: IUserRepository):
         self.usuario_repository = usuario_repository
 
     def execute(self, email: str) -> Optional[str]:
@@ -185,7 +185,7 @@ class ResetPasswordUseCase:
     Caso de uso para aplicar la nueva contraseña tras validar un token de recuperación.
     """
     
-    def __init__(self, usuario_repository: IUsuarioRepository):
+    def __init__(self, usuario_repository: IUserRepository):
         self.usuario_repository = usuario_repository
 
     def execute(self, token: str, new_password: str) -> bool:

@@ -13,7 +13,7 @@ from app.modules.matches.application.use_cases import (
     GetMatchPlayersUseCase
 )
 from app.modules.matches.infrastructure.repositories_impl import MatchRepositoryImpl
-from app.modules.notifications.infrastructure.repositories_impl import NotificacionRepositoryImpl
+from app.modules.notifications.infrastructure.repositories_impl import NotificationRepositoryImpl
 from app.modules.notifications.application.use_cases import CreateNotificationUseCase
 
 router = APIRouter(prefix="/matches", tags=["Matches"])
@@ -113,8 +113,10 @@ def accept_match(
     
     # Enviar notificación FCM al organizador (Capitán A)
     try:
-        notif_repo = NotificacionRepositoryImpl(db)
+        notif_repo = NotificationRepositoryImpl(db)
         notif_use_case = CreateNotificationUseCase(notif_repo)
+        assert match.id is not None
+        assert match.id is not None
         notif_use_case.execute(
             id_usuario=match.fk_id_usuario_org,
             mensaje=f"¡El equipo rival ha aceptado el reto! Entra a configurar los detalles del partido.",
@@ -150,12 +152,14 @@ def configure_match(
     # Notificar a los jugadores si pasó a pendiente_pago (ambos configuraron o uno aceptó configuración)
     if match.estatus_partida == 'pendiente_pago':
         try:
-            notif_repo = NotificacionRepositoryImpl(db)
+            notif_repo = NotificationRepositoryImpl(db)
             notif_use_case = CreateNotificationUseCase(notif_repo)
             players = repository.get_players(match_id)
             for player in players:
                 # Omitir al capitan (current_user_id o fk_id_usuario_org si ya pagó su parte)
                 if player["id_usuario"] != current_user_id:
+                    assert match.id is not None
+                    assert match.id is not None
                     notif_use_case.execute(
                         id_usuario=player["id_usuario"],
                         mensaje=f"¡El partido está listo! Ya puedes realizar el pago de tu cuota al capitán.",
@@ -181,7 +185,7 @@ def mark_team_ready(
     if match.estatus_partida == 'confirmada':
         # Notificar a todos que el partido está confirmado
         try:
-            notif_repo = NotificacionRepositoryImpl(db)
+            notif_repo = NotificationRepositoryImpl(db)
             notif_use_case = CreateNotificationUseCase(notif_repo)
             players = repository.get_players(match_id)
             for player in players:
@@ -248,7 +252,7 @@ def register_result(
             target_user = cap_b if current_user_id == match.fk_id_usuario_org else match.fk_id_usuario_org
             
             if target_user:
-                notif_repo = NotificacionRepositoryImpl(db)
+                notif_repo = NotificationRepositoryImpl(db)
                 notif_use_case = CreateNotificationUseCase(notif_repo)
                 notif_use_case.execute(
                     id_usuario=target_user,
@@ -303,7 +307,7 @@ def update_match(
         raise ConflictException("No se puede editar un partido que ya está en negociación o pago")
         
     # Validar que el usuario es capitán del nuevo equipo A (si cambia)
-    if request.fk_id_equipo_a and request.fk_id_equipo_a != match.fk_id_equipo_a:
+    if request.fk_id_equipo_a is not None and request.fk_id_equipo_a != match.fk_id_equipo_a:
         from app.modules.teams.infrastructure.repositories_impl import TeamRepositoryImpl
         team_repo = TeamRepositoryImpl(db)
         team = team_repo.get_by_id(request.fk_id_equipo_a)
@@ -316,5 +320,5 @@ def update_match(
     match.fecha_fin_estimada = request.fecha_fin_estimada
     match.fk_id_equipo_a = request.fk_id_equipo_a
     
-    updated_match = repository.update(match)
+    updated_match = repository.update(match_id, request.model_dump())
     return updated_match

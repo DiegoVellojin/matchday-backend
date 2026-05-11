@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from app.core.database import get_db
 from app.modules.auth.presentation.schemas import GoogleAuthRequest, AuthResponse, RegisterRequest, LoginRequest, ForgotPasswordRequest, ResetPasswordRequest
 from app.modules.auth.application.use_cases import GoogleLoginUseCase, RegisterUserUseCase, LoginUserUseCase, RequestPasswordResetUseCase, ResetPasswordUseCase
-from app.modules.auth.infrastructure.repositories_impl import UsuarioRepositoryImpl
+from app.modules.auth.infrastructure.repositories_impl import UserRepositoryImpl
 from app.modules.auth.domain.exceptions import InvalidGoogleTokenException, EmailAlreadyExistsException, InvalidCredentialsException, AuthException
 
 router = APIRouter()
@@ -15,7 +15,7 @@ def google_login(request: GoogleAuthRequest, db: Session = Depends(get_db)):
     """
     Endpoint para autenticar a un usuario con Google Sign-In.
     """
-    usuario_repo = UsuarioRepositoryImpl(db)
+    usuario_repo = UserRepositoryImpl(db)
     use_case = GoogleLoginUseCase(usuario_repository=usuario_repo)
     token = use_case.execute(id_token=request.id_token)
     return AuthResponse(access_token=token)
@@ -25,7 +25,7 @@ def register_user(request: RegisterRequest, db: Session = Depends(get_db)):
     """
     Endpoint para registrar un nuevo usuario con correo y contraseña.
     """
-    usuario_repo = UsuarioRepositoryImpl(db)
+    usuario_repo = UserRepositoryImpl(db)
     use_case = RegisterUserUseCase(usuario_repository=usuario_repo)
     token = use_case.execute(
         nombre_usuario=request.nombre_usuario,
@@ -40,7 +40,7 @@ def login_user(request: LoginRequest, db: Session = Depends(get_db)):
     """
     Endpoint para iniciar sesión con correo y contraseña.
     """
-    usuario_repo = UsuarioRepositoryImpl(db)
+    usuario_repo = UserRepositoryImpl(db)
     use_case = LoginUserUseCase(usuario_repository=usuario_repo)
     token = use_case.execute(email=request.email, password=request.password)
     return AuthResponse(access_token=token)
@@ -85,7 +85,7 @@ def forgot_password(request: ForgotPasswordRequest, background_tasks: Background
     """
     Endpoint para solicitar la recuperación de contraseña.
     """
-    usuario_repo = UsuarioRepositoryImpl(db)
+    usuario_repo = UserRepositoryImpl(db)
     use_case = RequestPasswordResetUseCase(usuario_repository=usuario_repo)
     
     token = use_case.execute(email=request.email)
@@ -107,7 +107,7 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
     """
     Endpoint para restablecer la contraseña usando el token temporal.
     """
-    usuario_repo = UsuarioRepositoryImpl(db)
+    usuario_repo = UserRepositoryImpl(db)
     use_case = ResetPasswordUseCase(usuario_repository=usuario_repo)
     use_case.execute(token=request.token, new_password=request.new_password)
     return {"message": "Contraseña actualizada exitosamente."}

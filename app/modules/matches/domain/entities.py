@@ -76,5 +76,7 @@ class MatchEntity(AggregateRoot):
         """Verifica si ambas propuestas coinciden para avanzar a pendiente_pago."""
         if not self.propuesta_fecha_a or not self.propuesta_fecha_b:
             return False
+        if self.propuesta_costo_a is None or self.propuesta_costo_b is None:
+            return False
         return (self.propuesta_fecha_a == self.propuesta_fecha_b and 
                 self.propuesta_costo_a == self.propuesta_costo_b)

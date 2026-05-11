@@ -1,12 +1,12 @@
-from typing import List
+from typing import List, Optional
 from app.modules.catalogs.domain.entities import Deporte, Region, Cancha
-from app.modules.catalogs.domain.interfaces import IDeporteRepository, IRegionRepository, ICanchaRepository
+from app.modules.catalogs.domain.interfaces import ISportRepository, IRegionRepository, ICourtRepository
 
 class GetSportsUseCase:
     """
     Caso de uso para obtener todos los deportes disponibles.
     """
-    def __init__(self, repository: IDeporteRepository):
+    def __init__(self, repository: ISportRepository):
         self.repository = repository
 
     def execute(self) -> List[Deporte]:
@@ -36,10 +36,10 @@ class GetCanchasUseCase:
     """
     Caso de uso para obtener las canchas, opcionalmente filtradas por región.
     """
-    def __init__(self, repository: ICanchaRepository):
+    def __init__(self, repository: ICourtRepository):
         self.repository = repository
 
-    def execute(self, region_id: int = None) -> List[Cancha]:
+    def execute(self, region_id: Optional[int] = None) -> List[Cancha]:
         """
         Ejecuta la consulta de canchas.
         
@@ -52,7 +52,7 @@ class CreateCanchaUseCase:
     """
     Caso de uso para insertar una nueva cancha.
     """
-    def __init__(self, repository: ICanchaRepository):
+    def __init__(self, repository: ICourtRepository):
         self.repository = repository
 
     def execute(self, cancha_data: dict) -> Cancha:

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.core.database import get_db
-from app.modules.catalogs.infrastructure.repositories_impl import DeporteRepositoryImpl, RegionRepositoryImpl, CanchaRepositoryImpl
+from app.modules.catalogs.infrastructure.repositories_impl import SportRepositoryImpl, RegionRepositoryImpl, CourtRepositoryImpl
 from app.modules.catalogs.application.use_cases import GetSportsUseCase, GetRegionsUseCase, GetCanchasUseCase, CreateCanchaUseCase
 from app.modules.catalogs.presentation.schemas import DeporteResponse, RegionResponse, CanchaResponse, CanchaCreate
 
@@ -13,7 +13,7 @@ def get_sports(db: Session = Depends(get_db)):
     """
     Obtiene la lista de todos los deportes disponibles.
     """
-    repo = DeporteRepositoryImpl(db)
+    repo = SportRepositoryImpl(db)
     use_case = GetSportsUseCase(repo)
     return use_case.execute()
 
@@ -30,7 +30,7 @@ def get_canchas(
     db: Session = Depends(get_db)
 ):
     """Obtiene la lista de canchas, opcionalmente filtradas por región."""
-    repo = CanchaRepositoryImpl(db)
+    repo = CourtRepositoryImpl(db)
     use_case = GetCanchasUseCase(repo)
     return use_case.execute(region_id=region_id)
 
@@ -40,6 +40,6 @@ def create_cancha(
     db: Session = Depends(get_db)
 ):
     """Crea una nueva cancha."""
-    repo = CanchaRepositoryImpl(db)
+    repo = CourtRepositoryImpl(db)
     use_case = CreateCanchaUseCase(repo)
     return use_case.execute(cancha.model_dump())

@@ -68,6 +68,8 @@ class AcceptEncounterUseCase:
             "fk_id_equipo_b": team_b_id,
             "estatus_partida": "negociando"
         })
+        if not updated:
+            raise NotFoundException("Partido no encontrado tras la actualización")
         return updated
 
 class ProposeTermsUseCase:
@@ -88,9 +90,12 @@ class ProposeTermsUseCase:
         
         # Actualizar términos en repositorio
         updated_match = self.repository.update_terms(match_id, user_id, is_captain_a, fecha, costo)
+        if not updated_match:
+            raise NotFoundException("Partido no encontrado después de actualizar términos")
 
         # Verificar si hay coincidencia
         if updated_match.can_transition_to_pending_payment():
+            assert updated_match.propuesta_fecha_a is not None and updated_match.propuesta_costo_a is not None
             self.repository.update(match_id, {
                 "estatus_partida": "pendiente_pago",
                 "fecha_acordada": updated_match.propuesta_fecha_a,
@@ -114,7 +119,10 @@ class ConfigureMatchUseCase:
         if not match:
             raise NotFoundException("Partido no encontrado")
         # Verificar que el usuario sea capitán de alguno de los equipos (org o alguien más)
-        return self.repository.configure_match(match_id, user_id, fecha, costo, banco, cedula, telefono)
+        configured = self.repository.configure_match(match_id, user_id, fecha, costo, banco, cedula, telefono)
+        if not configured:
+            raise NotFoundException("Partido no encontrado al configurar")
+        return configured
 
 class MarkTeamReadyUseCase:
     """
@@ -135,7 +143,7 @@ class MarkTeamReadyUseCase:
         else:
             team_id = match.fk_id_equipo_b
             
-        if not team_id:
+        if team_id is None:
             raise ConflictException("No se determinó tu equipo o el partido no tiene equipos.")
             
         # Verificar que todos los jugadores del team_id en PartidaUsuario tengan estatus_pago = verificado
@@ -148,7 +156,10 @@ class MarkTeamReadyUseCase:
                 raise ConflictException("Aún hay jugadores sin pago verificado en tu equipo.")
                 
         # Si llegamos aquí, todos están verificados
-        return self.match_repository.mark_team_ready(match_id, team_id)
+        updated_match = self.match_repository.mark_team_ready(match_id, team_id)
+        if not updated_match:
+            raise NotFoundException("Partido no encontrado al marcar equipo listo")
+        return updated_match
 
 class JoinMatchUseCase:
     """Caso de uso para que un usuario se una a un partido."""
@@ -184,12 +195,21 @@ class RegisterMatchResultUseCase:
         # submit_result_proposal (el repo ya revisa fk_id_usuario_org).
         
         updated_match = self.repository.submit_result_proposal(match_id, current_user_id, goals_a, goals_b)
+        if not updated_match:
+            raise NotFoundException("Partido no encontrado al registrar el resultado")
         
         # Verificación Cruzada
         if updated_match.resultado_goles_a_cap_a is not None and updated_match.resultado_goles_a_cap_b is not None:
+            if updated_match.fk_id_equipo_a is None or updated_match.fk_id_equipo_b is None:
+                raise ConflictException("No se puede registrar resultado sin ambos equipos asignados.")
+
             if (updated_match.resultado_goles_a_cap_a == updated_match.resultado_goles_a_cap_b and
                 updated_match.resultado_goles_b_cap_a == updated_match.resultado_goles_b_cap_b):
                 # Hay coincidencia! Registrar resultado oficial
+                assert updated_match.fk_id_equipo_a is not None
+                assert updated_match.fk_id_equipo_b is not None
+                assert updated_match.resultado_goles_a_cap_a is not None
+                assert updated_match.resultado_goles_b_cap_a is not None
                 self.repository.register_result(
                     match_id, 
                     updated_match.fk_id_equipo_a, 
