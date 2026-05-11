@@ -116,3 +116,13 @@ class PaymentRepositoryImpl(IPaymentRepository):
         """
         self.db.execute(text(query), {"id_partida": id_partida, "id_usuario": id_usuario})
         self.db.commit()
+
+    def get_payment_captain(self, id_partida: int, user_id: int) -> Optional[int]:
+        query = """
+        SELECT e.fk_id_usuario_capitan
+        FROM bd_matchday."Partida_Usuario" pu
+        JOIN bd_matchday."Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
+        WHERE pu.fk_id_partida = :id_partida AND pu.fk_id_usuario = :user_id
+        """
+        result = self.db.execute(text(query), {"id_partida": id_partida, "user_id": user_id}).fetchone()
+        return result[0] if result else None

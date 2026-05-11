@@ -97,11 +97,15 @@ def upload_receipt(
             user = user_repo.get_by_id(current_user_id)
             user_name = user.nombre_usuario if user else "Un jugador"
             
-            # Determinamos a quién notificar (al capitán del equipo del usuario, o al organizador)
-            # Para simplificar, notificaremos al organizador (quien usualmente gestiona los pagos)
-            # o al capitán que corresponda. Aquí usamos fk_id_usuario_org.
+            # Determinamos a quién notificar (al capitán del equipo del usuario)
+            target_user = repository.get_payment_captain(id_partida, current_user_id)
+            
+            # Si no hay capitán específico (ej. error de data), notificamos al organizador como respaldo
+            if not target_user:
+                target_user = match.fk_id_usuario_org
+
             notif_use_case.execute(
-                id_usuario=match.fk_id_usuario_org,
+                id_usuario=target_user,
                 mensaje=f"{user_name} ha subido su comprobante de pago. Por favor verifícalo.",
                 tipo="receipt_uploaded",
                 referencia_id=id_partida,

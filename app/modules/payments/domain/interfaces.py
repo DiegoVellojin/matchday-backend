@@ -25,3 +25,7 @@ class IPaymentRepository(ABC):
     @abstractmethod
     def verify_payment(self, id_partida: int, id_usuario: int) -> None:
         pass
+
+    @abstractmethod
+    def get_payment_captain(self, id_partida: int, user_id: int) -> Optional[int]:
+        pass
