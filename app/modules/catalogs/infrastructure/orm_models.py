@@ -10,6 +10,7 @@ class DeporteORM(Base):
 
     id_deporte = Column(Integer, primary_key=True, index=True)
     nombre_deporte = Column(String(50), nullable=False)
+    max_jugadores_deporte = Column(Integer, nullable=True)
 
 class RegionORM(Base):
     __tablename__ = "Region"
