@@ -71,3 +71,18 @@ INSERT INTO bd_matchday."Datos_Bancarios" (fk_id_usuario, banco, cedula, telefon
 (2, 'Mercantil', '27000002', '04123456789'),
 (3, 'Banesco', '27000003', '04000000001'),
 (4, 'Provincial', '27000004', '04000000002');
+
+-- 6. EQUIPOS
+INSERT INTO bd_matchday."Equipo" (id_equipo, nombre_equipo, url_logo_equipo, descripcion_equipo, esta_reclutando, max_miembros, puntos_acumulados, fecha_creacion_equipo, url_chat_equipo, fk_id_deporte, fk_id_usuario_capitan) VALUES 
+(1, 'Real Madrid', 'https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/team_logos%2Flogo_1778511772422.jpg?alt=media&token=412a85e8-4320-4cfa-bf10-2659227f5110', '', true, 2, 0, '2026-05-11 15:02:54.057458', NULL, 5, 1),
+(2, 'Manchester City', 'https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/team_logos%2Flogo_1778511872966.jpg?alt=media&token=ea82529f-74e0-4147-83ad-c14b982c27e2', '', true, 2, 0, '2026-05-11 15:04:34.288630', NULL, 5, 3);
+
+SELECT setval('bd_matchday."Equipo_id_equipo_seq"', 2);
+
+-- 7. MEMBRESÍAS DE EQUIPO
+INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_miembro, rol_equipo) VALUES 
+(1, 1, 'aceptado', 'Capitan'),
+(2, 3, 'aceptado', 'Capitan'),
+(1, 2, 'aceptado', 'Jugador'),
+(2, 4, 'aceptado', 'Jugador');
+

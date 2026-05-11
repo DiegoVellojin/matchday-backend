@@ -133,6 +133,48 @@ def accept_match(
         
     return match
 
+@router.post("/{match_id}/propose-terms", response_model=MatchResponse)
+def propose_terms(
+    match_id: int,
+    request: ProposeTermsRequest,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id)
+):
+    repository = MatchRepositoryImpl(db)
+    use_case = ProposeTermsUseCase(repository)
+    
+    match = use_case.execute(
+        match_id=match_id,
+        user_id=current_user_id,
+        fecha=request.fecha_acordada,
+        costo=request.costo_total
+    )
+    
+    # Notificar al otro capitán sobre la nueva propuesta
+    try:
+        target_user = match.fk_id_usuario_org if current_user_id != match.fk_id_usuario_org else None
+        if target_user is None and match.fk_id_equipo_b:
+             from app.modules.teams.infrastructure.repositories_impl import TeamRepositoryImpl
+             team_repo = TeamRepositoryImpl(db)
+             equipo_b = team_repo.get_by_id(match.fk_id_equipo_b)
+             if equipo_b:
+                 target_user = equipo_b.fk_id_usuario_capitan
+        
+        if target_user:
+            notif_repo = NotificationRepositoryImpl(db)
+            notif_use_case = CreateNotificationUseCase(notif_repo)
+            notif_use_case.execute(
+                id_usuario=target_user,
+                mensaje=f"El capitán rival ha propuesto nuevos términos para el partido. ¡Revísalos!",
+                tipo="terms_proposed",
+                referencia_id=match_id,
+                db=db
+            )
+    except Exception as e:
+        print(f"Error al enviar notificación en propose_terms: {e}")
+        
+    return match
+
 @router.put("/{match_id}/configure", response_model=MatchResponse)
 def configure_match(
     match_id: int,
