@@ -385,6 +385,20 @@ class MatchRepositoryImpl(IMatchRepository):
             setattr(orm, "resultado_goles_b_cap_b", goals_b)
             
         self.db.commit()
+
+        # Verificar si coinciden para auto-completar
+        g_a_a = cast(Optional[int], orm.resultado_goles_a_cap_a)
+        g_b_a = cast(Optional[int], orm.resultado_goles_b_cap_a)
+        g_a_b = cast(Optional[int], orm.resultado_goles_a_cap_b)
+        g_b_b = cast(Optional[int], orm.resultado_goles_b_cap_b)
+
+        if g_a_a is not None and g_b_a is not None and g_a_b is not None and g_b_b is not None:
+            if g_a_a == g_a_b and g_b_a == g_b_b:
+                # Los resultados coinciden, procedemos a registrar oficialmente
+                fk_a = cast(int, orm.fk_id_equipo_a)
+                fk_b = cast(int, orm.fk_id_equipo_b)
+                self.register_result(match_id, fk_a, fk_b, g_a_a, g_b_a)
+
         return self.get_by_id(match_id)
 
     def register_result(self, match_id: int, team_a_id: int, team_b_id: int, goals_a: int, goals_b: int) -> None:
