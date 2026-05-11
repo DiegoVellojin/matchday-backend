@@ -64,6 +64,7 @@ def list_matches(
     # para que vea los que están en negociación, pendientes de pago, completados (historial), etc.
     final_status = status
     final_user_id = None
+    final_exclude_user_id = None
     
     if (mine and current_user_id) or team_id:
         # Si no se pasó un status específico, buscamos todos los estados
@@ -72,6 +73,8 @@ def list_matches(
             
     if mine and current_user_id:
         final_user_id = current_user_id
+    elif not mine and current_user_id:
+        final_exclude_user_id = current_user_id
             
     return use_case.execute(
         sport_id=sport_id, 
@@ -80,7 +83,8 @@ def list_matches(
         cancha_id=cancha_id,
         fecha=fecha,
         user_id=final_user_id,
-        team_id=team_id
+        team_id=team_id,
+        exclude_user_id=final_exclude_user_id
     )
 
 @router.get("/{match_id}", response_model=MatchResponse)

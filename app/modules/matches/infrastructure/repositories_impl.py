@@ -133,9 +133,10 @@ class MatchRepositoryImpl(IMatchRepository):
                 cancha_id: Optional[int] = None,
                 fecha: Optional[datetime] = None,
                 user_id: Optional[int] = None,
-                team_id: Optional[int] = None) -> List[MatchEntity]:
+                team_id: Optional[int] = None,
+                exclude_user_id: Optional[int] = None) -> List[MatchEntity]:
         from app.modules.matches.domain.specifications import (
-            MatchBySport, MatchByStatus, MatchByCancha, MatchByDate, MatchByUserInvolved
+            MatchBySport, MatchByStatus, MatchByCancha, MatchByDate, MatchByUserInvolved, ExcludeMatchesByUserTeams
         )
         
         specs = []
@@ -144,6 +145,7 @@ class MatchRepositoryImpl(IMatchRepository):
         if cancha_id: specs.append(MatchByCancha(cancha_id))
         if fecha: specs.append(MatchByDate(fecha))
         if user_id: specs.append(MatchByUserInvolved(user_id))
+        if exclude_user_id: specs.append(ExcludeMatchesByUserTeams(exclude_user_id))
         if team_id:
             from app.modules.matches.domain.specifications import MatchByTeamInvolved
             specs.append(MatchByTeamInvolved(team_id))

@@ -26,7 +26,8 @@ class GetMatchesUseCase:
                 cancha_id: Optional[int] = None,
                 fecha: Optional[datetime] = None,
                 user_id: Optional[int] = None,
-                team_id: Optional[int] = None) -> List[MatchEntity]:
+                team_id: Optional[int] = None,
+                exclude_user_id: Optional[int] = None) -> List[MatchEntity]:
         return self.repository.get_all(
             sport_id=sport_id, 
             status=status,
@@ -34,7 +35,8 @@ class GetMatchesUseCase:
             cancha_id=cancha_id,
             fecha=fecha,
             user_id=user_id,
-            team_id=team_id
+            team_id=team_id,
+            exclude_user_id=exclude_user_id
         )
 
 class GetMatchDetailsUseCase:
