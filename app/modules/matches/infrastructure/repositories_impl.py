@@ -91,8 +91,10 @@ class MatchRepositoryImpl(IMatchRepository):
         fk_a = cast(Optional[int], orm.fk_id_equipo_a)
         fk_b = cast(Optional[int], orm.fk_id_equipo_b)
         if fk_a is not None:
+            self._register_team_members(cast(int, orm.id_partida), fk_a)
             EventDispatcher.dispatch(TeamAssignedToMatch(match_id=cast(int, orm.id_partida), team_id=fk_a))
         if fk_b is not None:
+            self._register_team_members(cast(int, orm.id_partida), fk_b)
             EventDispatcher.dispatch(TeamAssignedToMatch(match_id=cast(int, orm.id_partida), team_id=fk_b))
 
         return entity
@@ -197,8 +199,10 @@ class MatchRepositoryImpl(IMatchRepository):
             fk_a = cast(Optional[int], orm.fk_id_equipo_a)
             fk_b = cast(Optional[int], orm.fk_id_equipo_b)
             if fk_a is not None and fk_a != old_equipo_a:
+                self._register_team_members(match_id, fk_a)
                 EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=fk_a))
             if fk_b is not None and fk_b != old_equipo_b:
+                self._register_team_members(match_id, fk_b)
                 EventDispatcher.dispatch(TeamAssignedToMatch(match_id=match_id, team_id=fk_b))
             
             self._dispatch_events(entity)
@@ -318,6 +322,15 @@ class MatchRepositoryImpl(IMatchRepository):
             setattr(orm, "fecha_acordada", propuesta_fecha_a)
             setattr(orm, "costo_total_partida", propuesta_costo_a)
             setattr(orm, "estatus_partida", 'pendiente_pago')
+            
+            # Auto-verificar pago de ambos capitanes
+            cap_a_id = orm.fk_id_usuario_org
+            cap_b_id = equipo_b.fk_id_usuario_capitan if equipo_b else None
+            
+            self.db.query(PartidaUsuarioORM).filter(
+                PartidaUsuarioORM.fk_id_partida == match_id,
+                PartidaUsuarioORM.fk_id_usuario.in_([cap_a_id, cap_b_id] if cap_b_id else [cap_a_id])
+            ).update({"estatus_pago": "verificado"}, synchronize_session=False)
             
         # Actualizar datos bancarios del usuario que configura
         datos_orm = self.db.query(DatosBancariosORM).filter(DatosBancariosORM.fk_id_usuario == user_id).first()
