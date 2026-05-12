@@ -94,8 +94,9 @@
 - Ejemplo correcto: repo.find(MatchBySport(1) & MatchByStatus('publicada'))
 
 ## Patrón Repository
-- Los repositorios implementan la interfaz IXxxRepository del dominio.
-- Las interfaces viven en domain/interfaces.py de cada módulo.
+- Los repositorios implementan la interfaz del dominio (ej. `IUserRepository`, `ISportRepository`).
+- Las interfaces viven en `domain/interfaces.py` de cada módulo y siguen nomenclatura en inglés con prefijo `I`.
+- Las implementaciones viven en `infrastructure/repositories_impl.py` y terminan en `RepositoryImpl` (ej. `UserRepositoryImpl`).
 - Los repositorios NO contienen lógica de negocio. Solo CRUD y consultas.
 
 # ─────────────────────────────────────────────────────────────

@@ -18,3 +18,6 @@ __pycache__/
 # Firebase
 firebase-service-account.json
 
+# Reglas de Agente
+.antigravityrules
+

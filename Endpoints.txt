@@ -1,5 +1,6 @@
 # ==============================================================================
-# MATCHDAY API SPECIFICATION (V1) - UPDATED 2026-05-06
+# ⚽ MATCHDAY API SPECIFICATION (V1)
+# Última Actualización: 12 Mayo 2026
 # ==============================================================================
 # Base URL: https://matchday-backend-3qot.onrender.com/api/v1
 # Protocol: HTTPS | Format: JSON | Auth: JWT (Bearer Token)
@@ -41,14 +42,15 @@
 
 ---
 ## ⚽ 3. MÓDULO: PARTIDOS (`/matches`)
+*Nota: Operaciones críticas requieren autorización estricta de Capitán.*
 - **POST /matches**              | Publicar nueva partida (retos).
 - **GET  /matches**              | Feed de partidas (filtros: sport, status, region, date, mine).
 - **GET  /matches/{id}**         | Info completa de la partida.
-- **PUT  /matches/{id}**         | Editar partida publicada (Solo Org).
-- **DELETE /matches/{id}**       | Cancelar/Eliminar partida (Solo Org).
+- **PUT  /matches/{id}**         | Editar partida publicada (Solo Capitán A).
+- **DELETE /matches/{id}**       | Cancelar/Eliminar partida (Solo Capitán A).
 - **POST /matches/{id}/join**    | Unirse individualmente o con equipo.
-- **POST /matches/{id}/accept/{t_id}** | Aceptar reto de un equipo específico.
-- **PUT  /matches/{id}/configure**| Configurar fecha final, costo y datos de pago (Org).
+- **POST /matches/{id}/accept/{t_id}** | Aceptar reto de un equipo específico (Solo Capitán A).
+- **PUT  /matches/{id}/configure**| Configurar fecha final, costo y datos de banco (Solo Capitán A).
 - **POST /matches/{id}/ready**   | Marcar equipo como listo (Capitanes).
 - **GET  /matches/{id}/players** | Ver lista de jugadores inscritos y su estatus.
 - **POST /matches/{id}/results** | Registrar resultado (Goles A vs Goles B).
@@ -62,7 +64,7 @@
 - **GET  /payments/my**          | Mis deudas y pagos realizados.
 - **POST /payments/{id_partida}/upload** | Subir comprobante y referencia.
 - **GET  /payments/team/{id_eq}/validate** | Pagos del equipo para validar (Capitán).
-- **PUT  /payments/verify**      | Confirmar recepción de dinero (Capitán).
+- **PUT  /payments/verify**      | Confirmar recepción de dinero (Capitán de cualquier equipo).
 
 ---
 ## 🔔 6. MÓDULO: NOTIFICACIONES (`/notifications`)
@@ -72,7 +74,7 @@
 
 ---
 ## 📚 7. MÓDULO: CATÁLOGOS (`/catalogs`)
-- **GET  /catalogs/sports**      | Lista de deportes.
+- **GET  /catalogs/sports**      | Lista de deportes (Fútbol, Padel, Tenis, Basket).
 - **GET  /catalogs/regions**     | Regiones geográficas.
 - **GET  /catalogs/canchas**      | Canchas registradas.
 - **POST /catalogs/canchas**     | Registrar nueva cancha (Google Maps).
