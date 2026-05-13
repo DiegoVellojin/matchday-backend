@@ -36,6 +36,6 @@ uvicorn==0.45.0
 watchfiles==1.1.1
 websockets==16.0
 firebase-admin==6.5.0
-pybcv==1.1.3
+pybcv==1.1.2
 apscheduler==3.11.0
 
