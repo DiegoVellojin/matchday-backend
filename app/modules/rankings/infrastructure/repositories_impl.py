@@ -22,9 +22,9 @@ class RankingRepositoryImpl(IRankingRepository):
             COALESCE(SUM(CASE WHEN r.resultado_texto = 'Victoria' THEN 1 ELSE 0 END), 0) as victorias,
             COALESCE(SUM(CASE WHEN r.resultado_texto = 'Empate' THEN 1 ELSE 0 END), 0) as empates,
             COALESCE(SUM(CASE WHEN r.resultado_texto = 'Derrota' THEN 1 ELSE 0 END), 0) as derrotas
-        FROM bd_matchday."Equipo" e
-        JOIN bd_matchday."Deporte" d ON e.fk_id_deporte = d.id_deporte
-        LEFT JOIN bd_matchday."Resultado" r ON e.id_equipo = r.fk_id_equipo
+        FROM "Equipo" e
+        JOIN "Deporte" d ON e.fk_id_deporte = d.id_deporte
+        LEFT JOIN "Resultado" r ON e.id_equipo = r.fk_id_equipo
         GROUP BY e.id_equipo, e.nombre_equipo, e.url_logo_equipo, d.nombre_deporte
         ORDER BY puntos_totales DESC, victorias DESC, partidos_jugados ASC
         """

@@ -18,7 +18,7 @@ class PushNotificationService:
         """
         # 1. Guardar en Base de Datos
         query = """
-        INSERT INTO bd_matchday."Notificacion" (fk_id_usuario, mensaje, tipo, referencia_id)
+        INSERT INTO "Notificacion" (fk_id_usuario, mensaje, tipo, referencia_id)
         VALUES (:fk_id_usuario, :mensaje, :tipo, :referencia_id)
         RETURNING id_notificacion;
         """

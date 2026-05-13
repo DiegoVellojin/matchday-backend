@@ -394,10 +394,11 @@ class MatchRepositoryImpl(IMatchRepository):
 
         if g_a_a is not None and g_b_a is not None and g_a_b is not None and g_b_b is not None:
             if g_a_a == g_a_b and g_b_a == g_b_b:
-                # Los resultados coinciden, procedemos a registrar oficialmente
-                fk_a = cast(int, orm.fk_id_equipo_a)
-                fk_b = cast(int, orm.fk_id_equipo_b)
-                self.register_result(match_id, fk_a, fk_b, g_a_a, g_b_a)
+                # EVITAR DUPLICADOS: Solo procesar si la partida no ha sido completada ya
+                if orm.estatus_partida != 'completada':
+                    fk_a = cast(int, orm.fk_id_equipo_a)
+                    fk_b = cast(int, orm.fk_id_equipo_b)
+                    self.register_result(match_id, fk_a, fk_b, g_a_a, g_b_a)
 
         return self.get_by_id(match_id)
 
