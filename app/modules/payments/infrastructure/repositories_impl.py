@@ -23,11 +23,11 @@ class PaymentRepositoryImpl(IPaymentRepository):
             db.banco as banco_receptor,
             db.cedula as cedula_receptora,
             db.telefono as telefono_receptor,
-            (SELECT COUNT(*) FROM "Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
-        FROM "Partida_Usuario" pu
-        JOIN "Partida" p ON pu.fk_id_partida = p.id_partida
-        LEFT JOIN "Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
-        LEFT JOIN "Datos_Bancarios" db ON e.fk_id_usuario_capitan = db.fk_id_usuario
+            (SELECT COUNT(*) FROM bd_matchday."Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
+        FROM bd_matchday."Partida_Usuario" pu
+        JOIN bd_matchday."Partida" p ON pu.fk_id_partida = p.id_partida
+        LEFT JOIN bd_matchday."Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
+        LEFT JOIN bd_matchday."Datos_Bancarios" db ON e.fk_id_usuario_capitan = db.fk_id_usuario
         WHERE pu.fk_id_usuario = :user_id
         """
         result = self.db.execute(text(query), {"user_id": user_id}).fetchall()
@@ -58,8 +58,8 @@ class PaymentRepositoryImpl(IPaymentRepository):
             # Calculamos el monto en BS congelando la tasa en este momento
             calc_query = """
             SELECT p.costo_total_partida, 
-                   (SELECT COUNT(*) FROM "Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
-            FROM "Partida" p
+                   (SELECT COUNT(*) FROM bd_matchday."Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
+            FROM bd_matchday."Partida" p
             WHERE p.id_partida = :id_partida
             """
             match_data = self.db.execute(text(calc_query), {"id_partida": id_partida}).fetchone()
@@ -70,7 +70,7 @@ class PaymentRepositoryImpl(IPaymentRepository):
                 monto_pagado_bs = monto_divisa * tasa_usada_bs
 
         query = """
-        UPDATE "Partida_Usuario"
+        UPDATE bd_matchday."Partida_Usuario"
         SET url_recibo_pago = :url, 
             referencia_pago = :referencia, 
             estatus_pago = 'reportado',
@@ -90,7 +90,7 @@ class PaymentRepositoryImpl(IPaymentRepository):
 
     def is_team_captain(self, id_equipo: int, user_id: int) -> bool:
         query = """
-        SELECT 1 FROM "Equipo" 
+        SELECT 1 FROM bd_matchday."Equipo" 
         WHERE id_equipo = :id_equipo AND fk_id_usuario_capitan = :user_id
         """
         result = self.db.execute(text(query), {"id_equipo": id_equipo, "user_id": user_id}).fetchone()
@@ -98,8 +98,8 @@ class PaymentRepositoryImpl(IPaymentRepository):
 
     def is_match_captain(self, id_partida: int, user_id: int) -> bool:
         query = """
-        SELECT 1 FROM "Equipo" e
-        JOIN "Partida_Usuario" pu ON e.id_equipo = pu.fk_id_equipo_asignado
+        SELECT 1 FROM bd_matchday."Equipo" e
+        JOIN bd_matchday."Partida_Usuario" pu ON e.id_equipo = pu.fk_id_equipo_asignado
         WHERE pu.fk_id_partida = :id_partida AND e.fk_id_usuario_capitan = :user_id
         """
         result = self.db.execute(text(query), {"id_partida": id_partida, "user_id": user_id}).fetchone()
@@ -116,11 +116,11 @@ class PaymentRepositoryImpl(IPaymentRepository):
             pu.estatus_pago,
             pu.url_recibo_pago,
             e.fk_id_usuario_capitan,
-            (SELECT COUNT(*) FROM "Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
-        FROM "Partida_Usuario" pu
-        JOIN "Partida" p ON pu.fk_id_partida = p.id_partida
-        JOIN "Usuario" u ON pu.fk_id_usuario = u.id_usuario
-        JOIN "Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
+            (SELECT COUNT(*) FROM bd_matchday."Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
+        FROM bd_matchday."Partida_Usuario" pu
+        JOIN bd_matchday."Partida" p ON pu.fk_id_partida = p.id_partida
+        JOIN bd_matchday."Usuario" u ON pu.fk_id_usuario = u.id_usuario
+        JOIN bd_matchday."Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
         WHERE pu.fk_id_equipo_asignado = :id_equipo
         """
         result = self.db.execute(text(query), {"id_equipo": id_equipo}).fetchall()
@@ -142,7 +142,7 @@ class PaymentRepositoryImpl(IPaymentRepository):
 
     def verify_payment(self, id_partida: int, id_usuario: int) -> None:
         query = """
-        UPDATE "Partida_Usuario"
+        UPDATE bd_matchday."Partida_Usuario"
         SET estatus_pago = 'verificado'
         WHERE fk_id_partida = :id_partida AND fk_id_usuario = :id_usuario
         """
@@ -152,8 +152,8 @@ class PaymentRepositoryImpl(IPaymentRepository):
     def get_payment_captain(self, id_partida: int, user_id: int) -> Optional[int]:
         query = """
         SELECT e.fk_id_usuario_capitan
-        FROM "Partida_Usuario" pu
-        JOIN "Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
+        FROM bd_matchday."Partida_Usuario" pu
+        JOIN bd_matchday."Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
         WHERE pu.fk_id_partida = :id_partida AND pu.fk_id_usuario = :user_id
         """
         result = self.db.execute(text(query), {"id_partida": id_partida, "user_id": user_id}).fetchone()
