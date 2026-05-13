@@ -44,8 +44,12 @@ class PartidaORM(Base):
     # Columnas adicionales para la negociación entre capitanes
     propuesta_fecha_a: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     propuesta_costo_a: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True)
+    propuesta_moneda_a: Mapped[str] = mapped_column(String(3), default="USD", server_default="USD")
+    
     propuesta_fecha_b: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     propuesta_costo_b: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True)
+    propuesta_moneda_b: Mapped[str] = mapped_column(String(3), default="USD", server_default="USD")
+    
     equipo_a_listo: Mapped[bool] = mapped_column(Boolean, default=False)
     equipo_b_listo: Mapped[bool] = mapped_column(Boolean, default=False)
 

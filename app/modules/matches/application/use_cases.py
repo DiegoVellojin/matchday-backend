@@ -82,7 +82,7 @@ class ProposeTermsUseCase:
     def __init__(self, repository: IMatchRepository):
         self.repository = repository
 
-    def execute(self, match_id: int, user_id: int, fecha: datetime, costo: float) -> MatchEntity:
+    def execute(self, match_id: int, user_id: int, fecha: datetime, costo: float, moneda: str) -> MatchEntity:
         match = self.repository.get_by_id(match_id)
         if not match:
             raise NotFoundException("Partido no encontrado")
@@ -91,7 +91,7 @@ class ProposeTermsUseCase:
         is_captain_a = match.fk_id_usuario_org == user_id
         
         # Actualizar términos en repositorio
-        updated_match = self.repository.update_terms(match_id, user_id, is_captain_a, fecha, costo)
+        updated_match = self.repository.update_terms(match_id, user_id, is_captain_a, fecha, costo, moneda)
         if not updated_match:
             raise NotFoundException("Partido no encontrado después de actualizar términos")
 
@@ -101,7 +101,8 @@ class ProposeTermsUseCase:
             self.repository.update(match_id, {
                 "estatus_partida": "pendiente_pago",
                 "fecha_acordada": updated_match.propuesta_fecha_a,
-                "costo_total_partida": updated_match.propuesta_costo_a
+                "costo_total_partida": updated_match.propuesta_costo_a,
+                "moneda": updated_match.propuesta_moneda_a
             })
             updated_match.estatus_partida = "pendiente_pago"
             updated_match.fecha_acordada = updated_match.propuesta_fecha_a
@@ -116,12 +117,12 @@ class ConfigureMatchUseCase:
     def __init__(self, repository: IMatchRepository):
         self.repository = repository
 
-    def execute(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> MatchEntity:
+    def execute(self, match_id: int, user_id: int, fecha: datetime, costo: float, moneda: str, banco: str, cedula: str, telefono: str) -> MatchEntity:
         match = self.repository.get_by_id(match_id)
         if not match:
             raise NotFoundException("Partido no encontrado")
         # Verificar que el usuario sea capitán de alguno de los equipos (org o alguien más)
-        configured = self.repository.configure_match(match_id, user_id, fecha, costo, banco, cedula, telefono)
+        configured = self.repository.configure_match(match_id, user_id, fecha, costo, moneda, banco, cedula, telefono)
         if not configured:
             raise NotFoundException("Partido no encontrado al configurar")
         return configured

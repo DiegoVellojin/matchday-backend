@@ -38,8 +38,11 @@ class MatchRepositoryImpl(IMatchRepository):
             jugadores_inscritos=len(orm.participantes) if hasattr(orm, 'participantes') else 0,
             propuesta_fecha_a=cast(Optional[datetime], orm.propuesta_fecha_a),
             propuesta_costo_a=cast(Optional[float], orm.propuesta_costo_a),
+            propuesta_moneda_a=orm.propuesta_moneda_a,
             propuesta_fecha_b=cast(Optional[datetime], orm.propuesta_fecha_b),
             propuesta_costo_b=cast(Optional[float], orm.propuesta_costo_b),
+            propuesta_moneda_b=orm.propuesta_moneda_b,
+            moneda=orm.moneda,
             equipo_a_listo=cast(bool, orm.equipo_a_listo),
             equipo_b_listo=cast(bool, orm.equipo_b_listo),
             resultado_goles_a_cap_a=cast(Optional[int], orm.resultado_goles_a_cap_a),
@@ -73,6 +76,7 @@ class MatchRepositoryImpl(IMatchRepository):
             fecha_inicio_estimada=match.fecha_inicio_estimada,
             fecha_fin_estimada=match.fecha_fin_estimada,
             costo_total_partida=match.costo_total_partida,
+            moneda=match.moneda,
             fk_id_usuario_org=match.fk_id_usuario_org,
             fk_id_deporte=match.fk_id_deporte,
             fk_id_cancha=match.fk_id_cancha,
@@ -271,22 +275,24 @@ class MatchRepositoryImpl(IMatchRepository):
             } for r in results
         ]
 
-    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> Optional[MatchEntity]:
+    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float, moneda: str) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
         if not orm:
             return None
         if is_captain_a:
             setattr(orm, "propuesta_fecha_a", fecha)
             setattr(orm, "propuesta_costo_a", costo)
+            setattr(orm, "propuesta_moneda_a", moneda)
         else:
             setattr(orm, "propuesta_fecha_b", fecha)
             setattr(orm, "propuesta_costo_b", costo)
+            setattr(orm, "propuesta_moneda_b", moneda)
         
         self.db.commit()
         self.db.refresh(orm)
         return self._to_entity(orm)
 
-    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> Optional[MatchEntity]:
+    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, moneda: str, banco: str, cedula: str, telefono: str) -> Optional[MatchEntity]:
         from app.modules.users.infrastructure.orm_models import DatosBancariosORM
         from app.modules.teams.infrastructure.orm_models import EquipoORM
         
@@ -306,21 +312,28 @@ class MatchRepositoryImpl(IMatchRepository):
         if is_capitan_a:
             setattr(orm, "propuesta_fecha_a", fecha)
             setattr(orm, "propuesta_costo_a", costo)
+            setattr(orm, "propuesta_moneda_a", moneda)
         elif is_capitan_b:
             setattr(orm, "propuesta_fecha_b", fecha)
             setattr(orm, "propuesta_costo_b", costo)
+            setattr(orm, "propuesta_moneda_b", moneda)
+
         # Verificar acuerdo mutuo para cambiar a pendiente_pago
         propuesta_fecha_a = cast(Optional[datetime], orm.propuesta_fecha_a)
         propuesta_fecha_b = cast(Optional[datetime], orm.propuesta_fecha_b)
         propuesta_costo_a = cast(Optional[float], orm.propuesta_costo_a)
         propuesta_costo_b = cast(Optional[float], orm.propuesta_costo_b)
+        propuesta_moneda_a = orm.propuesta_moneda_a
+        propuesta_moneda_b = orm.propuesta_moneda_b
 
         if propuesta_fecha_a is not None and propuesta_fecha_b is not None and \
            propuesta_costo_a is not None and propuesta_costo_b is not None and \
            propuesta_costo_a == propuesta_costo_b and \
+           propuesta_moneda_a == propuesta_moneda_b and \
            propuesta_fecha_a == propuesta_fecha_b:
             setattr(orm, "fecha_acordada", propuesta_fecha_a)
             setattr(orm, "costo_total_partida", propuesta_costo_a)
+            setattr(orm, "moneda", propuesta_moneda_a)
             setattr(orm, "estatus_partida", 'pendiente_pago')
             
             # Auto-verificar pago de ambos capitanes

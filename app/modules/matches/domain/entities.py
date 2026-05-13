@@ -12,6 +12,7 @@ class MatchEntity(AggregateRoot):
     fecha_fin_estimada: datetime = field(default_factory=datetime.now)
     fecha_acordada: Optional[datetime] = None
     costo_total_partida: float = 0.0
+    moneda: str = "USD"
     estatus_partida: str = "publicada"
     fk_id_usuario_org: int = 0
     fk_id_deporte: int = 0
@@ -25,8 +26,10 @@ class MatchEntity(AggregateRoot):
     # Campos para la negociación entre capitanes
     propuesta_fecha_a: Optional[datetime] = None
     propuesta_costo_a: Optional[float] = None
+    propuesta_moneda_a: str = "USD"
     propuesta_fecha_b: Optional[datetime] = None
     propuesta_costo_b: Optional[float] = None
+    propuesta_moneda_b: str = "USD"
     equipo_a_listo: bool = False
     equipo_b_listo: bool = False
 
@@ -86,5 +89,7 @@ class MatchEntity(AggregateRoot):
             return False
         if self.propuesta_costo_a is None or self.propuesta_costo_b is None:
             return False
+        
         return (self.propuesta_fecha_a == self.propuesta_fecha_b and 
-                self.propuesta_costo_a == self.propuesta_costo_b)
+                self.propuesta_costo_a == self.propuesta_costo_b and
+                self.propuesta_moneda_a == self.propuesta_moneda_b)

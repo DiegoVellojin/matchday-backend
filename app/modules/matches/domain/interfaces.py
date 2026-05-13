@@ -50,7 +50,7 @@ class IMatchRepository(ABC):
         pass
 
     @abstractmethod
-    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, banco: str, cedula: str, telefono: str) -> Optional[MatchEntity]:
+    def configure_match(self, match_id: int, user_id: int, fecha: datetime, costo: float, moneda: str, banco: str, cedula: str, telefono: str) -> Optional[MatchEntity]:
         """Configura los términos del partido e inserta/actualiza los datos bancarios del capitán."""
         pass
 
@@ -60,7 +60,7 @@ class IMatchRepository(ABC):
         pass
 
     @abstractmethod
-    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float) -> Optional[MatchEntity]:
+    def update_terms(self, match_id: int, user_id: int, is_captain_a: bool, fecha: datetime, costo: float, moneda: str) -> Optional[MatchEntity]:
         """Actualiza los términos propuestos por un capitán."""
         pass
 

@@ -14,11 +14,13 @@ class ProposeTermsRequest(BaseModel):
     """Esquema para proponer términos de negociación."""
     fecha_acordada: datetime
     costo_total: float
+    moneda: str = "USD"
 
 class MatchConfigureRequest(BaseModel):
     """Esquema para configurar partido (Capitán)."""
     fecha_acordada: datetime
     costo_total_partida: float
+    moneda: str = "USD"
     banco_receptor: str
     cedula_receptor: str
     telefono_receptor: str
@@ -45,6 +47,7 @@ class MatchResponse(BaseModel):
     fecha_fin_estimada: datetime
     fecha_acordada: Optional[datetime] = None
     costo_total_partida: float
+    moneda: str = "USD"
     estatus_partida: str
     fk_id_usuario_org: int
     fk_id_deporte: int
@@ -54,8 +57,10 @@ class MatchResponse(BaseModel):
     
     propuesta_fecha_a: Optional[datetime] = None
     propuesta_costo_a: Optional[float] = None
+    propuesta_moneda_a: str = "USD"
     propuesta_fecha_b: Optional[datetime] = None
     propuesta_costo_b: Optional[float] = None
+    propuesta_moneda_b: str = "USD"
     
     equipo_a_listo: bool = False
     equipo_b_listo: bool = False

@@ -147,7 +147,8 @@ def propose_terms(
         match_id=match_id,
         user_id=current_user_id,
         fecha=request.fecha_acordada,
-        costo=request.costo_total
+        costo=request.costo_total,
+        moneda=request.moneda
     )
     
     # Notificar al otro capitán sobre la nueva propuesta
@@ -190,6 +191,7 @@ def configure_match(
         user_id=current_user_id, 
         fecha=request.fecha_acordada, 
         costo=request.costo_total_partida,
+        moneda=request.moneda,
         banco=request.banco_receptor,
         cedula=request.cedula_receptor,
         telefono=request.telefono_receptor
