@@ -112,7 +112,7 @@ class MatchByTeamInvolved(Specification):
         self.team_id = team_id
 
     def is_satisfied_by(self, match) -> bool:
-        return match.fk_id_equipo_a == self.team_id or match.fk_id_equipo_b == self.team_id
+        return match.id_equipo_a == self.team_id or match.id_equipo_b == self.team_id
 
     def apply_to_query(self, query, model):
         return query.filter(or_(
