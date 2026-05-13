@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.modules.finance.infrastructure.bcv_service import BCVService
 
-router = APIRouter(prefix="/config", tags=["Finance"])
+router = APIRouter(tags=["Finance"])
 
 @router.get("/rates/latest")
 def get_latest_rates(db: Session = Depends(get_db)):
