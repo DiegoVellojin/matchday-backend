@@ -26,10 +26,15 @@ class PaymentResponse(BaseModel):
     is_paid: bool
     estatus_pago: str
     url_recibo_pago: Optional[str] = None
+    banco_receptor: Optional[str] = None
+    cedula_receptora: Optional[str] = None
+    telefono_receptor: Optional[str] = None
+    moneda: str = "USD"
 
 class UploadReceiptRequest(BaseModel):
     url_recibo_pago: str
     referencia_pago: str
+    tasa_usada_bs: Optional[float] = None
 
 @router.get("/my", response_model=List[PaymentResponse])
 def get_my_payments(
@@ -64,7 +69,11 @@ def get_my_payments(
             monto=round(monto_individual, 2),
             is_paid=(row["estatus_pago"] == "verificado" or monto_individual == 0),
             estatus_pago=row["estatus_pago"],
-            url_recibo_pago=row["url_recibo_pago"]
+            url_recibo_pago=row["url_recibo_pago"],
+            banco_receptor=row.get("banco_receptor"),
+            cedula_receptora=row.get("cedula_receptora"),
+            telefono_receptor=row.get("telefono_receptor"),
+            moneda=row.get("moneda", "USD")
         ))
     return payments
 
@@ -79,7 +88,13 @@ def upload_receipt(
     repository = PaymentRepositoryImpl(db)
     use_case = UploadReceiptUseCase(repository)
     
-    use_case.execute(id_partida, current_user_id, request.url_recibo_pago, request.referencia_pago)
+    use_case.execute(
+        id_partida, 
+        current_user_id, 
+        request.url_recibo_pago, 
+        request.referencia_pago,
+        request.tasa_usada_bs
+    )
     
     # Notificar al organizador / capitán
     try:

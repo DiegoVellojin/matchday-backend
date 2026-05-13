@@ -16,13 +16,18 @@ class PaymentRepositoryImpl(IPaymentRepository):
             e.url_logo_equipo,
             p.fecha_inicio_estimada,
             p.costo_total_partida,
+            p.moneda,
             pu.estatus_pago,
             pu.url_recibo_pago,
             e.fk_id_usuario_capitan,
+            db.banco as banco_receptor,
+            db.cedula as cedula_receptora,
+            db.telefono as telefono_receptor,
             (SELECT COUNT(*) FROM "Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
         FROM "Partida_Usuario" pu
         JOIN "Partida" p ON pu.fk_id_partida = p.id_partida
         LEFT JOIN "Equipo" e ON pu.fk_id_equipo_asignado = e.id_equipo
+        LEFT JOIN "Datos_Bancarios" db ON e.fk_id_usuario_capitan = db.fk_id_usuario
         WHERE pu.fk_id_usuario = :user_id
         """
         result = self.db.execute(text(query), {"user_id": user_id}).fetchall()
@@ -35,24 +40,51 @@ class PaymentRepositoryImpl(IPaymentRepository):
                 "url_logo_equipo": row.url_logo_equipo,
                 "fecha_inicio_estimada": row.fecha_inicio_estimada,
                 "costo_total_partida": float(row.costo_total_partida) if row.costo_total_partida else 0.0,
+                "moneda": row.moneda,
                 "estatus_pago": row.estatus_pago,
                 "url_recibo_pago": row.url_recibo_pago,
                 "fk_id_usuario_capitan": row.fk_id_usuario_capitan,
-                "total_jugadores": row.total_jugadores
+                "total_jugadores": row.total_jugadores,
+                "banco_receptor": row.banco_receptor,
+                "cedula_receptora": row.cedula_receptora,
+                "telefono_receptor": row.telefono_receptor
             })
         return payments
 
-    def upload_receipt(self, id_partida: int, user_id: int, url_recibo_pago: str, referencia_pago: str) -> None:
+    def upload_receipt(self, id_partida: int, user_id: int, url_recibo_pago: str, referencia_pago: str, tasa_usada_bs: Optional[float] = None) -> None:
+        monto_pagado_bs = None
+        
+        if tasa_usada_bs:
+            # Calculamos el monto en BS congelando la tasa en este momento
+            calc_query = """
+            SELECT p.costo_total_partida, 
+                   (SELECT COUNT(*) FROM "Partida_Usuario" WHERE fk_id_partida = p.id_partida) as total_jugadores
+            FROM "Partida" p
+            WHERE p.id_partida = :id_partida
+            """
+            match_data = self.db.execute(text(calc_query), {"id_partida": id_partida}).fetchone()
+            if match_data:
+                costo_total = float(match_data.costo_total_partida)
+                total_jugadores = match_data.total_jugadores
+                monto_divisa = costo_total / total_jugadores if total_jugadores > 0 else costo_total
+                monto_pagado_bs = monto_divisa * tasa_usada_bs
+
         query = """
         UPDATE "Partida_Usuario"
-        SET url_recibo_pago = :url, referencia_pago = :referencia, estatus_pago = 'reportado'
+        SET url_recibo_pago = :url, 
+            referencia_pago = :referencia, 
+            estatus_pago = 'reportado',
+            tasa_usada_bs = :tasa,
+            monto_pagado_bs = :monto_bs
         WHERE fk_id_partida = :id_partida AND fk_id_usuario = :user_id
         """
         self.db.execute(text(query), {
             "url": url_recibo_pago,
             "referencia": referencia_pago,
             "id_partida": id_partida,
-            "user_id": user_id
+            "user_id": user_id,
+            "tasa": tasa_usada_bs,
+            "monto_bs": monto_pagado_bs
         })
         self.db.commit()
 

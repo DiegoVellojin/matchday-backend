@@ -7,7 +7,7 @@ class IPaymentRepository(ABC):
         pass
 
     @abstractmethod
-    def upload_receipt(self, id_partida: int, user_id: int, url_recibo_pago: str, referencia_pago: str) -> None:
+    def upload_receipt(self, id_partida: int, user_id: int, url_recibo_pago: str, referencia_pago: str, tasa_usada_bs: Optional[float] = None) -> None:
         pass
 
     @abstractmethod
