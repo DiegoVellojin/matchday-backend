@@ -206,7 +206,8 @@ class RegisterMatchResultUseCase:
             if updated_match.fk_id_equipo_a is None or updated_match.fk_id_equipo_b is None:
                 raise ConflictException("No se puede registrar resultado sin ambos equipos asignados.")
 
-            if (updated_match.resultado_goles_a_cap_a == updated_match.resultado_goles_a_cap_b and
+            if (updated_match.estatus_partida != 'completada' and
+                updated_match.resultado_goles_a_cap_a == updated_match.resultado_goles_a_cap_b and
                 updated_match.resultado_goles_b_cap_a == updated_match.resultado_goles_b_cap_b):
                 # Hay coincidencia! Registrar resultado oficial
                 assert updated_match.fk_id_equipo_a is not None

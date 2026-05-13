@@ -92,6 +92,7 @@ class MatchResponse(BaseModel):
     banco_capitan_b: Optional[str] = None
     cedula_capitan_b: Optional[str] = None
     telefono_capitan_b_pago: Optional[str] = None
+    id_equipo_usuario: Optional[int] = None
 
     class Config:
         from_attributes = True

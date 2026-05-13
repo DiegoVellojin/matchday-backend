@@ -7,6 +7,8 @@ from app.modules.teams.infrastructure.repositories_impl import TeamRepositoryImp
 from app.modules.teams.application.use_cases import CreateTeamUseCase, RequestJoinTeamUseCase, GetMyTeamsUseCase, JoinTeamWithTokenUseCase, GetPendingMembersUseCase, RespondToJoinRequestUseCase, GetDiscoverableTeamsUseCase, UpdateTeamUseCase, DeleteTeamUseCase, TransferCaptainUseCase
 
 from app.modules.teams.presentation.schemas import TeamCreateRequest, TeamResponse, MemberResponse, RespondRequest, TeamUpdateRequest
+from app.modules.matches.infrastructure.orm_models import PartidaORM
+from sqlalchemy import or_
 
 router = APIRouter()
 
@@ -38,6 +40,7 @@ def create_team(
     
     eq_dict = equipo.__dict__.copy()
     eq_dict["miembros_actuales"] = 1
+    eq_dict["partidos_jugados"] = 0 # Recién creado siempre es 0
     return eq_dict
 
 
@@ -71,9 +74,19 @@ def get_discoverable_teams(
             EquipoUsuarioORM.estatus_miembro == 'aceptado'
         ).first() is not None
         
+        # Calcular partidos jugados (completados)
+        part_count = db.query(PartidaORM).filter(
+            or_(
+                PartidaORM.fk_id_equipo_a == eq.id_equipo,
+                PartidaORM.fk_id_equipo_b == eq.id_equipo
+            ),
+            PartidaORM.estatus_partida == 'completada'
+        ).count()
+        
         eq_dict = eq.__dict__.copy()
         eq_dict["miembros_actuales"] = count if count > 0 else 1
         eq_dict["soy_miembro"] = es_miembro
+        eq_dict["partidos_jugados"] = part_count
         response.append(eq_dict)
     return response
 
@@ -98,9 +111,19 @@ def get_my_teams(
             EquipoUsuarioORM.fk_id_equipo == eq.id_equipo,
             EquipoUsuarioORM.estatus_miembro == 'aceptado'
         ).count()
+        # Calcular partidos jugados (completados)
+        part_count = db.query(PartidaORM).filter(
+            or_(
+                PartidaORM.fk_id_equipo_a == eq.id_equipo,
+                PartidaORM.fk_id_equipo_b == eq.id_equipo
+            ),
+            PartidaORM.estatus_partida == 'completada'
+        ).count()
+        
         eq_dict = eq.__dict__.copy()
         eq_dict["miembros_actuales"] = count if count > 0 else 1
         eq_dict["soy_miembro"] = True
+        eq_dict["partidos_jugados"] = part_count
         response.append(eq_dict)
     return response
 
@@ -134,9 +157,19 @@ def get_team_detail(
         EquipoUsuarioORM.estatus_miembro == 'aceptado'
     ).first() is not None
     
+    # Calcular partidos jugados (completados)
+    partidos_count = db.query(PartidaORM).filter(
+        or_(
+            PartidaORM.fk_id_equipo_a == equipo.id_equipo,
+            PartidaORM.fk_id_equipo_b == equipo.id_equipo
+        ),
+        PartidaORM.estatus_partida == 'completada'
+    ).count()
+    
     eq_dict = equipo.__dict__.copy()
     eq_dict["miembros_actuales"] = count if count > 0 else 1
     eq_dict["soy_miembro"] = es_miembro
+    eq_dict["partidos_jugados"] = partidos_count
     return eq_dict
 
 
@@ -432,9 +465,19 @@ def update_team(
         EquipoUsuarioORM.estatus_miembro == 'aceptado'
     ).count()
     
+    # Calcular partidos jugados (completados)
+    part_count = db.query(PartidaORM).filter(
+        or_(
+            PartidaORM.fk_id_equipo_a == id_equipo,
+            PartidaORM.fk_id_equipo_b == id_equipo
+        ),
+        PartidaORM.estatus_partida == 'completada'
+    ).count()
+    
     res_dict = updated.__dict__.copy()
     res_dict["miembros_actuales"] = count
     res_dict["soy_miembro"] = True
+    res_dict["partidos_jugados"] = part_count
     return res_dict
 
 @router.put("/{id_equipo}/transfer-captain/{id_nuevo_capitan}")

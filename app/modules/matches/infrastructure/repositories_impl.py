@@ -158,8 +158,12 @@ class MatchRepositoryImpl(IMatchRepository):
             from app.modules.matches.domain.specifications import MatchByTeamInvolved
             specs.append(MatchByTeamInvolved(team_id))
         
-        if not specs:
-            # Si no hay filtros, creamos una especificación que siempre sea verdadera o simplemente buscamos todos
+        if specs:
+            composite_spec = specs[0]
+            for next_spec in specs[1:]:
+                composite_spec = composite_spec & next_spec
+            matches = self.find(composite_spec)
+        else:
             from sqlalchemy.orm import joinedload
             from app.modules.teams.infrastructure.orm_models import EquipoORM
             from app.modules.users.infrastructure.orm_models import UsuarioORM
@@ -170,14 +174,22 @@ class MatchRepositoryImpl(IMatchRepository):
                 joinedload(PartidaORM.equipo_a),
                 joinedload(PartidaORM.equipo_b).joinedload(EquipoORM.capitan)
             ).all()
-            return [self._to_entity(orm) for orm in results]
+            matches = [self._to_entity(orm) for orm in results]
 
-        # Combinar todas las especificaciones con AND
-        composite_spec = specs[0]
-        for next_spec in specs[1:]:
-            composite_spec = composite_spec & next_spec
-            
-        return self.find(composite_spec)
+        if user_id:
+            from app.modules.matches.infrastructure.orm_models import PartidaUsuarioORM
+            match_ids = [m.id for m in matches if m.id]
+            if match_ids:
+                participations = self.db.query(PartidaUsuarioORM).filter(
+                    PartidaUsuarioORM.fk_id_partida.in_(match_ids),
+                    PartidaUsuarioORM.fk_id_usuario == user_id
+                ).all()
+                part_map = {p.fk_id_partida: p.fk_id_equipo_asignado for p in participations}
+                for m in matches:
+                    if m.id in part_map:
+                        m.id_equipo_usuario = part_map[m.id]
+
+        return matches
 
     def update(self, match_id: int, data: dict) -> Optional[MatchEntity]:
         orm = self.db.query(PartidaORM).filter(PartidaORM.id_partida == match_id).first()
@@ -398,21 +410,6 @@ class MatchRepositoryImpl(IMatchRepository):
             setattr(orm, "resultado_goles_b_cap_b", goals_b)
             
         self.db.commit()
-
-        # Verificar si coinciden para auto-completar
-        g_a_a = cast(Optional[int], orm.resultado_goles_a_cap_a)
-        g_b_a = cast(Optional[int], orm.resultado_goles_b_cap_a)
-        g_a_b = cast(Optional[int], orm.resultado_goles_a_cap_b)
-        g_b_b = cast(Optional[int], orm.resultado_goles_b_cap_b)
-
-        if g_a_a is not None and g_b_a is not None and g_a_b is not None and g_b_b is not None:
-            if g_a_a == g_a_b and g_b_a == g_b_b:
-                # EVITAR DUPLICADOS: Solo procesar si la partida no ha sido completada ya
-                if orm.estatus_partida != 'completada':
-                    fk_a = cast(int, orm.fk_id_equipo_a)
-                    fk_b = cast(int, orm.fk_id_equipo_b)
-                    self.register_result(match_id, fk_a, fk_b, g_a_a, g_b_a)
-
         return self.get_by_id(match_id)
 
     def register_result(self, match_id: int, team_a_id: int, team_b_id: int, goals_a: int, goals_b: int) -> None:
