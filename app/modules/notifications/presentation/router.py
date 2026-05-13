@@ -16,7 +16,7 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
 # Nos aseguramos de que la tabla exista en Neon DB
 def _create_table_if_not_exists():
     query = """
-    CREATE TABLE IF NOT EXISTS "Notificacion" (
+    CREATE TABLE IF NOT EXISTS bd_matchday."Notificacion" (
         id_notificacion SERIAL PRIMARY KEY,
         fk_id_usuario INT NOT NULL,
         mensaje VARCHAR(255) NOT NULL,
