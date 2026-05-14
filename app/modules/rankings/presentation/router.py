@@ -22,8 +22,8 @@ class LeaderboardEntry(BaseModel):
     derrotas: int
 
 @router.get("/team-leaderboard", response_model=List[LeaderboardEntry])
-def get_team_leaderboard(db: Session = Depends(get_db)):
-    """Obtiene la clasificación de los equipos."""
+def get_team_leaderboard(sport_id: int | None = None, db: Session = Depends(get_db)):
+    """Obtiene la clasificación de los equipos filtrada opcionalmente por deporte."""
     repository = RankingRepositoryImpl(db)
     use_case = GetTeamLeaderboardUseCase(repository)
-    return use_case.execute()
+    return use_case.execute(sport_id=sport_id)
