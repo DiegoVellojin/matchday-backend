@@ -8,9 +8,9 @@ router = APIRouter(tags=["Finance"])
 @router.get("/rates/latest")
 def get_latest_rates(db: Session = Depends(get_db)):
     """
-    Endpoint de Grado Industrial para consulta de tasas.
-    Recupera las tasas USD/EUR del BCV persistidas localmente.
-    No realiza peticiones externas durante el request para minimizar latencia.
+    Endpoint de Grado Industrial para consulta de tasas vigentes.
+    Recupera las tasas USD/EUR del BCV persistidas localmente aplicando 
+    filtros de fecha valor para cumplimiento normativo los fines de semana.
     """
     service = BCVService(db)
     rates = service.get_latest_rates()

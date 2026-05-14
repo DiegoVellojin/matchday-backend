@@ -36,7 +36,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Configuración de Tareas Programadas (BCV Sync)
+# Configuración de Tareas Programadas (BCV Sync con Zona Horaria de Venezuela)
 def sync_bcv_rates_task():
     db = SessionLocal()
     try:
@@ -45,10 +45,21 @@ def sync_bcv_rates_task():
     finally:
         db.close()
 
-scheduler = BackgroundScheduler()
-# Ejecutar todos los días a las 8:00 AM y 1:00 PM
-scheduler.add_job(sync_bcv_rates_task, 'cron', hour=8, minute=0)
-scheduler.add_job(sync_bcv_rates_task, 'cron', hour=13, minute=0)
+# Añadimos explícitamente la zona horaria para evitar desfases en servidores de Render/Heroku
+scheduler = BackgroundScheduler(timezone="America/Caracas")
+
+# 1. Apertura de la mañana (9:00 AM)
+scheduler.add_job(sync_bcv_rates_task, 'cron', hour=9, minute=0)
+
+# 2. El Cierre Estándar (4:30 PM / 16:30)
+# Le damos 30 minutos de margen al BCV por si no publica a las 4:00 en punto.
+scheduler.add_job(sync_bcv_rates_task, 'cron', hour=16, minute=30)
+
+# 3. El Salvavidas Nocturno (7:00 PM / 19:00)
+# Cubre cualquier retraso extremo. Si a las 4:30 PM ya se había capturado con éxito, 
+# este intento se cancelará solo por tu regla de las 2 horas de caché.
+scheduler.add_job(sync_bcv_rates_task, 'cron', hour=19, minute=0)
+
 scheduler.start()
 
 # Sincronización inicial al arrancar el servidor
