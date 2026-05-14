@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.core.database import get_db
 from app.modules.rankings.infrastructure.repositories_impl import RankingRepositoryImpl
 from app.modules.rankings.application.use_cases import GetTeamLeaderboardUseCase, EvaluateTeamUseCase, HasEvaluatedUseCase
-from app.modules.auth.infrastructure.security import get_current_user
+from app.core.security import get_current_user_id
 
 router = APIRouter(prefix="/rankings", tags=["Rankings"])
 
@@ -35,13 +35,13 @@ def get_team_leaderboard(sport_id: int | None = None, db: Session = Depends(get_
     return use_case.execute(sport_id=sport_id)
 
 @router.post("/evaluate")
-def evaluate_team(request: EvaluationRequest, current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+def evaluate_team(request: EvaluationRequest, current_user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     """Registra una evaluación para el equipo rival."""
     repository = RankingRepositoryImpl(db)
     use_case = EvaluateTeamUseCase(repository)
     success = use_case.execute(
         partida_id=request.partida_id,
-        evaluador_id=current_user.id_usuario,
+        evaluador_id=current_user_id,
         puntuacion=request.puntuacion,
         comentario=request.comentario
     )
@@ -50,9 +50,9 @@ def evaluate_team(request: EvaluationRequest, current_user = Depends(get_current
     return {"status": "success", "message": "Evaluación registrada correctamente."}
 
 @router.get("/has-evaluated/{match_id}")
-def check_evaluation(match_id: int, current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+def check_evaluation(match_id: int, current_user_id: int = Depends(get_current_user_id), db: Session = Depends(get_db)):
     """Verifica si el usuario ya evaluó este partido."""
     repository = RankingRepositoryImpl(db)
     use_case = HasEvaluatedUseCase(repository)
-    has_evaluated = use_case.execute(partida_id=match_id, evaluador_id=current_user.id_usuario)
+    has_evaluated = use_case.execute(partida_id=match_id, evaluador_id=current_user_id)
     return {"has_evaluated": has_evaluated}
