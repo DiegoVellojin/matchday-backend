@@ -1,20 +1,16 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import resend
 from app.core.config import settings
 
 def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jugador"):
     """
-    Envía el correo electrónico de recuperación de contraseña.
+    Envía el correo electrónico de recuperación de contraseña usando Resend API.
     """
-    if not settings.SMTP_USERNAME or not settings.SMTP_PASSWORD:
-        print("ADVERTENCIA: Credenciales SMTP no configuradas. Correo no enviado.")
-        print(f"Enlace generado para {to_email}: {reset_link}")
+    if not settings.RESEND_API_KEY:
+        print("ERROR: RESEND_API_KEY no configurada. No se enviará el correo.", flush=True)
         return
 
     # Logo de la App
     logo_url = "https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/app_icon.png?alt=media&token=18be696c-c7b7-4933-a3cb-4eb8afceed50"
-
     primary_green = "#00A859" 
 
     html_content = f"""
@@ -62,28 +58,19 @@ def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jug
     </html>
     """
 
-    message = MIMEMultipart("alternative")
-    message["Subject"] = "Se ha solicitado restablecer tu contraseña de MatchDay"
-    message["From"] = f"MatchDay Soporte <{settings.SMTP_FROM_EMAIL}>"
-    message["To"] = to_email
-
-    html_part = MIMEText(html_content, "html")
-    message.attach(html_part)
-
     try:
-        print(f"DEBUG: Intentando enviar correo a {to_email} vía {settings.SMTP_SERVER}:{settings.SMTP_PORT}...", flush=True)
+        print(f"DEBUG: Enviando correo a {to_email} vía Resend Library...", flush=True)
+        resend.api_key = settings.RESEND_API_KEY
         
-        if settings.SMTP_PORT == 465:
-            # Usar SSL directo para el puerto 465 (más común en entornos restringidos)
-            server = smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10)
-        else:
-            # Usar TLS (starttls) para el puerto 587 u otros
-            server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10)
-            server.starttls()
+        params = {
+            "from": f"MatchDay <{settings.RESEND_FROM_EMAIL}>",
+            "to": [to_email],
+            "subject": "Recuperar contraseña - MatchDay",
+            "html": html_content
+        }
 
-        server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-        server.sendmail(settings.SMTP_FROM_EMAIL, to_email, message.as_string())
-        server.quit()
-        print(f"SUCCESS: Correo de recuperación enviado exitosamente a {to_email}", flush=True)
+        email = resend.Emails.send(params)
+        print(f"SUCCESS: Correo de recuperación enviado exitosamente vía Resend (ID: {email.get('id')})", flush=True)
+            
     except Exception as e:
-        print(f"ERROR: No se pudo enviar el correo a {to_email}: {str(e)}", flush=True)
+        print(f"ERROR: Fallo al enviar con Resend: {str(e)}", flush=True)
