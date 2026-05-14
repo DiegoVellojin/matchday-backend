@@ -71,12 +71,13 @@ def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jug
     message.attach(html_part)
 
     try:
+        print(f"DEBUG: Intentando enviar correo a {to_email} vía {settings.SMTP_SERVER}:{settings.SMTP_PORT}...", flush=True)
         # Configuración para TLS
-        server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT)
+        server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10)
         server.starttls()
         server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
         server.sendmail(settings.SMTP_FROM_EMAIL, to_email, message.as_string())
         server.quit()
-        print(f"Correo de recuperación enviado exitosamente a {to_email}")
+        print(f"SUCCESS: Correo de recuperación enviado exitosamente a {to_email}", flush=True)
     except Exception as e:
-        print(f"Error al enviar correo a {to_email}: {e}")
+        print(f"ERROR: No se pudo enviar el correo a {to_email}: {str(e)}", flush=True)
