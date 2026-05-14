@@ -73,7 +73,7 @@ def list_matches(
             
     if mine and current_user_id:
         final_user_id = current_user_id
-    elif not mine and current_user_id:
+    elif not mine and current_user_id and not team_id:
         final_exclude_user_id = current_user_id
             
     return use_case.execute(
