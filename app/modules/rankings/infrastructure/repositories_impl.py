@@ -1,8 +1,11 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from typing import List, Dict
-
+from typing import List, Dict, Optional
 from app.modules.rankings.domain.interfaces import IRankingRepository
+from app.modules.rankings.infrastructure.orm_models import EvaluacionORM
+from app.modules.matches.infrastructure.orm_models import PartidaORM
+from app.modules.teams.infrastructure.orm_models import EquipoORM
+from app.modules.users.infrastructure.orm_models import UsuarioORM
 
 class RankingRepositoryImpl(IRankingRepository):
     """Implementación del repositorio de Rankings."""
@@ -54,3 +57,60 @@ class RankingRepositoryImpl(IRankingRepository):
             })
             
         return leaderboard
+
+    def has_evaluated(self, partida_id: int, evaluador_id: int) -> bool:
+        return self.db.query(EvaluacionORM).filter(
+            EvaluacionORM.fk_id_partida == partida_id,
+            EvaluacionORM.fk_id_evaluador == evaluador_id
+        ).first() is not None
+
+    def evaluate_team(self, partida_id: int, evaluador_id: int, puntuacion: int, comentario: str | None = None) -> bool:
+        # 1. Obtener la partida para identificar al equipo rival y su capitán
+        partida = self.db.query(PartidaORM).filter(PartidaORM.id_partida == partida_id).first()
+        if not partida:
+            return False
+
+        # Identificar quién es el evaluado
+        if evaluador_id == partida.fk_id_usuario_org:
+            # El evaluador es el capitán A, el evaluado es el equipo B y su capitán
+            # Necesitamos encontrar al capitán B. El capitán B es quien aceptó el partido.
+            # En PartidaORM no tenemos id_usuario_rival directamente, pero podemos inferirlo de equipo_b
+            evaluado_equipo_id = partida.fk_id_equipo_b
+            if not evaluado_equipo_id: return False
+            equipo_b = self.db.query(EquipoORM).filter(EquipoORM.id_equipo == evaluado_equipo_id).first()
+            evaluado_capitan_id = equipo_b.fk_id_usuario_capitan
+        else:
+            # El evaluador es el capitán B, el evaluado es el equipo A y su capitán
+            evaluado_equipo_id = partida.fk_id_equipo_a
+            evaluado_capitan_id = partida.fk_id_usuario_org
+
+        if not evaluado_equipo_id or not evaluado_capitan_id:
+            return False
+
+        # 2. Registrar la evaluación
+        nueva_evaluacion = EvaluacionORM(
+            fk_id_partida=partida_id,
+            fk_id_evaluador=evaluador_id,
+            fk_id_evaluado_equipo=evaluado_equipo_id,
+            fk_id_evaluado_capitan=evaluado_capitan_id,
+            puntuacion=puntuacion,
+            comentario=comentario
+        )
+        self.db.add(nueva_evaluacion)
+
+        # 3. Actualizar promedio del equipo
+        equipo = self.db.query(EquipoORM).filter(EquipoORM.id_equipo == evaluado_equipo_id).first()
+        if equipo:
+            total_estrellas = (equipo.calificacion_promedio * equipo.num_calificaciones) + puntuacion
+            equipo.num_calificaciones += 1
+            equipo.calificacion_promedio = total_estrellas / equipo.num_calificaciones
+
+        # 4. Actualizar promedio del capitán (reliability_score)
+        capitan = self.db.query(UsuarioORM).filter(UsuarioORM.id_usuario == evaluado_capitan_id).first()
+        if capitan:
+            total_estrellas_cap = (capitan.reliability_score * capitan.num_calificaciones_capitan) + puntuacion
+            capitan.num_calificaciones_capitan += 1
+            capitan.reliability_score = total_estrellas_cap / capitan.num_calificaciones_capitan
+
+        self.db.commit()
+        return True

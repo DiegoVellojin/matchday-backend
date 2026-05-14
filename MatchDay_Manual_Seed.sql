@@ -86,3 +86,44 @@ INSERT INTO bd_matchday."Equipo_Usuario" (fk_id_equipo, fk_id_usuario, estatus_m
 (1, 2, 'aceptado', 'Jugador'),
 (2, 4, 'aceptado', 'Jugador');
 
+-- 8. PARTIDAS EN DIFERENTES ESTADOS
+-- 8.1 Partida PUBLICADA
+INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, costo_total_partida, moneda, cupos_totales, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a) VALUES 
+(1, '2026-06-01 18:00:00', '2026-06-01 20:00:00', 40.00, 'USD', 4, 'publicada', 1, 5, 2, 1);
+
+-- 8.2 Partida NEGOCIANDO
+INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, costo_total_partida, moneda, cupos_totales, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a, fk_id_equipo_b, propuesta_fecha_a, propuesta_costo_a) VALUES 
+(2, '2026-06-02 18:00:00', '2026-06-02 20:00:00', 40.00, 'USD', 4, 'negociando', 3, 5, 2, 2, 1, '2026-06-02 19:00:00', 45.00);
+
+-- 8.3 Partida PENDIENTE_PAGO
+INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, fecha_acordada, costo_total_partida, moneda, cupos_totales, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a, fk_id_equipo_b) VALUES 
+(3, '2026-06-03 18:00:00', '2026-06-03 20:00:00', '2026-06-03 18:00:00', 40.00, 'USD', 4, 'pendiente_pago', 1, 5, 2, 1, 2);
+
+-- 8.4 Partida CONFIRMADA
+INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, fecha_acordada, costo_total_partida, moneda, cupos_totales, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a, fk_id_equipo_b) VALUES 
+(4, '2026-06-04 18:00:00', '2026-06-04 20:00:00', '2026-06-04 18:00:00', 40.00, 'USD', 4, 'confirmada', 3, 5, 2, 2, 1);
+
+-- 8.5 Partida COMPLETADA
+INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, fecha_acordada, costo_total_partida, moneda, cupos_totales, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a, fk_id_equipo_b, resultado_goles_a_cap_a, resultado_goles_b_cap_a, resultado_goles_a_cap_b, resultado_goles_b_cap_b) VALUES 
+(5, '2026-05-10 18:00:00', '2026-05-10 20:00:00', '2026-05-10 18:00:00', 40.00, 'USD', 4, 'completada', 1, 5, 2, 1, 2, 2, 1, 2, 1);
+
+-- 8.6 Partida CANCELADA
+INSERT INTO bd_matchday."Partida" (id_partida, fecha_inicio_estimada, fecha_fin_estimada, costo_total_partida, moneda, cupos_totales, estatus_partida, fk_id_usuario_org, fk_id_deporte, fk_id_cancha, fk_id_equipo_a) VALUES 
+(6, '2026-06-06 18:00:00', '2026-06-06 20:00:00', 40.00, 'USD', 4, 'cancelada', 1, 5, 2, 1);
+
+SELECT setval('bd_matchday."Partida_id_partida_seq"', 6);
+
+-- 9. JUGADORES EN PARTIDAS (Muestra para Pendiente Pago y Completada)
+-- Jugadores Partida 3 (Pendiente Pago)
+INSERT INTO bd_matchday."Partida_Usuario" (fk_id_partida, fk_id_usuario, estatus_pago, fk_id_equipo_asignado) VALUES 
+(3, 1, 'verificado', 1), (3, 2, 'pendiente', 1), (3, 3, 'verificado', 2), (3, 4, 'pendiente', 2);
+
+-- Jugadores Partida 5 (Completada)
+INSERT INTO bd_matchday."Partida_Usuario" (fk_id_partida, fk_id_usuario, estatus_pago, fk_id_equipo_asignado) VALUES 
+(5, 1, 'verificado', 1), (5, 2, 'verificado', 1), (5, 3, 'verificado', 2), (5, 4, 'verificado', 2);
+
+-- 10. RESULTADOS (Para la partida completada)
+INSERT INTO bd_matchday."Resultado" (fk_id_partida, fk_id_equipo, goles_favor, goles_contra, puntos_obtenidos, resultado_texto) VALUES 
+(5, 1, 2, 1, 3, 'Victoria'),
+(5, 2, 1, 2, 0, 'Derrota');
+

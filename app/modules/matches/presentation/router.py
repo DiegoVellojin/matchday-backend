@@ -90,11 +90,20 @@ def list_matches(
 @router.get("/{match_id}", response_model=MatchResponse)
 def get_match(
     match_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user_id: Optional[int] = Depends(get_optional_user_id)
 ):
     repository = MatchRepositoryImpl(db)
     use_case = GetMatchDetailsUseCase(repository)
-    return use_case.execute(match_id)
+    match = use_case.execute(match_id)
+    
+    # Si el usuario está autenticado y el partido está completado, verificar si ya evaluó
+    if current_user_id and match.estatus_partida == 'completada':
+        from app.modules.rankings.infrastructure.repositories_impl import RankingRepositoryImpl
+        ranking_repo = RankingRepositoryImpl(db)
+        match.ya_evaluado = ranking_repo.has_evaluated(match_id, current_user_id)
+        
+    return match
 
 @router.post("/{match_id}/accept/{team_id}", response_model=MatchResponse)
 def accept_match(

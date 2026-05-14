@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Usuario"(
     url_foto_perfil VARCHAR(255) NULL,  
     rol_usuario VARCHAR(20) DEFAULT 'Standard' NOT NULL,  
     reliability_score DECIMAL(3, 2) DEFAULT 5.00, 
+    num_calificaciones_capitan INT DEFAULT 0,
     fecha_creacion_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_rol_usuario CHECK (rol_usuario IN ('Standard', 'Admin'))
 );
@@ -82,6 +83,8 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Equipo"(
     esta_reclutando BOOLEAN DEFAULT TRUE,
     max_miembros INT DEFAULT 11,
     puntos_acumulados INT DEFAULT 0,  
+    calificacion_promedio DECIMAL(3, 2) DEFAULT 0.00,
+    num_calificaciones INT DEFAULT 0,
     fecha_creacion_equipo TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     url_chat_equipo VARCHAR(255) NULL,
     fk_id_deporte INT NOT NULL,
@@ -171,6 +174,23 @@ CREATE TABLE IF NOT EXISTS bd_matchday."Resultado"(
     CONSTRAINT fk_resultado_equipo FOREIGN KEY (fk_id_equipo) REFERENCES bd_matchday."Equipo"(id_equipo) ON DELETE CASCADE,
     CONSTRAINT chk_resultado_texto CHECK (resultado_texto IN ('Victoria', 'Derrota', 'Empate')),
     CONSTRAINT unique_resultado_partida_equipo UNIQUE (fk_id_partida, fk_id_equipo)
+);
+
+CREATE TABLE IF NOT EXISTS bd_matchday."Evaluacion"(
+    id_evaluacion SERIAL PRIMARY KEY,
+    fk_id_partida INT NOT NULL,
+    fk_id_evaluador INT NOT NULL,
+    fk_id_evaluado_equipo INT NOT NULL,
+    fk_id_evaluado_capitan INT NOT NULL,
+    puntuacion INT NOT NULL,
+    comentario TEXT NULL,
+    fecha_evaluacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_evaluacion_partida FOREIGN KEY (fk_id_partida) REFERENCES bd_matchday."Partida"(id_partida) ON DELETE CASCADE,
+    CONSTRAINT fk_evaluacion_evaluador FOREIGN KEY (fk_id_evaluador) REFERENCES bd_matchday."Usuario"(id_usuario),
+    CONSTRAINT fk_evaluacion_equipo FOREIGN KEY (fk_id_evaluado_equipo) REFERENCES bd_matchday."Equipo"(id_equipo),
+    CONSTRAINT fk_evaluacion_capitan FOREIGN KEY (fk_id_evaluado_capitan) REFERENCES bd_matchday."Usuario"(id_usuario),
+    CONSTRAINT chk_puntuacion CHECK (puntuacion BETWEEN 1 AND 5),
+    CONSTRAINT unique_evaluacion_partida_evaluador UNIQUE (fk_id_partida, fk_id_evaluador)
 );
 
 -- =========================================================================================

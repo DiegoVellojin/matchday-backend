@@ -18,6 +18,7 @@ class UsuarioORM(Base):
     url_foto_perfil = Column(String(255), nullable=True)
     rol_usuario = Column(String(20), nullable=False, default="Standard")
     reliability_score = Column(Float, default=5.00)
+    num_calificaciones_capitan = Column(Integer, default=0)
     fecha_creacion_usuario = Column(DateTime, server_default=func.now())
 
     # Relaciones

@@ -93,6 +93,7 @@ class MatchResponse(BaseModel):
     cedula_capitan_b: Optional[str] = None
     telefono_capitan_b_pago: Optional[str] = None
     id_equipo_usuario: Optional[int] = None
+    ya_evaluado: bool = False
 
     class Config:
         from_attributes = True

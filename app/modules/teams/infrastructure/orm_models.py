@@ -23,6 +23,8 @@ class EquipoORM(Base):
     from sqlalchemy import Boolean
     esta_reclutando = Column(Boolean, default=True)
     max_miembros = Column(Integer, default=11)
+    calificacion_promedio = Column(Float, default=0.0)
+    num_calificaciones = Column(Integer, default=0)
 
     # Relaciones (Opcional, para facilitar consultas)
     capitan = relationship("app.modules.users.infrastructure.orm_models.UsuarioORM", foreign_keys=[fk_id_usuario_capitan], overlaps="capitan")

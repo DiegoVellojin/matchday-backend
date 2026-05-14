@@ -59,6 +59,7 @@ class MatchEntity(AggregateRoot):
     cedula_capitan_b: Optional[str] = None
     telefono_capitan_b_pago: Optional[str] = None
     id_equipo_usuario: Optional[int] = None
+    ya_evaluado: bool = False
     backend_status: str = "UPDATED_V3"
 
     def __post_init__(self):
