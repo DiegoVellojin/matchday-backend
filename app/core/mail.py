@@ -70,7 +70,9 @@ def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jug
         }
 
         email = resend.Emails.send(params)
-        print(f"SUCCESS: Correo de recuperación enviado exitosamente vía Resend (ID: {email.get('id')})", flush=True)
+        # En versiones recientes (2.x), el resultado puede ser un objeto con atributo 'id'
+        email_id = getattr(email, "id", "desconocido")
+        print(f"SUCCESS: Correo de recuperación enviado exitosamente vía Resend (ID: {email_id})", flush=True)
             
     except Exception as e:
         print(f"ERROR: Fallo al enviar con Resend: {str(e)}", flush=True)

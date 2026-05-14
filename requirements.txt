@@ -38,6 +38,7 @@ websockets==16.0
 firebase-admin==6.5.0
 pyBCV==1.1.2
 apscheduler==3.11.0
-resend==0.9.0
+resend
+
 
 
