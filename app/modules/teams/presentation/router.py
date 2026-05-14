@@ -74,9 +74,13 @@ def get_discoverable_teams(
             EquipoUsuarioORM.estatus_miembro == 'aceptado'
         ).first() is not None
         
-        # Calcular partidos jugados (completados) usando tabla Resultado
-        part_count = db.query(ResultadoORM).filter(
-            ResultadoORM.fk_id_equipo == eq.id_equipo
+        # Calcular partidos jugados (completados) usando tabla Partida
+        part_count = db.query(PartidaORM).filter(
+            or_(
+                PartidaORM.fk_id_equipo_a == eq.id_equipo,
+                PartidaORM.fk_id_equipo_b == eq.id_equipo
+            ),
+            PartidaORM.estatus_partida == 'completada'
         ).count()
         
         eq_dict = eq.__dict__.copy()
@@ -107,9 +111,13 @@ def get_my_teams(
             EquipoUsuarioORM.fk_id_equipo == eq.id_equipo,
             EquipoUsuarioORM.estatus_miembro == 'aceptado'
         ).count()
-        # Calcular partidos jugados (completados) usando tabla Resultado
-        part_count = db.query(ResultadoORM).filter(
-            ResultadoORM.fk_id_equipo == eq.id_equipo
+        # Calcular partidos jugados (completados) usando tabla Partida
+        part_count = db.query(PartidaORM).filter(
+            or_(
+                PartidaORM.fk_id_equipo_a == eq.id_equipo,
+                PartidaORM.fk_id_equipo_b == eq.id_equipo
+            ),
+            PartidaORM.estatus_partida == 'completada'
         ).count()
         
         eq_dict = eq.__dict__.copy()
@@ -149,9 +157,13 @@ def get_team_detail(
         EquipoUsuarioORM.estatus_miembro == 'aceptado'
     ).first() is not None
     
-    # Calcular partidos jugados (completados) usando tabla Resultado
-    partidos_count = db.query(ResultadoORM).filter(
-        ResultadoORM.fk_id_equipo == id_equipo
+    # Calcular partidos jugados (completados) usando tabla Partida
+    partidos_count = db.query(PartidaORM).filter(
+        or_(
+            PartidaORM.fk_id_equipo_a == id_equipo,
+            PartidaORM.fk_id_equipo_b == id_equipo
+        ),
+        PartidaORM.estatus_partida == 'completada'
     ).count()
     
     eq_dict = equipo.__dict__.copy()
