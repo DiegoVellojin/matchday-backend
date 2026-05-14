@@ -72,9 +72,15 @@ def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jug
 
     try:
         print(f"DEBUG: Intentando enviar correo a {to_email} vía {settings.SMTP_SERVER}:{settings.SMTP_PORT}...", flush=True)
-        # Configuración para TLS
-        server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10)
-        server.starttls()
+        
+        if settings.SMTP_PORT == 465:
+            # Usar SSL directo para el puerto 465 (más común en entornos restringidos)
+            server = smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10)
+        else:
+            # Usar TLS (starttls) para el puerto 587 u otros
+            server = smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT, timeout=10)
+            server.starttls()
+
         server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
         server.sendmail(settings.SMTP_FROM_EMAIL, to_email, message.as_string())
         server.quit()
