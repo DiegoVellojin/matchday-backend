@@ -13,45 +13,53 @@ def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jug
     logo_url = "https://firebasestorage.googleapis.com/v0/b/matchday-68b9a.firebasestorage.app/o/app_icon.png?alt=media&token=18be696c-c7b7-4933-a3cb-4eb8afceed50"
     primary_green = "#00A859" 
 
+    # Nuevo diseño Premium
     html_content = f"""
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0; }}
-            .container {{ max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }}
-            .header {{ background-color: #111111; padding: 20px; text-align: center; }}
-            .header img {{ height: 40px; }}
-
-            .content {{ padding: 20px 40px; text-align: center; color: #333333; }}
-            .content h1 {{ font-size: 22px; color: #111111; }}
-            .content p {{ font-size: 16px; color: #666666; line-height: 1.5; }}
-            .button-container {{ margin: 30px 0; }}
-            .button {{ background-color: {primary_green}; color: #ffffff !important; padding: 15px 30px; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-block; font-size: 16px; }}
-            .footer {{ background-color: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #999999; }}
-            .link-fallback {{ font-size: 12px; color: #999999; margin-top: 20px; word-break: break-all; }}
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap');
+            body {{ margin: 0; padding: 0; background-color: #0A0A0A; font-family: 'Outfit', 'Segoe UI', sans-serif; }}
+            .wrapper {{ background-color: #0A0A0A; padding: 40px 20px; text-align: center; }}
+            .container {{ max-width: 500px; margin: 0 auto; background: #141414; border: 1px solid #222; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }}
+            .header {{ padding: 40px 20px; background: linear-gradient(180deg, #1A1A1A 0%, #141414 100%); }}
+            .logo {{ height: 50px; filter: drop-shadow(0 0 10px rgba(0, 168, 89, 0.3)); }}
+            .content {{ padding: 0 40px 40px; color: #FFFFFF; }}
+            .title {{ font-size: 28px; font-weight: 700; margin-bottom: 16px; color: #FFFFFF; letter-spacing: -0.5px; }}
+            .greeting {{ color: {primary_green}; font-size: 18px; font-weight: 600; margin-bottom: 24px; }}
+            .text {{ color: #A0A0A0; font-size: 16px; line-height: 1.6; margin-bottom: 32px; }}
+            .btn-container {{ margin: 40px 0; }}
+            .btn {{ background: linear-gradient(90deg, #00A859 0%, #008D4A 100%); color: #FFFFFF !important; padding: 18px 36px; text-decoration: none; border-radius: 16px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 10px 20px rgba(0, 168, 89, 0.2); transition: transform 0.2s; }}
+            .footer {{ background-color: #0F0F0F; padding: 30px; border-top: 1px solid #222; }}
+            .footer-text {{ color: #444; font-size: 12px; line-height: 1.4; }}
+            .expiry {{ color: #666; font-size: 13px; margin-top: 20px; font-style: italic; }}
         </style>
     </head>
     <body>
-        <div class="container">
-            <div class="header">
-                <img src="{logo_url}" alt="MatchDay">
-            </div>
-
-            <div class="content">
-                <h1>¡Hola, {nombre}!</h1>
-                <p>Recibimos una solicitud para restablecer tu contraseña. Si fuiste tú, presiona el botón de abajo:</p>
-                <div class="button-container">
-                    <a href="{reset_link}" class="button">RESTABLECER MI CONTRASEÑA</a>
+        <div class="wrapper">
+            <div class="container">
+                <div class="header">
+                    <img src="{logo_url}" class="logo" alt="MatchDay">
                 </div>
-                <p>Si no puedes presionar el botón, copia y pega este enlace en tu navegador:</p>
-                <p class="link-fallback">{reset_link}</p>
-                <p style="font-size: 13px; color: #999999;">Este enlace expirará en 15 minutos.</p>
-            </div>
-            <div class="footer">
-                <p>&copy; 2026 MatchDay App. Todos los derechos reservados.</p>
+                <div class="content">
+                    <h1 class="title">Recupera tu acceso</h1>
+                    <div class="greeting">¡Hola, {nombre}! ⚽</div>
+                    <p class="text">Recibimos una solicitud para restablecer tu contraseña. Queremos que vuelvas a la cancha lo antes posible.</p>
+                    
+                    <div class="btn-container">
+                        <a href="{reset_link}" class="btn">RESTABLECER MI CONTRASEÑA</a>
+                    </div>
+                    
+                    <p class="expiry">Este enlace de seguridad expirará en 15 minutos por tu protección.</p>
+                </div>
+                <div class="footer">
+                    <p class="footer-text">© 2026 MatchDay. Todos los derechos reservados.<br>Has recibido este correo porque se solicitó un cambio de clave en tu cuenta.</p>
+                    <p class="footer-text" style="margin-top: 20px;">
+                        ¿El botón no funciona? <a href="{reset_link}" style="color: {primary_green}; text-decoration: none;">Haz clic aquí</a>
+                    </p>
+                </div>
             </div>
         </div>
     </body>
@@ -59,7 +67,6 @@ def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jug
     """
 
     try:
-        print(f"DEBUG: Enviando correo a {to_email} vía Resend Library...", flush=True)
         resend.api_key = settings.RESEND_API_KEY
         
         params = {
@@ -69,10 +76,7 @@ def send_password_reset_email(to_email: str, reset_link: str, nombre: str = "Jug
             "html": html_content
         }
 
-        email = resend.Emails.send(params)
-        # En versiones recientes (2.x), el resultado puede ser un objeto con atributo 'id'
-        email_id = getattr(email, "id", "desconocido")
-        print(f"SUCCESS: Correo de recuperación enviado exitosamente vía Resend (ID: {email_id})", flush=True)
+        resend.Emails.send(params)
             
     except Exception as e:
-        print(f"ERROR: Fallo al enviar con Resend: {str(e)}", flush=True)
+        print(f"ERROR: Fallo al enviar correo con Resend a {to_email}: {str(e)}", flush=True)
