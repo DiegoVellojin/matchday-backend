@@ -39,6 +39,7 @@ class TeamResponse(BaseModel):
     url_chat_equipo: Optional[str] = None
     miembros_actuales: int = 1
     soy_miembro: bool = False
+    partidos_jugados: int = 0
     fecha_creacion_equipo: datetime
 
 
