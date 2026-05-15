@@ -27,3 +27,11 @@ class HasEvaluatedUseCase:
 
     def execute(self, partida_id: int, evaluador_id: int) -> bool:
         return self.repository.has_evaluated(partida_id, evaluador_id)
+
+class GetEvaluationsUseCase:
+    """Caso de uso para obtener las evaluaciones de un equipo o capitán."""
+    def __init__(self, repository: IRankingRepository):
+        self.repository = repository
+
+    def execute(self, target_id: int, is_team: bool) -> List[Dict]:
+        return self.repository.get_evaluations(target_id, is_team)

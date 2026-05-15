@@ -40,6 +40,8 @@ class TeamResponse(BaseModel):
     miembros_actuales: int = 1
     soy_miembro: bool = False
     partidos_jugados: int = 0
+    calificacion_promedio: float = 0.0
+    num_calificaciones: int = 0
     fecha_creacion_equipo: datetime
 
 

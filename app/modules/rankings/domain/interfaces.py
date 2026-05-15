@@ -18,3 +18,8 @@ class IRankingRepository(ABC):
     def has_evaluated(self, partida_id: int, evaluador_id: int) -> bool:
         """Verifica si un usuario ya ha evaluado en un partido específico."""
         pass
+
+    @abstractmethod
+    def get_evaluations(self, target_id: int, is_team: bool) -> List[Dict]:
+        """Obtiene las evaluaciones recibidas por un equipo o un capitán."""
+        pass

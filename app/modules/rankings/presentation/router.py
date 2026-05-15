@@ -5,10 +5,30 @@ from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.modules.rankings.infrastructure.repositories_impl import RankingRepositoryImpl
-from app.modules.rankings.application.use_cases import GetTeamLeaderboardUseCase, EvaluateTeamUseCase, HasEvaluatedUseCase
+from app.modules.rankings.application.use_cases import (
+    GetTeamLeaderboardUseCase, EvaluateTeamUseCase, 
+    HasEvaluatedUseCase, GetEvaluationsUseCase
+)
 from app.core.security import get_current_user_id
+from datetime import datetime
 
 router = APIRouter(prefix="/rankings", tags=["Rankings"])
+
+class EvaluatorInfo(BaseModel):
+    nombre: str
+    foto: str | None
+
+class TeamInfo(BaseModel):
+    nombre: str
+    logo: str | None
+
+class ReviewResponse(BaseModel):
+    id_evaluacion: int
+    puntuacion: int
+    comentario: str | None
+    fecha: datetime
+    evaluador: EvaluatorInfo
+    equipo_evaluador: TeamInfo
 
 class LeaderboardEntry(BaseModel):
     posicion: int
@@ -56,3 +76,10 @@ def check_evaluation(match_id: int, current_user_id: int = Depends(get_current_u
     use_case = HasEvaluatedUseCase(repository)
     has_evaluated = use_case.execute(partida_id=match_id, evaluador_id=current_user_id)
     return {"has_evaluated": has_evaluated}
+
+@router.get("/evaluations", response_model=List[ReviewResponse])
+def get_evaluations(target_id: int, is_team: bool = True, db: Session = Depends(get_db)):
+    """Obtiene el historial de comentarios/evaluaciones de un equipo o capitán."""
+    repository = RankingRepositoryImpl(db)
+    use_case = GetEvaluationsUseCase(repository)
+    return use_case.execute(target_id=target_id, is_team=is_team)

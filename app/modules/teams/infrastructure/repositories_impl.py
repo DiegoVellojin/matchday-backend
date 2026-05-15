@@ -39,7 +39,9 @@ class TeamRepositoryImpl(ITeamRepository):
             esta_reclutando=cast(bool, orm.esta_reclutando),
             max_miembros=cast(int, orm.max_miembros),
             fecha_creacion_equipo=cast(datetime, orm.fecha_creacion_equipo),
-            url_chat_equipo=cast(str, orm.url_chat_equipo)
+            url_chat_equipo=cast(str, orm.url_chat_equipo),
+            calificacion_promedio=float(orm.calificacion_promedio),
+            num_calificaciones=int(orm.num_calificaciones)
         )
 
     def _to_membership_entity(self, orm: EquipoUsuarioORM) -> EquipoUsuario:

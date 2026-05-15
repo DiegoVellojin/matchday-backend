@@ -40,6 +40,14 @@ class MatchPlayerResponse(BaseModel):
     referencia_pago: Optional[str] = None
     id_equipo: Optional[int] = None
 
+class EvaluationResponse(BaseModel):
+    """Esquema para una evaluación."""
+    id_evaluacion: int
+    puntuacion: int
+    comentario: Optional[str] = None
+    evaluador_nombre: str
+    fecha_evaluacion: datetime
+
 class MatchResponse(BaseModel):
     """Esquema de respuesta de un partido."""
     id: int
@@ -94,6 +102,7 @@ class MatchResponse(BaseModel):
     telefono_capitan_b_pago: Optional[str] = None
     id_equipo_usuario: Optional[int] = None
     ya_evaluado: bool = False
+    evaluaciones: List[EvaluationResponse] = []
 
     class Config:
         from_attributes = True

@@ -114,3 +114,42 @@ class RankingRepositoryImpl(IRankingRepository):
 
         self.db.commit()
         return True
+
+    def get_evaluations(self, target_id: int, is_team: bool) -> List[Dict]:
+        query = self.db.query(EvaluacionORM)
+        if is_team:
+            query = query.filter(EvaluacionORM.fk_id_evaluado_equipo == target_id)
+        else:
+            query = query.filter(EvaluacionORM.fk_id_evaluado_capitan == target_id)
+        
+        evaluaciones = query.order_by(EvaluacionORM.fecha_evaluacion.desc()).all()
+        
+        result = []
+        for e in evaluaciones:
+            # Para cada evaluación, necesitamos saber quién evaluó (Capitán) y de qué equipo era
+            # El evaluador es e.evaluador. El equipo del evaluador es el equipo_a o equipo_b de la partida 
+            # que NO es el equipo evaluado.
+            partida = e.partida
+            if not partida: continue
+            
+            # Determinar el equipo del evaluador
+            if e.fk_id_evaluador == partida.fk_id_usuario_org:
+                equipo_evaluador = partida.equipo_a
+            else:
+                equipo_evaluador = partida.equipo_b
+                
+            result.append({
+                "id_evaluacion": e.id_evaluacion,
+                "puntuacion": e.puntuacion,
+                "comentario": e.comentario,
+                "fecha": e.fecha_evaluacion,
+                "evaluador": {
+                    "nombre": e.evaluador.nombre_usuario if e.evaluador else "Usuario",
+                    "foto": e.evaluador.url_foto_perfil if e.evaluador else None
+                },
+                "equipo_evaluador": {
+                    "nombre": equipo_evaluador.nombre_equipo if equipo_evaluador else "Equipo",
+                    "logo": equipo_evaluador.url_logo_equipo if equipo_evaluador else None
+                }
+            })
+        return result

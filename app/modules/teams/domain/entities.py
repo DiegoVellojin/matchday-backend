@@ -19,7 +19,9 @@ class Equipo:
         esta_reclutando: bool = True,
         max_miembros: int = 11,
         fecha_creacion_equipo: Optional[datetime] = None,
-        url_chat_equipo: Optional[str] = None
+        url_chat_equipo: Optional[str] = None,
+        calificacion_promedio: float = 0.0,
+        num_calificaciones: int = 0
     ):
         self.id_equipo = id_equipo
         self.nombre_equipo = nombre_equipo
@@ -33,6 +35,8 @@ class Equipo:
         self.max_miembros = max_miembros
         self.fecha_creacion_equipo = fecha_creacion_equipo
         self.url_chat_equipo = url_chat_equipo
+        self.calificacion_promedio = calificacion_promedio
+        self.num_calificaciones = num_calificaciones
 
 
 class EquipoUsuario:

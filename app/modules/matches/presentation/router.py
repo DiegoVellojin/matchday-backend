@@ -97,11 +97,26 @@ def get_match(
     use_case = GetMatchDetailsUseCase(repository)
     match = use_case.execute(match_id)
     
-    # Si el usuario está autenticado y el partido está completado, verificar si ya evaluó
-    if current_user_id and match.estatus_partida == 'completada':
+    # Si el partido está completado, verificar evaluaciones
+    if match.estatus_partida == 'completada':
         from app.modules.rankings.infrastructure.repositories_impl import RankingRepositoryImpl
+        from app.modules.rankings.infrastructure.orm_models import EvaluacionORM
         ranking_repo = RankingRepositoryImpl(db)
-        match.ya_evaluado = ranking_repo.has_evaluated(match_id, current_user_id)
+        
+        if current_user_id:
+            match.ya_evaluado = ranking_repo.has_evaluated(match_id, current_user_id)
+        
+        # Obtener todas las evaluaciones del partido para mostrarlas públicamente
+        evaluaciones_orm = db.query(EvaluacionORM).filter(EvaluacionORM.fk_id_partida == match_id).all()
+        match.evaluaciones = [
+            {
+                "id_evaluacion": ev.id_evaluacion,
+                "puntuacion": ev.puntuacion,
+                "comentario": ev.comentario,
+                "evaluador_nombre": ev.evaluador.nombre_usuario if ev.evaluador else "Usuario",
+                "fecha_evaluacion": ev.fecha_evaluacion
+            } for ev in evaluaciones_orm
+        ]
         
     return match
 
