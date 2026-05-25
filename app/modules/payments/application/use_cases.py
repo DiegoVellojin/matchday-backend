@@ -1,6 +1,6 @@
 from typing import List, Dict, Optional
 from app.modules.payments.domain.interfaces import IPaymentRepository
-from app.core.exceptions import UnauthorizedException, NotFoundException
+from app.core.exceptions import UnauthorizedException, ForbiddenException, NotFoundException
 
 class GetMyPaymentsUseCase:
     """Obtiene los pagos de un usuario específico."""
@@ -27,7 +27,7 @@ class GetTeamPaymentsToValidateUseCase:
 
     def execute(self, id_equipo: int, user_id: int) -> List[Dict]:
         if not self.repository.is_team_captain(id_equipo, user_id):
-            raise UnauthorizedException("No eres el capitán de este equipo")
+            raise ForbiddenException("No eres el capitán de este equipo")
         
         return self.repository.get_team_payments(id_equipo)
 
@@ -39,6 +39,6 @@ class VerifyUserPaymentUseCase:
 
     def execute(self, id_partida: int, id_usuario: int, current_user_id: int) -> None:
         if not self.repository.is_match_captain(id_partida, current_user_id):
-            raise UnauthorizedException("No eres el capitán del equipo de esta partida")
+            raise ForbiddenException("No eres el capitán del equipo de esta partida")
             
         self.repository.verify_payment(id_partida, id_usuario)

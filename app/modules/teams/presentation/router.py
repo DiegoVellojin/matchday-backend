@@ -229,8 +229,8 @@ def get_invite_token(
         raise NotFoundException("Equipo no encontrado")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        from app.core.exceptions import UnauthorizedException
-        raise UnauthorizedException("Solo el capitán puede generar invitaciones.")
+        from app.core.exceptions import UnauthorizedException, ForbiddenException
+        raise ForbiddenException("Solo el capitán puede generar invitaciones.")
     
     from app.core.security import create_team_invitation_token
     token = create_team_invitation_token(id_equipo)
@@ -255,8 +255,8 @@ def kick_member(
         raise NotFoundException("Equipo no encontrado.")
         
     if equipo.fk_id_usuario_capitan != current_user_id:
-        from app.core.exceptions import UnauthorizedException
-        raise UnauthorizedException("No eres el capitán de este equipo.")
+        from app.core.exceptions import UnauthorizedException, ForbiddenException
+        raise ForbiddenException("No eres el capitán de este equipo.")
         
     if id_usuario == current_user_id:
         from app.core.exceptions import ConflictException
@@ -298,8 +298,8 @@ def get_pending_requests(
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo or equipo.fk_id_usuario_capitan != current_user_id:
-        from app.core.exceptions import UnauthorizedException
-        raise UnauthorizedException("Acceso denegado.")
+        from app.core.exceptions import UnauthorizedException, ForbiddenException
+        raise ForbiddenException("Acceso denegado.")
         
     from app.modules.teams.infrastructure.orm_models import EquipoUsuarioORM
     from app.modules.users.infrastructure.orm_models import UsuarioORM
@@ -368,8 +368,8 @@ def respond_to_request(
     equipo = repo.get_by_id(id_equipo)
     
     if not equipo or equipo.fk_id_usuario_capitan != current_user_id:
-        from app.core.exceptions import UnauthorizedException
-        raise UnauthorizedException("Acceso denegado.")
+        from app.core.exceptions import UnauthorizedException, ForbiddenException
+        raise ForbiddenException("Acceso denegado.")
     
     use_case = RespondToJoinRequestUseCase(repo)
     success = use_case.execute(id_equipo, id_usuario, request.accept)
@@ -450,8 +450,8 @@ def update_team(
         raise NotFoundException("Equipo no encontrado.")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        from app.core.exceptions import UnauthorizedException
-        raise UnauthorizedException("No eres el capitán de este equipo.")
+        from app.core.exceptions import UnauthorizedException, ForbiddenException
+        raise ForbiddenException("No eres el capitán de este equipo.")
     
     use_case = UpdateTeamUseCase(repo)
     updated = use_case.execute(id_equipo, request.model_dump(exclude_none=True))
@@ -498,8 +498,8 @@ def transfer_captain(
         raise NotFoundException("Equipo no encontrado.")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        from app.core.exceptions import UnauthorizedException
-        raise UnauthorizedException("Solo el capitán puede transferir su rol.")
+        from app.core.exceptions import UnauthorizedException, ForbiddenException
+        raise ForbiddenException("Solo el capitán puede transferir su rol.")
     
     members = repo.get_members(id_equipo)
     es_miembro = any(m.fk_id_usuario == id_nuevo_capitan and m.estatus_miembro == "aceptado" for m in members)
@@ -554,8 +554,8 @@ def delete_team(
         raise NotFoundException("Equipo no encontrado.")
     
     if equipo.fk_id_usuario_capitan != current_user_id:
-        from app.core.exceptions import UnauthorizedException
-        raise UnauthorizedException("Solo el capitán puede eliminar el equipo.")
+        from app.core.exceptions import UnauthorizedException, ForbiddenException
+        raise ForbiddenException("Solo el capitán puede eliminar el equipo.")
 
     use_case = DeleteTeamUseCase(repo)
     if use_case.execute(id_equipo):

@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_user_id, get_optional_user_id
-from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException
+from app.core.exceptions import NotFoundException, ConflictException, UnauthorizedException, ForbiddenException
 from app.modules.matches.presentation.schemas import MatchCreateRequest, MatchResponse, ProposeTermsRequest, RegisterResultRequest, MatchConfigureRequest, MatchPlayerResponse
 from app.modules.matches.application.use_cases import (
     CreateMatchUseCase, GetMatchesUseCase, GetMatchDetailsUseCase,
@@ -32,7 +32,7 @@ def create_match(
         team_repo = TeamRepositoryImpl(db)
         team = team_repo.get_by_id(request.fk_id_equipo_a)
         if not team or team.fk_id_usuario_capitan != current_user_id:
-            raise UnauthorizedException("Solo el capitán del equipo puede solicitar un encuentro")
+            raise ForbiddenException("Solo el capitán del equipo puede solicitar un encuentro")
 
     use_case = CreateMatchUseCase(repository)
     match_data = request.model_dump()
@@ -134,7 +134,7 @@ def accept_match(
     team_repo = TeamRepositoryImpl(db)
     team = team_repo.get_by_id(team_id)
     if not team or team.fk_id_usuario_capitan != current_user_id:
-        raise UnauthorizedException("Solo el capitán del equipo puede aceptar un encuentro")
+        raise ForbiddenException("Solo el capitán del equipo puede aceptar un encuentro")
 
     use_case = AcceptEncounterUseCase(repository)
     match = use_case.execute(match_id, team_id)
@@ -350,7 +350,7 @@ def delete_match(
         raise NotFoundException("Partido no encontrado")
     
     if match.fk_id_usuario_org != current_user_id:
-        raise UnauthorizedException("Solo el organizador puede cancelar este partido")
+        raise ForbiddenException("Solo el organizador puede cancelar este partido")
         
     # Solo permitir cancelar si está en 'publicada' o 'negociando' (antes de pagos)
     if match.estatus_partida not in ['publicada', 'negociando']:
@@ -372,7 +372,7 @@ def update_match(
         raise NotFoundException("Partido no encontrado")
     
     if match.fk_id_usuario_org != current_user_id:
-        raise UnauthorizedException("Solo el organizador puede editar este partido")
+        raise ForbiddenException("Solo el organizador puede editar este partido")
         
     # Solo permitir editar si está en 'publicada'
     if match.estatus_partida != 'publicada':
@@ -384,7 +384,7 @@ def update_match(
         team_repo = TeamRepositoryImpl(db)
         team = team_repo.get_by_id(request.fk_id_equipo_a)
         if not team or team.fk_id_usuario_capitan != current_user_id:
-            raise UnauthorizedException("Solo el capitán del equipo puede asignar su equipo a un encuentro")
+            raise ForbiddenException("Solo el capitán del equipo puede asignar su equipo a un encuentro")
 
     match.fk_id_deporte = request.fk_id_deporte
     match.fk_id_cancha = request.fk_id_cancha

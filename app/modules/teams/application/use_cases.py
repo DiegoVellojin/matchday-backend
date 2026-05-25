@@ -148,8 +148,8 @@ class JoinTeamWithTokenUseCase:
         
         id_equipo = verify_team_invitation_token(token)
         if not id_equipo:
-            from app.core.exceptions import UnauthorizedException
-            raise UnauthorizedException("El enlace de invitación es inválido o ha expirado.")
+            from app.core.exceptions import UnauthorizedException, ForbiddenException
+            raise ForbiddenException("El enlace de invitación es inválido o ha expirado.")
 
         # Verificar si ya es miembro
         miembros = self.repository.get_members(id_equipo)
